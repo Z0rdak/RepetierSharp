@@ -1,0 +1,7 @@
+﻿namespace RepetierMqtt.Event
+{
+    public class MessageChangedEvent : IRepetierEvent
+    {
+        // get messages after this event and on start up - no polling needed
+    }
+}
