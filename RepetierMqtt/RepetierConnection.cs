@@ -50,6 +50,12 @@ namespace RepetierMqtt
         public delegate void JobStartedReceivedHandler(string printer, JobStartedEvent jobStarted, long timestamp);
 
         /// <summary>
+        /// Triggered when REST call to start print is not successfull
+        /// </summary>
+        public event JobStartedFailedHandler OnJobStartedFailed;
+        public delegate void JobStartedFailedHandler(string printer, IRestResponse response, long timestamp);
+
+        /// <summary>
         /// Event: jobKilled 
         /// Gets send after a normal job has been killed.
         /// </summary>
@@ -205,27 +211,40 @@ namespace RepetierMqtt
         /// <param name="GCODEFilePath"></param>
         public void UploadAndStartPrint(string GCODEFilePath, string printer)
         {
-
             // TODO: check connection / authorization
 
             // TODO: rework file handling
             var GCODEFileName = Path.GetFileNameWithoutExtension(GCODEFilePath);
-
-            var Request = new RestRequest($"printer/job/{printer}/", Method.POST);
-            Request.AddFile("gcode", GCODEFilePath);
-            Request.AddHeader("x-api-key", ApiKey);
-            Request.AddHeader("Content-Type", "multipart/form-data");
-            Request.AddParameter("a", "upload");
-            Request.AddParameter("name", GCODEFileName);
-
-            // TODO: return information of successfull or failed request (event?)
-            var Response = RestClient.Execute(Request);
-            if (Response.ErrorException != null)
+            try
             {
-                throw new Exception($"Exception in UploadAndStartPrinting: {Response.ErrorException.Message}");
+
+                var Request = new RestRequest($"printer/job/{printer}/", Method.POST);
+                Request.AddFile("gcode", GCODEFilePath);
+                Request.AddHeader("x-api-key", ApiKey);
+                Request.AddHeader("Content-Type", "multipart/form-data");
+                Request.AddParameter("a", "upload");
+                Request.AddParameter("name", GCODEFileName);
+
+                var Response = RestClient.Execute(Request);
+                if (Response.StatusCode != System.Net.HttpStatusCode.OK)
+                {
+                    OnJobStartedFailed?.Invoke(printer, Response, DateTimeOffset.Now.ToUnixTimeSeconds());
+                    return;
+                }
+                if (Response.ErrorException != null)
+                {
+                    throw new Exception($"Exception in UploadAndStartPrinting: {Response.ErrorException.Message}");
+                }
+                StartWebSocketMessageTimers();
+            } catch (Exception ex)
+            {
+                Console.Error.WriteLine($"{ex}");
             }
-            StartWebSocketMessageTimers();
+      
+      
         }
+
+
 
         /// <summary>
         /// Set up event handlers for WebSocket events and timers for cyclic websocket calls.
