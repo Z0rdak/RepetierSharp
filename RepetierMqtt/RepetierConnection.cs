@@ -228,7 +228,7 @@ namespace RepetierMqtt
                 var Response = RestClient.Execute(Request);
                 if (Response.StatusCode != System.Net.HttpStatusCode.OK)
                 {
-                    OnJobStartedFailed(printer, Response, DateTimeOffset.Now.ToUnixTimeSeconds());
+                    OnJobStartedFailed?.Invoke(printer, Response, DateTimeOffset.Now.ToUnixTimeSeconds());
                     return;
                 }
                 if (Response.ErrorException != null)
