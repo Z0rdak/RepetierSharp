@@ -336,7 +336,6 @@ namespace RepetierMqtt
 
         }
 
-        // TODO: implement method (WIP)
         private void HandleEvent(RepetierBaseEvent repetierBaseEvent, long timestamp)
         {
             var printer = repetierBaseEvent.Printer;
@@ -345,21 +344,21 @@ namespace RepetierMqtt
             switch (repetierBaseEvent.Event)
             {
                 case EventConstants.LOGOUT:
-                    OnLogoutReceived(timestamp);
+                    OnLogoutReceived?.Invoke(timestamp);
                     break;
                 case EventConstants.LOGIN_REQUIRED:
-                    OnLoginRequiredReceived(timestamp);
+                    OnLoginRequiredReceived?.Invoke(timestamp);
                     break;
                 case EventConstants.USER_CREDENTIALS:
                     var userCredentialsEvent = JsonSerializer.Deserialize<UserCredentialsEvent>(eventData);
-                    OnUserCredentialsReceived(userCredentialsEvent, timestamp);
+                    OnUserCredentialsReceived?.Invoke(userCredentialsEvent, timestamp);
                     break;
                 case EventConstants.PRINTER_LIST_CHANGED:
                     var printerListChangedEvent = JsonSerializer.Deserialize<PrinterListChangedEvent>(eventData);
-                    OnPrinterListChanged(printerListChangedEvent.Printers, timestamp);
+                    OnPrinterListChanged?.Invoke(printerListChangedEvent.Printers, timestamp);
                     break;
                 case EventConstants.MESSAGES_CHANGED:
-                    OnMessagesChanged(timestamp);
+                    OnMessagesChanged?.Invoke(timestamp);
                     SendCommand(MessagesCommand.Instance, printer);
                     break;
                 case EventConstants.LOG:
