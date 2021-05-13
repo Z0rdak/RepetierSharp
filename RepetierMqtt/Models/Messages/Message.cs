@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 
 namespace RepetierMqtt.Models.Messages
 {
-    public class MessagesMessage : IRepetierMessage
+    public class Message : IRepetierMessage
     {
         [JsonPropertyName("id")]
         public int Id { get; }
@@ -27,6 +27,6 @@ namespace RepetierMqtt.Models.Messages
         [JsonPropertyName("pause")]
         public bool IsPaused { get; }
 
-        public MessagesMessage() { }
+        public Message() { }
     }
 }
