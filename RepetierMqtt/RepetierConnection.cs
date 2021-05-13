@@ -9,6 +9,7 @@ using RepetierMqtt.Event;
 using RepetierMqtt.Messages;
 using RepetierMqtt.Models;
 using RepetierMqtt.Models.Commands;
+using RepetierMqtt.Models.Events;
 using RepetierMqtt.Models.Messages;
 using RepetierMqtt.Util;
 using RestSharp;
@@ -212,20 +213,10 @@ namespace RepetierMqtt
         public void UploadAndStartPrint(string GCODEFilePath, string printer)
         {
             // TODO: check connection / authorization
-
-            // TODO: rework file handling
-            var GCODEFileName = Path.GetFileNameWithoutExtension(GCODEFilePath);
             try
             {
-
-                var Request = new RestRequest($"printer/job/{printer}/", Method.POST);
-                Request.AddFile("gcode", GCODEFilePath);
-                Request.AddHeader("x-api-key", ApiKey);
-                Request.AddHeader("Content-Type", "multipart/form-data");
-                Request.AddParameter("a", "upload");
-                Request.AddParameter("name", GCODEFileName);
-
-                var Response = RestClient.Execute(Request);
+                var request = ApiConstants.StartPrintRequest(GCODEFilePath, printer, this.ApiKey);
+                var Response = RestClient.Execute(request);
                 if (Response.StatusCode != System.Net.HttpStatusCode.OK)
                 {
                     OnJobStartedFailed?.Invoke(printer, Response, DateTimeOffset.Now.ToUnixTimeSeconds());
@@ -292,19 +283,19 @@ namespace RepetierMqtt
 
             switch (commandStr)
             {
-                case "login":
+                case CommandConstants.LOGIN:
                     var loginMessage = (LoginMessage)repetierMessage;
                     break;
-                case "logout":
+                case CommandConstants.LOGOUT:
                     // No payload
                     break;
-                case "listPrinter":
+                case CommandConstants.LIST_PRINTER:
                     {
                         var ListprintersMessage = (ListPrinterMessage)repetierMessage;
                         var printers = ListprintersMessage.Printers;
                     }
                     break;
-                case "stateList":
+                case CommandConstants.STATE_LIST:
                     {
                         var stateListMessage = (StateListMessage)repetierMessage;
                         var printers = stateListMessage.PrinterStates;
@@ -314,22 +305,22 @@ namespace RepetierMqtt
                         }
                     }
                     break;
-                case "response":
+                case CommandConstants.RESPONSE:
                     {
                         var responseMessage = (ResponseMessage)repetierMessage;
                     }
                     break;
-                case "messages":
+                case CommandConstants.MESSAGES:
                     {
                         var messagesMessage = (MessagesMessage)repetierMessage;
                     }
                     break;
-                case "listModels":
+                case CommandConstants.LIST_MODELS:
                     {
 
                     }
                     break;
-                case "listJobs":
+                case CommandConstants.LIST_JOBS:
                     {
 
                     }
@@ -348,52 +339,52 @@ namespace RepetierMqtt
 
             switch (repetierBaseEvent.Event)
             {
-                case "logout":
+                case EventConstants.LOGOUT:
                     OnLogoutReceived(timestamp);
                     break;
-                case "loginRequired":
+                case EventConstants.LOGIN_REQUIRED:
                     OnLoginRequiredReceived(timestamp);
                     break;
-                case "userCredentials":
+                case EventConstants.USER_CREDENTIALS:
                     var userCredentialsEvent = JsonSerializer.Deserialize<UserCredentialsEvent>(eventData);
                     OnUserCredentialsReceived(userCredentialsEvent, timestamp);
                     break;
-                case "printerListChanged":
+                case EventConstants.PRINTER_LIST_CHANGED:
                     var printerListChangedEvent = JsonSerializer.Deserialize<PrinterListChangedEvent>(eventData);
                     OnPrinterListChanged(printerListChangedEvent.Printers, timestamp);
                     break;
-                case "messagesChanged":
+                case EventConstants.MESSAGES_CHANGED:
                     OnMessagesChanged(timestamp);
                     // TODO: get messages and fire event
                     break;
-                case "log":
+                case EventConstants.LOG:
                     var logEvent = JsonSerializer.Deserialize<LogEvent>(eventData);
                     OnLogReceived?.Invoke(logEvent);
                     break;
-                case "jobsChanged":
+                case EventConstants.JOBS_CHANGED:
                     OnJobsChanged?.Invoke(printer, timestamp);
                     break;
-                case "jobFinished":
+                case EventConstants.JOB_FINISHED:
                     var jobFinishedEvent = JsonSerializer.Deserialize<JobFinishedEvent>(eventData);
                     OnJobFinishedReceived?.Invoke(printer, jobFinishedEvent, timestamp);
                     break;
-                case "jobKilled":
+                case EventConstants.JOB_KILLED:
                     var jobKilledEvent = JsonSerializer.Deserialize<JobKilledEvent>(eventData);
                     OnJobKilledReceived?.Invoke(printer, jobKilledEvent, timestamp);
                     break;
-                case "jobStarted":
+                case EventConstants.JOB_STARTED:
                     var jobStartedEvent = JsonSerializer.Deserialize<JobStartedEvent>(eventData);
                     OnJobStartedReceived?.Invoke(printer, jobStartedEvent, timestamp);
                     break;
-                case "state":
+                case EventConstants.STATE:
                     var printerStateChangedEvent = JsonSerializer.Deserialize<PrinterStateChangeEvent>(eventData);
                     OnPrinterStateReceived?.Invoke(printer, printerStateChangedEvent.PrinterState, timestamp);
                     break;
-                case "temp":
+                case EventConstants.TEMP:
                     var tempChangeEvent = JsonSerializer.Deserialize<TempChangeEvent>(eventData);
                     OnTempChangeReceived?.Invoke(printer, tempChangeEvent, timestamp);
                     break;
-                case "changeFilament":
+                case EventConstants.CHANGE_FILAMENT:
                     OnChangeFilamentReceived?.Invoke(printer, timestamp);
                     break;
                 default:
@@ -428,8 +419,8 @@ namespace RepetierMqtt
             var progressRate = estimationExists ? CalculatePollingInterval(estimatedPrintTime, 0.005) : defaultPollRate;
             var stateRate = estimationExists ? CalculatePollingInterval(estimatedPrintTime, 0.01) : defaultPollRate;
 
-            PeriodicTaskMap.Add("listPrinters", new PeriodicTask(() => SendListPrinters()));
-            PeriodicTaskMap.Add("stateList", new PeriodicTask(() => SendStateList()));
+            PeriodicTaskMap.Add(CommandConstants.LIST_PRINTER, new PeriodicTask(() => SendListPrinters()));
+            PeriodicTaskMap.Add(CommandConstants.STATE_LIST, new PeriodicTask(() => SendStateList()));
         }
 
         /// <summary>
@@ -438,8 +429,8 @@ namespace RepetierMqtt
         /// </summary>
         public RepetierServerInformation GetRepetierServerInfo()
         {
-            var Request = new RestRequest($"printer/info/", Method.GET);
-            return JsonSerializer.Deserialize<RepetierServerInformation>(RestClient.Execute(Request).Content);
+            var response = RestClient.Execute(ApiConstants.PRINTER_INFO_REQUEST);
+            return JsonSerializer.Deserialize<RepetierServerInformation>(response.Content);
         }
 
         /// <summary>
