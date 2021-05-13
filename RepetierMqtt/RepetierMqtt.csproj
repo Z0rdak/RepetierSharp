@@ -4,8 +4,8 @@
     <OutputType>Library</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <StartupObject></StartupObject>
-    <AssemblyName>RepetierServerMqttClient</AssemblyName>
-    <RootNamespace>RepetierServerMqttClient</RootNamespace>
+    <AssemblyName>RepetierMqtt</AssemblyName>
+    <RootNamespace>RepetierMqtt</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
