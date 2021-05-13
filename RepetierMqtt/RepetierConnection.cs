@@ -131,6 +131,10 @@ namespace RepetierMqtt
         public delegate void MessagesChangedReceivedHandler(long timestamp);
         #endregion
 
+
+        public event MessagesReceivedHandler OnMessagesReceived;
+        public delegate void MessagesReceivedHandler(List<Message> messages);
+
         // TODO: Move implement move, printqueueChanged, foldersChanged, eepromClear, eepromChanged, 
         // config, firewareChanged, settingsChanged, printerSettingChanged, modelGroupListChanged,
         // prepareJob, prepareJobFinished, remoteServersChanged and getExternalLinks events
@@ -312,7 +316,8 @@ namespace RepetierMqtt
                     break;
                 case CommandConstants.MESSAGES:
                     {
-                        var messagesMessage = (MessagesMessage)repetierMessage;
+                        var messagesMessage = (List<Message>)repetierMessage;
+                        OnMessagesReceived(messagesMessage);
                     }
                     break;
                 case CommandConstants.LIST_MODELS:
@@ -355,7 +360,7 @@ namespace RepetierMqtt
                     break;
                 case EventConstants.MESSAGES_CHANGED:
                     OnMessagesChanged(timestamp);
-                    // TODO: get messages and fire event
+                    SendCommand(MessagesCommand.Instance, printer);
                     break;
                 case EventConstants.LOG:
                     var logEvent = JsonSerializer.Deserialize<LogEvent>(eventData);
