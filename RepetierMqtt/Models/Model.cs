@@ -5,6 +5,9 @@ using System.Text.Json.Serialization;
 
 namespace RepetierMqtt.Models
 {
+    /// <summary>
+    /// Represents a g-code file stored in the printer. It also contains some statistical data.
+    /// </summary>
     public class Model
     {
         [JsonPropertyName("analysed")]
