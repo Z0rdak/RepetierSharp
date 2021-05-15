@@ -24,7 +24,6 @@ namespace RepetierMqtt
     {
 
         #region event handler for repetier events
-
         /// <summary>
         /// Event: log
         /// When the proper log level is set, you get events for each new log line you wish to see. Type indicates one of the following:
@@ -131,11 +130,17 @@ namespace RepetierMqtt
         public delegate void MessagesChangedReceivedHandler(long timestamp);
         #endregion
 
-        public event MessagesReceivedHandler OnMessagesReceived;
-        public delegate void MessagesReceivedHandler(List<Message> messages);
+        #region Event handler for received messages
+        public event EventHandler<IRepetierMessage> OnRepetierMessageReceived;
 
-        public event ResponseReceivedHandler OnResponseReceived;
-        public delegate void ResponseReceivedHandler(IRepetierMessage response);
+        public event EventHandler<List<Message>> OnMessagesReceived;
+        public event EventHandler<LoginMessage> OnLoginMessageReceived;
+        public event EventHandler<List<Printer>> OnPrinterListReceived;       
+        public event EventHandler<Dictionary<string, PrinterState>> OnStateListReceived;
+        public event EventHandler<List<Model>> OnModelListReceived;
+        public event EventHandler<List<Model>> OnJobListReceived;
+
+        #endregion
 
         // TODO: Move implement move, printqueueChanged, foldersChanged, eepromClear, eepromChanged, 
         // config, firewareChanged, settingsChanged, printerSettingChanged, modelGroupListChanged,
@@ -289,52 +294,50 @@ namespace RepetierMqtt
             {
                 case CommandConstants.LOGIN:
                     var loginMessage = JsonSerializer.Deserialize<LoginMessage>(message.Data);
-                    // TODO: 
-                    OnResponseReceived?.Invoke(loginMessage);
+                    OnLoginMessageReceived?.Invoke(this, loginMessage);
+                    OnRepetierMessageReceived?.Invoke(this, loginMessage);
                     break;
                 case CommandConstants.LOGOUT:
-                    // TODO: 
+                    OnRepetierMessageReceived?.Invoke(this, null);
                     // No payload
                     break;
                 case CommandConstants.LIST_PRINTER:
                     {
                         var ListprintersMessage = JsonSerializer.Deserialize<ListPrinterMessage>(message.Data);
-                        OnResponseReceived?.Invoke(ListprintersMessage);
-                        var printers = ListprintersMessage.Printers;
-                        // TODO: 
+                        OnRepetierMessageReceived?.Invoke(this, ListprintersMessage);
+                        OnPrinterListReceived?.Invoke(this, ListprintersMessage.Printers);
                     }
                     break;
                 case CommandConstants.STATE_LIST:
                     {
                         var stateListMessage = JsonSerializer.Deserialize<StateListMessage>(message.Data);
-                        var printers = stateListMessage.PrinterStates;
-                        OnResponseReceived?.Invoke(stateListMessage);
-                        foreach (var entry in printers)
-                        {
-                            // TODO: event for each printer?
-                        }
+                        OnRepetierMessageReceived?.Invoke(this, stateListMessage);
+                        OnStateListReceived?.Invoke(this, stateListMessage.PrinterStates);
                     }
                     break;
                 case CommandConstants.RESPONSE:
                     {
                         var responseMessage = JsonSerializer.Deserialize<ResponseMessage>(message.Data);
-                        OnResponseReceived?.Invoke(responseMessage);
+
+                        OnRepetierMessageReceived?.Invoke(this, responseMessage);
                     }
                     break;
                 case CommandConstants.MESSAGES:
                     {
                         var messagesMessage = JsonSerializer.Deserialize<List<Message>>(message.Data);
-                        OnMessagesReceived?.Invoke(messagesMessage);
+                        OnMessagesReceived?.Invoke(this, messagesMessage);
                     }
                     break;
                 case CommandConstants.LIST_MODELS:
                     {
                         var modelList = JsonSerializer.Deserialize<List<Model>>(message.Data);
+                        OnModelListReceived?.Invoke(this, modelList);
                     }
                     break;
                 case CommandConstants.LIST_JOBS:
                     {
-                        var modelsInJobQueue = JsonSerializer.Deserialize<List<Model>>(message.Data);
+                        var jobList = JsonSerializer.Deserialize<List<Model>>(message.Data);
+                        OnJobListReceived?.Invoke(this, jobList);
                     }
                     break;
                 default:
