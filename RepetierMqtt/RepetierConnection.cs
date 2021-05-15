@@ -281,16 +281,14 @@ namespace RepetierMqtt
             };
         }
 
-        // TODO: implement method (WIP)
         private void HandleMessage(RepetierBaseMessage message)
         {
-            var repetierMessage = JsonSerializer.Deserialize<IRepetierMessage>(message.Data);
             var commandStr = CommandManager.CommandIdentifierFor(message.CallBackId);
 
             switch (commandStr)
             {
                 case CommandConstants.LOGIN:
-                    var loginMessage = (LoginMessage)repetierMessage;
+                    var loginMessage = JsonSerializer.Deserialize<LoginMessage>(message.Data);
                     // TODO: 
                     OnResponseReceived?.Invoke(loginMessage);
                     break;
@@ -300,7 +298,7 @@ namespace RepetierMqtt
                     break;
                 case CommandConstants.LIST_PRINTER:
                     {
-                        var ListprintersMessage = (ListPrinterMessage)repetierMessage;
+                        var ListprintersMessage = JsonSerializer.Deserialize<ListPrinterMessage>(message.Data);
                         OnResponseReceived?.Invoke(ListprintersMessage);
                         var printers = ListprintersMessage.Printers;
                         // TODO: 
@@ -308,7 +306,7 @@ namespace RepetierMqtt
                     break;
                 case CommandConstants.STATE_LIST:
                     {
-                        var stateListMessage = (StateListMessage)repetierMessage;
+                        var stateListMessage = JsonSerializer.Deserialize<StateListMessage>(message.Data);
                         var printers = stateListMessage.PrinterStates;
                         OnResponseReceived?.Invoke(stateListMessage);
                         foreach (var entry in printers)
@@ -319,24 +317,24 @@ namespace RepetierMqtt
                     break;
                 case CommandConstants.RESPONSE:
                     {
-                        var responseMessage = (ResponseMessage)repetierMessage;
+                        var responseMessage = JsonSerializer.Deserialize<ResponseMessage>(message.Data);
                         OnResponseReceived?.Invoke(responseMessage);
                     }
                     break;
                 case CommandConstants.MESSAGES:
                     {
-                        var messagesMessage = (List<Message>)repetierMessage;
+                        var messagesMessage = JsonSerializer.Deserialize<List<Message>>(message.Data);
                         OnMessagesReceived?.Invoke(messagesMessage);
                     }
                     break;
                 case CommandConstants.LIST_MODELS:
                     {
-                        var modelList = (List<Model>)repetierMessage;
+                        var modelList = JsonSerializer.Deserialize<List<Model>>(message.Data);
                     }
                     break;
                 case CommandConstants.LIST_JOBS:
                     {
-                        var modelsInJobQueue = (List<Model>)repetierMessage;
+                        var modelsInJobQueue = JsonSerializer.Deserialize<List<Model>>(message.Data);
                     }
                     break;
                 default:
