@@ -246,8 +246,6 @@ namespace RepetierMqtt
       
         }
 
-
-
         /// <summary>
         /// Set up event handlers for WebSocket events and timers for cyclic websocket calls.
         /// </summary>
@@ -286,6 +284,11 @@ namespace RepetierMqtt
             };
         }
 
+        /// <summary>
+        /// Handles an incoming repetier message.
+        /// Depeding on content of message a corresponding event with the data of the message is fired.
+        /// </summary>
+        /// <param name="message"></param>
         private void HandleMessage(RepetierBaseMessage message)
         {
             var commandStr = CommandManager.CommandIdentifierFor(message.CallBackId);
@@ -318,7 +321,6 @@ namespace RepetierMqtt
                 case CommandConstants.RESPONSE:
                     {
                         var responseMessage = JsonSerializer.Deserialize<ResponseMessage>(message.Data);
-
                         OnRepetierMessageReceived?.Invoke(this, responseMessage);
                     }
                     break;
@@ -346,6 +348,12 @@ namespace RepetierMqtt
 
         }
 
+        /// <summary>
+        /// Handles an incoming repetier event.
+        /// The event data is then forwarded by calling their corresponding event handlers.
+        /// </summary>
+        /// <param name="repetierBaseEvent"> Information of corresponding printer and event data</param>
+        /// <param name="timestamp"> Unix timestamp of the event</param>
         private void HandleEvent(RepetierBaseEvent repetierBaseEvent, long timestamp)
         {
             var printer = repetierBaseEvent.Printer;
