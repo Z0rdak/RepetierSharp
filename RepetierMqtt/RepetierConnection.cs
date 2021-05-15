@@ -131,9 +131,11 @@ namespace RepetierMqtt
         public delegate void MessagesChangedReceivedHandler(long timestamp);
         #endregion
 
-
         public event MessagesReceivedHandler OnMessagesReceived;
         public delegate void MessagesReceivedHandler(List<Message> messages);
+
+        public event ResponseReceivedHandler OnResponseReceived;
+        public delegate void ResponseReceivedHandler(IRepetierMessage response);
 
         // TODO: Move implement move, printqueueChanged, foldersChanged, eepromClear, eepromChanged, 
         // config, firewareChanged, settingsChanged, printerSettingChanged, modelGroupListChanged,
@@ -289,45 +291,52 @@ namespace RepetierMqtt
             {
                 case CommandConstants.LOGIN:
                     var loginMessage = (LoginMessage)repetierMessage;
+                    // TODO: 
+                    OnResponseReceived?.Invoke(loginMessage);
                     break;
                 case CommandConstants.LOGOUT:
+                    // TODO: 
                     // No payload
                     break;
                 case CommandConstants.LIST_PRINTER:
                     {
                         var ListprintersMessage = (ListPrinterMessage)repetierMessage;
+                        OnResponseReceived?.Invoke(ListprintersMessage);
                         var printers = ListprintersMessage.Printers;
+                        // TODO: 
                     }
                     break;
                 case CommandConstants.STATE_LIST:
                     {
                         var stateListMessage = (StateListMessage)repetierMessage;
                         var printers = stateListMessage.PrinterStates;
+                        OnResponseReceived?.Invoke(stateListMessage);
                         foreach (var entry in printers)
                         {
-
+                            // TODO: event for each printer?
                         }
                     }
                     break;
                 case CommandConstants.RESPONSE:
                     {
                         var responseMessage = (ResponseMessage)repetierMessage;
+                        OnResponseReceived?.Invoke(responseMessage);
                     }
                     break;
                 case CommandConstants.MESSAGES:
                     {
                         var messagesMessage = (List<Message>)repetierMessage;
-                        OnMessagesReceived(messagesMessage);
+                        OnMessagesReceived?.Invoke(messagesMessage);
                     }
                     break;
                 case CommandConstants.LIST_MODELS:
                     {
-
+                        var modelList = (List<Model>)repetierMessage;
                     }
                     break;
                 case CommandConstants.LIST_JOBS:
                     {
-
+                        var modelsInJobQueue = (List<Model>)repetierMessage;
                     }
                     break;
                 default:
