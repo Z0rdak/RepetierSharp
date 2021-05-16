@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 
 namespace RepetierMqtt.Models.Commands
 {
-    class RemoveJobCommand : ICommandData
+    public class RemoveJobCommand : ICommandData
     {
         [JsonPropertyName("id")]
         public int JobId { get; }

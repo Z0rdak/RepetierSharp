@@ -137,6 +137,8 @@ namespace RepetierMqtt
         public event EventHandler<List<Printer>> OnPrinterListReceived;
         public event EventHandler<Dictionary<string, PrinterState>> OnStateListReceived;
         public event EventHandler<List<Model>> OnModelListReceived;
+        public event EventHandler<Model> OnModelInfoReceived;
+        public event EventHandler<Model> OnJobInfoReceived;
         public event EventHandler<List<Model>> OnJobListReceived;
         #endregion
 
@@ -347,6 +349,85 @@ namespace RepetierMqtt
                         OnJobListReceived?.Invoke(this, jobList);
                     }
                     break;
+                case CommandConstants.MODEL_INFO:
+                    {
+                        var modelInfo = JsonSerializer.Deserialize<Model>(message.Data);
+                        OnModelInfoReceived?.Invoke(this, modelInfo);
+                    }
+                    break;
+                case CommandConstants.JOB_INFO:
+                    {
+                        var jobInfo = JsonSerializer.Deserialize<Model>(message.Data);
+                        OnJobInfoReceived?.Invoke(this, jobInfo);
+                    }
+                    break;
+                case CommandConstants.REMOVE_JOB:
+                    {
+                        // no payload
+                    }
+                    break;
+                case CommandConstants.SEND:
+                    {
+                        // no payload
+                    }
+                    break;
+                case CommandConstants.COPY_MODEL:
+                    {
+                        // TODO: event?
+                        // no payload
+                    }
+                    break;
+                case CommandConstants.EMERGENCY_STOP:
+                    {
+                        // TODO: event
+                        // no payload
+                    }
+                    break;
+                case CommandConstants.ACTIVATE:
+                    {
+                        // no payload
+                    }
+                    break;
+                case CommandConstants.DEACTIVATE:
+                    {
+                        // no payload
+                    }
+                    break;
+                case CommandConstants.CREATE_USER:
+                    {
+                        // payload: {"success":true}
+                    }
+                    break;
+                case CommandConstants.UPDATE_USER:
+                    {
+                        // no payload 
+                    }
+                    break;
+                case CommandConstants.DELETE_USER:
+                    {
+                        // payload: {"success":true}
+                    }
+                    break;
+                case CommandConstants.USER_LIST:
+                    {
+                        // payload: { "loginRequired": true, "users": [ { "id": 1, "login": "repetier", "permissions": 15 } ] }
+                    }
+                    break;
+                case CommandConstants.START_JOB:
+                    {
+                        // no payload
+                    }
+                    break;
+                case CommandConstants.STOP_JOB:
+                    {
+                        // no payload
+                    }
+                    break;
+                case CommandConstants.CONTINUE_JOB:
+                    {
+                        // no payload
+                    }
+                    break;
                 default:
                     break;
             }
@@ -529,6 +610,41 @@ namespace RepetierMqtt
         public void EnqueueJob(int modelId, bool autostart = true)
         {
             SendCommand(new CopyModelCommand(modelId, autostart));
+        }
+
+        public void GetModelInfo(int modelId)
+        {
+            SendCommand(new ModelInfoCommand(modelId));
+        }
+
+        public void GetJobInfo(int jobId)
+        {
+            SendCommand(new JobInfoCommand(jobId));
+        }
+
+        public void StartJob(int jobId)
+        {
+            SendCommand(new StartJobCommand(jobId));
+        }
+
+        public void ContinueJob()
+        {
+            SendCommand(ContinueJobCommand.Instance);
+        }
+
+        public void RemoveJob(int jobId)
+        {
+            SendCommand(new RemoveJobCommand(jobId));
+        }
+
+        public void ActivatePrinter(string printerSlug)
+        {
+            SendCommand(new ActivateCommand(printerSlug));
+        }
+
+        public void DeactivatePrinter(string printerSlug)
+        {
+            SendCommand(new DeactivateCommand(printerSlug));
         }
 
         #endregion
