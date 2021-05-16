@@ -1,9 +1,11 @@
-﻿namespace RepetierMqtt.Models
+﻿using RepetierMqtt.Models.Commands;
+
+namespace RepetierMqtt.Models.Commands
 {
     public class LogoutCommand : ICommandData
     {
         
-        public string CommandIdentifier => "logout";
+        public string CommandIdentifier => CommandConstants.LOGOUT;
 
         private LogoutCommand() { }
 

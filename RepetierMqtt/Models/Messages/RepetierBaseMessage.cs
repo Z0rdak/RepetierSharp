@@ -1,9 +1,9 @@
 ﻿using RepetierMqtt.Models.Messages;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
-using static RepetierMqtt.Models.RepetierBaseCommand;
+using static RepetierMqtt.Models.Commands.RepetierBaseCommand;
 
-namespace RepetierMqtt.Messages
+namespace RepetierMqtt.Models.Messages
 {
     public class RepetierBaseMessage
     {

@@ -1,15 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Configuration;
-using System.IO;
-using System.Text;
 using System.Text.Json;
-using System.Threading;
-using RepetierMqtt.Event;
-using RepetierMqtt.Messages;
+using RepetierMqtt.Models.Events;
 using RepetierMqtt.Models;
 using RepetierMqtt.Models.Commands;
-using RepetierMqtt.Models.Events;
 using RepetierMqtt.Models.Messages;
 using RepetierMqtt.Util;
 using RestSharp;
@@ -137,7 +132,12 @@ namespace RepetierMqtt
         public event EventHandler<List<Printer>> OnPrinterListReceived;
         public event EventHandler<Dictionary<string, PrinterState>> OnStateListReceived;
         public event EventHandler<List<Model>> OnModelListReceived;
+        public event EventHandler<Model> OnModelInfoReceived;
+        public event EventHandler<Model> OnJobInfoReceived;
         public event EventHandler<List<Model>> OnJobListReceived;
+        public event EventHandler<StatusMessage> OnUserCreateResponseReceived;
+        public event EventHandler<StatusMessage> OnUserDeleteResponseReceived;
+        public event EventHandler<UserListMessage> OnUserListReceived;
         #endregion
 
         // TODO: Move implement move, printqueueChanged, foldersChanged, eepromClear, eepromChanged, 
@@ -159,6 +159,8 @@ namespace RepetierMqtt
         public string ApiKey { get; set; }             // Authentification for Repetier-Server
         private bool ApiKeyProvided { get; set; }
         private string SessionKey { get; set; }
+
+        public string ActivePrinter { get; private set; }
 
 
         /// <summary>
@@ -345,6 +347,90 @@ namespace RepetierMqtt
                         OnJobListReceived?.Invoke(this, jobList);
                     }
                     break;
+                case CommandConstants.MODEL_INFO:
+                    {
+                        var modelInfo = JsonSerializer.Deserialize<Model>(message.Data);
+                        OnModelInfoReceived?.Invoke(this, modelInfo);
+                    }
+                    break;
+                case CommandConstants.JOB_INFO:
+                    {
+                        var jobInfo = JsonSerializer.Deserialize<Model>(message.Data);
+                        OnJobInfoReceived?.Invoke(this, jobInfo);
+                    }
+                    break;
+                case CommandConstants.REMOVE_JOB:
+                    {
+                        // no payload
+                    }
+                    break;
+                case CommandConstants.SEND:
+                    {
+                        // no payload
+                    }
+                    break;
+                case CommandConstants.COPY_MODEL:
+                    {
+                        // TODO: event?
+                        // no payload
+                    }
+                    break;
+                case CommandConstants.EMERGENCY_STOP:
+                    {
+                        // TODO: event
+                        // no payload
+                    }
+                    break;
+                case CommandConstants.ACTIVATE:
+                    {
+                        // no payload
+                    }
+                    break;
+                case CommandConstants.DEACTIVATE:
+                    {
+                        // no payload
+                    }
+                    break;
+                case CommandConstants.CREATE_USER:
+                    {
+                        var statusMessage = JsonSerializer.Deserialize<StatusMessage>(message.Data);
+                        OnUserCreateResponseReceived?.Invoke(this, statusMessage);
+                    }
+                    break;
+                case CommandConstants.UPDATE_USER:
+                    {
+                        // no payload 
+                    }
+                    break;
+                case CommandConstants.DELETE_USER:
+                    {
+                        var statusMessage = JsonSerializer.Deserialize<StatusMessage>(message.Data);
+                        OnUserDeleteResponseReceived?.Invoke(this, statusMessage);
+                    }
+                    break;
+                case CommandConstants.USER_LIST:
+                    {
+                        // TODO: rework/check message/deserialization
+                        var userList = JsonSerializer.Deserialize<UserListMessage>(message.Data);
+                        OnUserListReceived?.Invoke(this, userList);
+                        // payload: { "loginRequired": true, "users": [ { "id": 1, "login": "repetier", "permissions": 15 } ] }
+                    }
+                    break;
+                case CommandConstants.START_JOB:
+                    {
+                        // no payload
+                    }
+                    break;
+                case CommandConstants.STOP_JOB:
+                    {
+                        // no payload
+                    }
+                    break;
+                case CommandConstants.CONTINUE_JOB:
+                    {
+                        // no payload
+                    }
+                    break;
                 default:
                     break;
             }
@@ -417,9 +503,14 @@ namespace RepetierMqtt
             }
         }
 
-        public void SendCommand(ICommandData command, string printer = "printer")
+        public void SendCommand(ICommandData command)
         {
-            // TODO: send active printer or empty?
+            var baseCommand = CommandManager.CommandWithId(command, this.ActivePrinter);
+            WebSocket.Send(baseCommand.ToBytes());
+        }
+
+        private void SendCommand(ICommandData command, string printer)
+        {
             var baseCommand = CommandManager.CommandWithId(command, printer);
             WebSocket.Send(baseCommand.ToBytes());
         }
@@ -517,6 +608,61 @@ namespace RepetierMqtt
         public void Logout()
         {
             SendCommand(LogoutCommand.Instance);
+        }
+
+        public void EnqueueJob(int modelId, bool autostart = true)
+        {
+            SendCommand(new CopyModelCommand(modelId, autostart));
+        }
+
+        public void GetModelInfo(int modelId)
+        {
+            SendCommand(new ModelInfoCommand(modelId));
+        }
+
+        public void GetJobInfo(int jobId)
+        {
+            SendCommand(new JobInfoCommand(jobId));
+        }
+
+        public void StartJob(int jobId)
+        {
+            SendCommand(new StartJobCommand(jobId));
+        }
+
+        public void ContinueJob()
+        {
+            SendCommand(ContinueJobCommand.Instance);
+        }
+
+        public void RemoveJob(int jobId)
+        {
+            SendCommand(new RemoveJobCommand(jobId));
+        }
+
+        public void ActivatePrinter(string printerSlug)
+        {
+            SendCommand(new ActivateCommand(printerSlug));
+        }
+
+        public void DeactivatePrinter(string printerSlug)
+        {
+            SendCommand(new DeactivateCommand(printerSlug));
+        }
+
+        public void CreateUser(string user, string password, int permission)
+        {
+            SendCommand(new CreateUserCommand(user, password, permission));
+        }
+
+        public void UpdateUser(string user, int permission, string password = "")
+        {
+            SendCommand(new UpdateUserCommand(user, permission, password));
+        }
+
+        public void DeleteUser(string user)
+        {
+            SendCommand(new DeleteUserCommand(user));
         }
 
         #endregion

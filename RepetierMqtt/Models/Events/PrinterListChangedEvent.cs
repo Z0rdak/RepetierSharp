@@ -1,6 +1,6 @@
-﻿using RepetierMqtt.Messages;
+﻿using RepetierMqtt.Models.Messages;
 
-namespace RepetierMqtt.Event
+namespace RepetierMqtt.Models.Events
 {
     public class PrinterListChangedEvent : ListPrinterMessage
     {

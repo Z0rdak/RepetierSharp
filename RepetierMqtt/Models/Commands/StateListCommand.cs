@@ -10,7 +10,7 @@ namespace RepetierMqtt.Models.Commands
         [JsonPropertyName("includeHistory")]
         public bool IncludeHistory { get; }
 
-        public string CommandIdentifier => "stateList";
+        public string CommandIdentifier => CommandConstants.STATE_LIST;
 
         public StateListCommand(bool includeHistory = false)
         {

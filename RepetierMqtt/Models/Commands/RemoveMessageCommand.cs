@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 
 namespace RepetierMqtt.Models.Commands
 {
-    public class RemoveMessagesCommand : ICommandData
+    public class RemoveMessageCommand : ICommandData
     {
         [JsonPropertyName("id")]
         public int Id { get; }
@@ -13,9 +13,9 @@ namespace RepetierMqtt.Models.Commands
         [JsonPropertyName("a")]
         public string A { get; } // empty or unpause ?
 
-        public string CommandIdentifier => "removeMessage";
+        public string CommandIdentifier => CommandConstants.REMOVE_MESSAGE;
 
-        public RemoveMessagesCommand(int messageId, string a = "")
+        public RemoveMessageCommand(int messageId, string a = "")
         {
             Id = messageId;
             A = a;
