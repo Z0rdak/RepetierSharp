@@ -1,7 +1,7 @@
 ﻿using RepetierMqtt.Models.Commands;
 using System.Text.Json.Serialization;
 
-namespace RepetierMqtt.Models
+namespace RepetierMqtt.Models.Commands
 {
     public class SendCommand : ICommandData
     {

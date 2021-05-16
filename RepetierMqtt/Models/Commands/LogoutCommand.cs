@@ -1,6 +1,6 @@
 ﻿using RepetierMqtt.Models.Commands;
 
-namespace RepetierMqtt.Models
+namespace RepetierMqtt.Models.Commands
 {
     public class LogoutCommand : ICommandData
     {

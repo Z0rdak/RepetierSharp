@@ -140,6 +140,9 @@ namespace RepetierMqtt
         public event EventHandler<Model> OnModelInfoReceived;
         public event EventHandler<Model> OnJobInfoReceived;
         public event EventHandler<List<Model>> OnJobListReceived;
+        public event EventHandler<StatusMessage> OnUserCreateResponseReceived;
+        public event EventHandler<StatusMessage> OnUserDeleteResponseReceived;
+        public event EventHandler<UserListMessage> OnUserListReceived;
         #endregion
 
         // TODO: Move implement move, printqueueChanged, foldersChanged, eepromClear, eepromChanged, 
@@ -395,7 +398,8 @@ namespace RepetierMqtt
                     break;
                 case CommandConstants.CREATE_USER:
                     {
-                        // payload: {"success":true}
+                        var statusMessage = JsonSerializer.Deserialize<StatusMessage>(message.Data);
+                        OnUserCreateResponseReceived?.Invoke(this, statusMessage);
                     }
                     break;
                 case CommandConstants.UPDATE_USER:
@@ -405,12 +409,15 @@ namespace RepetierMqtt
                     break;
                 case CommandConstants.DELETE_USER:
                     {
-                        // payload: {"success":true}
+                        var statusMessage = JsonSerializer.Deserialize<StatusMessage>(message.Data);
+                        OnUserCreateResponseReceived?.Invoke(this, statusMessage);
                     }
                     break;
                 case CommandConstants.USER_LIST:
                     {
+                        // TODO: rework/check message/deserialization
                         var userList = JsonSerializer.Deserialize<UserListMessage>(message.Data);
+                        OnUserListReceived?.Invoke(this, userList);
                         // payload: { "loginRequired": true, "users": [ { "id": 1, "login": "repetier", "permissions": 15 } ] }
                     }
                     break;
@@ -646,6 +653,21 @@ namespace RepetierMqtt
         public void DeactivatePrinter(string printerSlug)
         {
             SendCommand(new DeactivateCommand(printerSlug));
+        }
+
+        public void CreateUser(string user, string password, int permission)
+        {
+            SendCommand(new CreateUserCommand(user, password, permission));
+        }
+
+        public void UpdateUser(string user, int permission, string password = "")
+        {
+            SendCommand(new UpdateUserCommand(user, permission, password));
+        }
+
+        public void DeleteUser(string user)
+        {
+            SendCommand(new DeleteUserCommand(user));
         }
 
         #endregion

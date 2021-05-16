@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace RepetierMqtt.Models
+namespace RepetierMqtt.Models.Commands
 {
     /// <summary>
     /// Represents a WebSocket command for requesting data from the Repetier Server.

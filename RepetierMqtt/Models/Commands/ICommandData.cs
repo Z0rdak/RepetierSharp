@@ -1,4 +1,4 @@
-﻿namespace RepetierMqtt.Models
+﻿namespace RepetierMqtt.Models.Commands
 {
     public interface ICommandData
     {
