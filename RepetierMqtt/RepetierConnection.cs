@@ -157,6 +157,8 @@ namespace RepetierMqtt
         private bool ApiKeyProvided { get; set; }
         private string SessionKey { get; set; }
 
+        public string ActivePrinter { get; private set; }
+
 
         /// <summary>
         /// BaseURL must be provided by the user. 
@@ -396,9 +398,14 @@ namespace RepetierMqtt
             }
         }
 
-        public void SendCommand(ICommandData command, string printer = "printer")
+        public void SendCommand(ICommandData command)
         {
-            // TODO: send active printer or empty?
+            var baseCommand = CommandManager.CommandWithId(command, this.ActivePrinter);
+            WebSocket.Send(baseCommand.ToBytes());
+        }
+
+        private void SendCommand(ICommandData command, string printer)
+        {
             var baseCommand = CommandManager.CommandWithId(command, printer);
             WebSocket.Send(baseCommand.ToBytes());
         }
@@ -496,6 +503,11 @@ namespace RepetierMqtt
         public void Logout()
         {
             SendCommand(LogoutCommand.Instance);
+        }
+
+        public void EnqueueJob(int modelId, bool autostart = true)
+        {
+            SendCommand(new CopyModelCommand(modelId, autostart));
         }
 
         #endregion
