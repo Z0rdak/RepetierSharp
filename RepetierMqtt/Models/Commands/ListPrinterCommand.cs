@@ -6,7 +6,7 @@ namespace RepetierMqtt.Models.Commands
 {
     public class ListPrinterCommand : ICommandData
     {
-        public string CommandIdentifier => "listPrinter";
+        public string CommandIdentifier => CommandConstants.LIST_PRINTER;
 
         private ListPrinterCommand() { }
 

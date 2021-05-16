@@ -6,7 +6,7 @@ namespace RepetierMqtt.Models.Commands
 {
     class ListJobsCommand : ICommandData
     {
-        public string CommandIdentifier => "listJobs";
+        public string CommandIdentifier => CommandConstants.LIST_JOBS;
 
         private ListJobsCommand() { }
 

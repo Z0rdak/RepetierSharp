@@ -7,7 +7,7 @@ namespace RepetierMqtt.Models.Commands
 {
     public class CopyModelCommand : ICommandData
     {
-        public string CommandIdentifier => "copyModel";
+        public string CommandIdentifier => CommandConstants.COPY_MODEL;
 
         [JsonPropertyName("id")]
         public int Id { get; }

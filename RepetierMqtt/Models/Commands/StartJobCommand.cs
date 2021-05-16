@@ -10,7 +10,7 @@ namespace RepetierMqtt.Models.Commands
         [JsonPropertyName("id")]
         public int JobId { get; }
 
-        public string CommandIdentifier => "startJob";
+        public string CommandIdentifier => CommandConstants.START_JOB;
 
         public StartJobCommand(int jobId)
         {

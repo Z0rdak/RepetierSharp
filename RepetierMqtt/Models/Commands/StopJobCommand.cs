@@ -6,7 +6,7 @@ namespace RepetierMqtt.Models.Commands
 {
     public class StopJobCommand : ICommandData
     {
-        public string CommandIdentifier => "stopJob";
+        public string CommandIdentifier => CommandConstants.STOP_JOB;
 
         private StopJobCommand() { }
 

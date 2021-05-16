@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using RepetierMqtt.Models.Commands;
+using System.Text.Json.Serialization;
 
 namespace RepetierMqtt.Models
 {
@@ -10,7 +11,7 @@ namespace RepetierMqtt.Models
         [JsonPropertyName("password")]
         public string Password { get; private set; } //  Password is MD5(sessionId + MD5(login + password)) 
 
-        public string CommandIdentifier => "login";
+        public string CommandIdentifier => CommandConstants.LOGIN;
 
         public LoginCommand(string name, string password)
         {

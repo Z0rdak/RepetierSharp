@@ -10,7 +10,7 @@ namespace RepetierMqtt.Models.Commands
         [JsonPropertyName("id")]
         public int JobId { get; }
 
-        public string CommandIdentifier => "removeJob";
+        public string CommandIdentifier => CommandConstants.REMOVE_JOB;
 
         public RemoveJobCommand(int jobId)
         {

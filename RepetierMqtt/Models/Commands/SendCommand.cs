@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using RepetierMqtt.Models.Commands;
+using System.Text.Json.Serialization;
 
 namespace RepetierMqtt.Models
 {
@@ -7,7 +8,7 @@ namespace RepetierMqtt.Models
         [JsonPropertyName("cmd")]
         public string GCode { get; }
 
-        public string CommandIdentifier => "send";
+        public string CommandIdentifier => CommandConstants.SEND;
 
         public SendCommand(string gcode)
         {

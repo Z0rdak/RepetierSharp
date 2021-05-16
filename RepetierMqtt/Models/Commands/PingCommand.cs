@@ -6,7 +6,7 @@ namespace RepetierMqtt.Models.Commands
 {
     public class PingCommand : ICommandData
     {
-        public string CommandIdentifier => "ping";
+        public string CommandIdentifier => CommandConstants.PING;
 
         private PingCommand() { }
 

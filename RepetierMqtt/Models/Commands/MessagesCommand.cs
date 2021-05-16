@@ -6,7 +6,7 @@ namespace RepetierMqtt.Models.Commands
 {
     public class MessagesCommand : ICommandData
     {
-        public string CommandIdentifier => "messages";
+        public string CommandIdentifier => CommandConstants.MESSAGES;
 
         private MessagesCommand() { }
 
