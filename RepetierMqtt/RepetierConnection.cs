@@ -24,7 +24,6 @@ namespace RepetierMqtt
     {
 
         #region event handler for repetier events
-
         /// <summary>
         /// Event: log
         /// When the proper log level is set, you get events for each new log line you wish to see. Type indicates one of the following:
@@ -131,15 +130,19 @@ namespace RepetierMqtt
         public delegate void MessagesChangedReceivedHandler(long timestamp);
         #endregion
 
-
-        public event MessagesReceivedHandler OnMessagesReceived;
-        public delegate void MessagesReceivedHandler(List<Message> messages);
+        #region Event handler for received messages
+        public event EventHandler<IRepetierMessage> OnRepetierMessageReceived;
+        public event EventHandler<List<Message>> OnMessagesReceived;
+        public event EventHandler<LoginMessage> OnLoginMessageReceived;
+        public event EventHandler<List<Printer>> OnPrinterListReceived;
+        public event EventHandler<Dictionary<string, PrinterState>> OnStateListReceived;
+        public event EventHandler<List<Model>> OnModelListReceived;
+        public event EventHandler<List<Model>> OnJobListReceived;
+        #endregion
 
         // TODO: Move implement move, printqueueChanged, foldersChanged, eepromClear, eepromChanged, 
         // config, firewareChanged, settingsChanged, printerSettingChanged, modelGroupListChanged,
         // prepareJob, prepareJobFinished, remoteServersChanged and getExternalLinks events
-
-        // TODO: extract literals into class with constants
 
         /// <summary>
         /// Command -> PeriodicTask
@@ -233,15 +236,14 @@ namespace RepetierMqtt
                     throw new Exception($"Exception in UploadAndStartPrinting: {Response.ErrorException.Message}");
                 }
                 StartWebSocketMessageTimers();
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 Console.Error.WriteLine($"{ex}");
             }
-      
-      
+
+
         }
-
-
 
         /// <summary>
         /// Set up event handlers for WebSocket events and timers for cyclic websocket calls.
@@ -250,20 +252,26 @@ namespace RepetierMqtt
         {
             WebSocket.OnMessage += (sender, e) =>
             {
-                // TODO: add try catch in case msg is not deserializeable 
-                // TODO: test serialization
-                var message = JsonSerializer.Deserialize<RepetierBaseMessage>(e.Data, DeserialisationHelper.IngoreNullableFieldsOptions);
-                long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-                var containsEvents = message.HasEvents != null && message.HasEvents == true;
+                try
+                {
+                    var message = JsonSerializer.Deserialize<RepetierBaseMessage>(e.Data, DeserialisationHelper.IngoreNullableFieldsOptions);
+                    long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+                    var containsEvents = message.HasEvents != null && message.HasEvents == true;
 
-                if (message.CallBackId == -1 || containsEvents)
-                {
-                    var events = JsonSerializer.Deserialize<List<RepetierBaseEvent>>(message.Data, DeserialisationHelper.IngoreNullableFieldsOptions);
-                    events.ForEach(repetierEvent => HandleEvent(repetierEvent, timestamp));
+                    if (message.CallBackId == -1 || containsEvents)
+                    {
+                        var eventList = JsonSerializer.Deserialize<List<RepetierBaseEvent>>(message.Data, DeserialisationHelper.IngoreNullableFieldsOptions);
+                        eventList.ForEach(repetierEvent => HandleEvent(repetierEvent, timestamp));
+                    }
+                    else
+                    {
+                        HandleMessage(message);
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    HandleMessage(message);
+                    Console.Error.WriteLine("Error processing message from repetier server");
+                    Console.Error.WriteLine($"{ex.StackTrace}");
                 }
             };
 
@@ -281,55 +289,62 @@ namespace RepetierMqtt
             };
         }
 
-        // TODO: implement method (WIP)
+        /// <summary>
+        /// Handles an incoming repetier message.
+        /// Depeding on content of message a corresponding event with the data of the message is fired.
+        /// </summary>
+        /// <param name="message"></param>
         private void HandleMessage(RepetierBaseMessage message)
         {
-            var repetierMessage = JsonSerializer.Deserialize<IRepetierMessage>(message.Data);
             var commandStr = CommandManager.CommandIdentifierFor(message.CallBackId);
 
             switch (commandStr)
             {
                 case CommandConstants.LOGIN:
-                    var loginMessage = (LoginMessage)repetierMessage;
+                    var loginMessage = JsonSerializer.Deserialize<LoginMessage>(message.Data);
+                    OnLoginMessageReceived?.Invoke(this, loginMessage);
+                    OnRepetierMessageReceived?.Invoke(this, loginMessage);
                     break;
                 case CommandConstants.LOGOUT:
+                    OnRepetierMessageReceived?.Invoke(this, null);
                     // No payload
                     break;
                 case CommandConstants.LIST_PRINTER:
                     {
-                        var ListprintersMessage = (ListPrinterMessage)repetierMessage;
-                        var printers = ListprintersMessage.Printers;
+                        var ListprintersMessage = JsonSerializer.Deserialize<ListPrinterMessage>(message.Data);
+                        OnRepetierMessageReceived?.Invoke(this, ListprintersMessage);
+                        OnPrinterListReceived?.Invoke(this, ListprintersMessage.Printers);
                     }
                     break;
                 case CommandConstants.STATE_LIST:
                     {
-                        var stateListMessage = (StateListMessage)repetierMessage;
-                        var printers = stateListMessage.PrinterStates;
-                        foreach (var entry in printers)
-                        {
-
-                        }
+                        var stateListMessage = JsonSerializer.Deserialize<StateListMessage>(message.Data);
+                        OnRepetierMessageReceived?.Invoke(this, stateListMessage);
+                        OnStateListReceived?.Invoke(this, stateListMessage.PrinterStates);
                     }
                     break;
                 case CommandConstants.RESPONSE:
                     {
-                        var responseMessage = (ResponseMessage)repetierMessage;
+                        var responseMessage = JsonSerializer.Deserialize<ResponseMessage>(message.Data);
+                        OnRepetierMessageReceived?.Invoke(this, responseMessage);
                     }
                     break;
                 case CommandConstants.MESSAGES:
                     {
-                        var messagesMessage = (List<Message>)repetierMessage;
-                        OnMessagesReceived(messagesMessage);
+                        var messagesMessage = JsonSerializer.Deserialize<List<Message>>(message.Data);
+                        OnMessagesReceived?.Invoke(this, messagesMessage);
                     }
                     break;
                 case CommandConstants.LIST_MODELS:
                     {
-
+                        var modelList = JsonSerializer.Deserialize<List<Model>>(message.Data);
+                        OnModelListReceived?.Invoke(this, modelList);
                     }
                     break;
                 case CommandConstants.LIST_JOBS:
                     {
-
+                        var jobList = JsonSerializer.Deserialize<List<Model>>(message.Data);
+                        OnJobListReceived?.Invoke(this, jobList);
                     }
                     break;
                 default:
@@ -338,6 +353,12 @@ namespace RepetierMqtt
 
         }
 
+        /// <summary>
+        /// Handles an incoming repetier event.
+        /// The event data is then forwarded by calling their corresponding event handlers.
+        /// </summary>
+        /// <param name="repetierBaseEvent"> Information of corresponding printer and event data</param>
+        /// <param name="timestamp"> Unix timestamp of the event</param>
         private void HandleEvent(RepetierBaseEvent repetierBaseEvent, long timestamp)
         {
             var printer = repetierBaseEvent.Printer;
