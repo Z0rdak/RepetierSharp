@@ -410,6 +410,7 @@ namespace RepetierMqtt
                     break;
                 case CommandConstants.USER_LIST:
                     {
+                        var userList = JsonSerializer.Deserialize<UserListMessage>(message.Data);
                         // payload: { "loginRequired": true, "users": [ { "id": 1, "login": "repetier", "permissions": 15 } ] }
                     }
                     break;
