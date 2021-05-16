@@ -1,4 +1,4 @@
-namespace RepetierMqtt.Messages
+namespace RepetierMqtt.Models.Messages
 {
     public interface IRepetierMessage { }
 }

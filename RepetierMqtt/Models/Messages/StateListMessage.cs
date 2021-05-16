@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace RepetierMqtt.Messages
+namespace RepetierMqtt.Models.Messages
 {
     public class StateListMessage : IRepetierMessage
     {

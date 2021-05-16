@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace RepetierMqtt.Models.Messages
+namespace RepetierMqtt.Models
 {
 
     public class Line

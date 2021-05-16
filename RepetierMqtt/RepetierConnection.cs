@@ -5,8 +5,8 @@ using System.IO;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
-using RepetierMqtt.Event;
-using RepetierMqtt.Messages;
+using RepetierMqtt.Models.Events;
+
 using RepetierMqtt.Models;
 using RepetierMqtt.Models.Commands;
 using RepetierMqtt.Models.Events;

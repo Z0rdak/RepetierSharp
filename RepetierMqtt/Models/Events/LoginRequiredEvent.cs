@@ -1,4 +1,4 @@
-﻿namespace RepetierMqtt.Event
+﻿namespace RepetierMqtt.Models.Events
 {
     public class LoginRequiredEvent : IRepetierEvent
     {

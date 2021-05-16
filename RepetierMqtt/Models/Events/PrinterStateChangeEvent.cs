@@ -1,6 +1,6 @@
 ﻿using RepetierMqtt.Models;
 
-namespace RepetierMqtt.Event
+namespace RepetierMqtt.Models.Events
 {
     public class PrinterStateChangeEvent : IRepetierEvent
     {

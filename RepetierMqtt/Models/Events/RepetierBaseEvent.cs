@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Serialization;
 
-namespace RepetierMqtt.Event
+namespace RepetierMqtt.Models.Events
 {
     public class RepetierBaseEvent
     {
