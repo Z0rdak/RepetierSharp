@@ -1,15 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Configuration;
-using System.IO;
-using System.Text;
 using System.Text.Json;
-using System.Threading;
 using RepetierMqtt.Models.Events;
-
 using RepetierMqtt.Models;
 using RepetierMqtt.Models.Commands;
-using RepetierMqtt.Models.Events;
 using RepetierMqtt.Models.Messages;
 using RepetierMqtt.Util;
 using RestSharp;
@@ -410,7 +405,7 @@ namespace RepetierMqtt
                 case CommandConstants.DELETE_USER:
                     {
                         var statusMessage = JsonSerializer.Deserialize<StatusMessage>(message.Data);
-                        OnUserCreateResponseReceived?.Invoke(this, statusMessage);
+                        OnUserDeleteResponseReceived?.Invoke(this, statusMessage);
                     }
                     break;
                 case CommandConstants.USER_LIST:
