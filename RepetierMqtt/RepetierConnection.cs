@@ -132,21 +132,17 @@ namespace RepetierMqtt
 
         #region Event handler for received messages
         public event EventHandler<IRepetierMessage> OnRepetierMessageReceived;
-
         public event EventHandler<List<Message>> OnMessagesReceived;
         public event EventHandler<LoginMessage> OnLoginMessageReceived;
-        public event EventHandler<List<Printer>> OnPrinterListReceived;       
+        public event EventHandler<List<Printer>> OnPrinterListReceived;
         public event EventHandler<Dictionary<string, PrinterState>> OnStateListReceived;
         public event EventHandler<List<Model>> OnModelListReceived;
         public event EventHandler<List<Model>> OnJobListReceived;
-
         #endregion
 
         // TODO: Move implement move, printqueueChanged, foldersChanged, eepromClear, eepromChanged, 
         // config, firewareChanged, settingsChanged, printerSettingChanged, modelGroupListChanged,
         // prepareJob, prepareJobFinished, remoteServersChanged and getExternalLinks events
-
-        // TODO: extract literals into class with constants
 
         /// <summary>
         /// Command -> PeriodicTask
@@ -238,12 +234,13 @@ namespace RepetierMqtt
                     throw new Exception($"Exception in UploadAndStartPrinting: {Response.ErrorException.Message}");
                 }
                 StartWebSocketMessageTimers();
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 Console.Error.WriteLine($"{ex}");
             }
-      
-      
+
+
         }
 
         /// <summary>
@@ -253,20 +250,26 @@ namespace RepetierMqtt
         {
             WebSocket.OnMessage += (sender, e) =>
             {
-                // TODO: add try catch in case msg is not deserializeable 
-                // TODO: test serialization
-                var message = JsonSerializer.Deserialize<RepetierBaseMessage>(e.Data, DeserialisationHelper.IngoreNullableFieldsOptions);
-                long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-                var containsEvents = message.HasEvents != null && message.HasEvents == true;
+                try
+                {
+                    var message = JsonSerializer.Deserialize<RepetierBaseMessage>(e.Data, DeserialisationHelper.IngoreNullableFieldsOptions);
+                    long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+                    var containsEvents = message.HasEvents != null && message.HasEvents == true;
 
-                if (message.CallBackId == -1 || containsEvents)
-                {
-                    var events = JsonSerializer.Deserialize<List<RepetierBaseEvent>>(message.Data, DeserialisationHelper.IngoreNullableFieldsOptions);
-                    events.ForEach(repetierEvent => HandleEvent(repetierEvent, timestamp));
+                    if (message.CallBackId == -1 || containsEvents)
+                    {
+                        var eventList = JsonSerializer.Deserialize<List<RepetierBaseEvent>>(message.Data, DeserialisationHelper.IngoreNullableFieldsOptions);
+                        eventList.ForEach(repetierEvent => HandleEvent(repetierEvent, timestamp));
+                    }
+                    else
+                    {
+                        HandleMessage(message);
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    HandleMessage(message);
+                    Console.Error.WriteLine("Error processing message from repetier server");
+                    Console.Error.WriteLine($"{ex.StackTrace}");
                 }
             };
 
