@@ -19,5 +19,20 @@ namespace RepetierMqtt.Models.Events
         public const string STATE = "state";
         public const string TEMP = "temp";
         public const string CHANGE_FILAMENT = "changeFilament";
+
+        public const string MOVE = "move";
+        public const string PRINT_QUEUE_CHANGED = "printqueueChanged";
+        public const string FOLDERS_CHANGED = "foldersChanged";
+        public const string EEPROM_CLEAR = "eepromClear";
+        public const string EEPROM_CHANGED = "eepromChanged";
+        public const string FIRMWARE_CHANGED = "firmwareChanged";
+        public const string CONFIG = "config";
+        public const string SETTINGS_CHANGED = "settingsChanged";
+        public const string PRINTER_SETTINGS_CHANGED = "printerSettingChanged";
+        public const string MODEL_GROUPLIST_CHANGED = "modelGroupListChanged";
+        public const string PREPARE_JOB = "prepareJob";
+        public const string PREPARE_JOB_FINIHSED = "prepareJobFinished";
+        public const string REMOVE_SERVERS_CHANGED = "remoteServersChanged";
+        public const string GET_EXTERNAL_LINKS = "getExternalLinks";
     }
 }
