@@ -15,7 +15,7 @@ namespace RepetierMqtt
     /// <summary>
     /// Represents a WebSocket connection to the Repetier Server.
     /// </summary>
-    public class RepetierConnection
+    public partial class RepetierConnection
     {
 
         #region event handler for repetier events
@@ -159,6 +159,8 @@ namespace RepetierMqtt
         public string ApiKey { get; set; }             // Authentification for Repetier-Server
         private bool ApiKeyProvided { get; set; }
         private string SessionKey { get; set; }
+        private string LoginName { get; set; }
+        private string Password { get; set; }
 
         public string ActivePrinter { get; private set; }
 
@@ -171,14 +173,26 @@ namespace RepetierMqtt
         /// <param name="ApiKey"></param>
         /// <param name="lang"> can be omitted </param>
         /// <param name="session"> can be omitted </param>
-        public RepetierConnection(string baseURL, string ApiKey = "", string lang = "US", string session = "")
+        public RepetierConnection(string baseURL, string ApiKey, string lang = "US")
         {
             this.BaseURL = baseURL;
             this.ApiKey = ApiKey;
             ApiKeyProvided = !string.IsNullOrEmpty(ApiKey.Trim());
             InitDefaultHandlers();
             RestClient = new RestClient($"http://{this.BaseURL}");
-            WebSocket = new WebSocket($"ws://{this.BaseURL}/socket/?lang={lang}&sess={session}&apikey={this.ApiKey}");
+            WebSocket = new WebSocket($"ws://{this.BaseURL}/socket/?lang={lang}&apikey={this.ApiKey}");
+        }
+
+        public RepetierConnection(string baseURL, string login, string password, string lang = "US")
+        {
+            this.BaseURL = baseURL;
+            this.ApiKey = ApiKey;
+            this.LoginName = login;
+            this.Password = password;
+            ApiKeyProvided = !string.IsNullOrEmpty(ApiKey.Trim());
+            InitDefaultHandlers();
+            RestClient = new RestClient($"http://{this.BaseURL}");
+            WebSocket = new WebSocket($"ws://{this.BaseURL}/socket/?lang={lang}");
         }
 
         /// <summary>
@@ -194,7 +208,6 @@ namespace RepetierMqtt
         /// </summary>
         public void Connect()
         {
-            // TODO: Login with Username/Password or ApiKey/Session
             InitWebSocket();
             WebSocket.Connect();
             PeriodicPing = new PeriodicTask(() => SendPing(), 1000);
@@ -260,6 +273,7 @@ namespace RepetierMqtt
 
                     if (message.CallBackId == -1 || containsEvents)
                     {
+                        SessionKey = message.SessionId;
                         var eventList = JsonSerializer.Deserialize<List<RepetierBaseEvent>>(message.Data, DeserialisationHelper.IngoreNullableFieldsOptions);
                         eventList.ForEach(repetierEvent => HandleEvent(repetierEvent, timestamp));
                     }
@@ -562,109 +576,6 @@ namespace RepetierMqtt
             return pollinginterval < 3000 ? 3000 : pollinginterval;
         }
 
-        // TODO: add extension class for this?
-        #region command convenience methods
 
-        /// <summary>
-        ///  Send a single "ping" message to the repetier server.
-        /// </summary>
-        private void SendPing()
-        {
-            SendCommand(PingCommand.Instance);
-        }
-
-        /// <summary>
-        /// Send a single "listPrinters" message to the repetier rerver.
-        /// The response to a "listPrinters" command contains the current print progress.
-        /// </summary>
-        public void SendListPrinters()
-        {
-            SendCommand(ListPrinterCommand.Instance);
-        }
-
-        /// <summary>
-        /// Send a single "stateList" message to the repetier server.
-        /// The response to a "stateList" command contains information regarding the printer state.
-        /// </summary>
-        public void SendStateList(bool includeHistory = false)
-        {
-            SendCommand(new StateListCommand(includeHistory));
-        }
-
-        /// <summary>
-        /// Send a single "stopJob" meassage to repetier server.
-        /// The printer will stop the current print and triggers a "jobKilled" event
-        /// </summary>
-        public void SendStopJob()
-        {
-            SendCommand(StopJobCommand.Instance);
-        }
-
-        public void Login(string user, string password)
-        {
-            SendCommand(new LoginCommand(user, password));
-        }
-
-        public void Logout()
-        {
-            SendCommand(LogoutCommand.Instance);
-        }
-
-        public void EnqueueJob(int modelId, bool autostart = true)
-        {
-            SendCommand(new CopyModelCommand(modelId, autostart));
-        }
-
-        public void GetModelInfo(int modelId)
-        {
-            SendCommand(new ModelInfoCommand(modelId));
-        }
-
-        public void GetJobInfo(int jobId)
-        {
-            SendCommand(new JobInfoCommand(jobId));
-        }
-
-        public void StartJob(int jobId)
-        {
-            SendCommand(new StartJobCommand(jobId));
-        }
-
-        public void ContinueJob()
-        {
-            SendCommand(ContinueJobCommand.Instance);
-        }
-
-        public void RemoveJob(int jobId)
-        {
-            SendCommand(new RemoveJobCommand(jobId));
-        }
-
-        public void ActivatePrinter(string printerSlug)
-        {
-            SendCommand(new ActivateCommand(printerSlug));
-        }
-
-        public void DeactivatePrinter(string printerSlug)
-        {
-            SendCommand(new DeactivateCommand(printerSlug));
-        }
-
-        public void CreateUser(string user, string password, int permission)
-        {
-            SendCommand(new CreateUserCommand(user, password, permission));
-        }
-
-        public void UpdateUser(string user, int permission, string password = "")
-        {
-            SendCommand(new UpdateUserCommand(user, permission, password));
-        }
-
-        public void DeleteUser(string user)
-        {
-            SendCommand(new DeleteUserCommand(user));
-        }
-
-        #endregion
     }
 }
