@@ -25,8 +25,8 @@ namespace RepetierMqtt.Models.Events
         public const string CONFIG = "config";
         public const string FIRMWARE_CHANGED = "firmwareChanged";
         public const string TEMP = "temp";
-        public const string SETTINGS_CHANGED = "settingsChanged";
-        public const string PRINTER_SETTINGS_CHANGED = "printerSettingChanged";
+        public const string SETTING_CHANGED = "settingChanged";
+        public const string PRINTER_SETTING_CHANGED = "printerSettingChanged";
         public const string MODEL_GROUPLIST_CHANGED = "modelGroupListChanged";
         public const string PREPARE_JOB = "prepareJob";
         public const string PREPARE_JOB_FINIHSED = "prepareJobFinished";
