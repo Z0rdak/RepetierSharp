@@ -125,6 +125,27 @@ namespace RepetierMqtt
         /// </summary>
         public event MessagesChangedReceivedHandler OnMessagesChanged;
         public delegate void MessagesChangedReceivedHandler(long timestamp);
+
+        public event PrintQueueChangedReceived OnPrintQueueChanged;
+        public delegate void PrintQueueChangedReceived(string printer);
+
+        public event FoldersChangedReceived OnFoldersChanged;
+        public delegate void FoldersChangedReceived();
+
+        public event EepromLoadStartedReceived OnEepromLoadStarted;
+        public delegate void EepromLoadStartedReceived();
+
+        public event EepromDataReceived OnEepromEntryReceived;
+        public delegate void EepromDataReceived(EepromDataEvent eepromData);
+
+        public event PrinterConfigReceived OnPrinterConfigReceived;
+        public delegate void PrinterConfigReceived(string printer, PrinterConfig printerConfig);
+
+        public event FirmwareDataReceived OnFirmwareDataReceived;
+        public delegate void FirmwareDataReceived(FirmwareInfo firmwareInfo);
+
+        public event MoveEventReceived OnMoveReceived;
+        public delegate void MoveEventReceived(string printer, MoveEvent moveEvent);
         #endregion
 
         #region Event handler for received messages
@@ -141,10 +162,6 @@ namespace RepetierMqtt
         public event EventHandler<StatusMessage> OnUserDeleteResponseReceived;
         public event EventHandler<UserListMessage> OnUserListReceived;
         #endregion
-
-        // TODO: Move implement move, printqueueChanged, foldersChanged, eepromClear, eepromChanged, 
-        // config, firewareChanged, settingsChanged, printerSettingChanged, modelGroupListChanged,
-        // prepareJob, prepareJobFinished, remoteServersChanged and getExternalLinks events
 
         /// <summary>
         /// Command -> PeriodicTask
@@ -485,10 +502,8 @@ namespace RepetierMqtt
                     SendCommand(MessagesCommand.Instance, printer);
                     break;
                 case EventConstants.MOVE:
-                    /* Payload: {"x":1,"y":1,"z":0,"e":67.233,"de":0.023}
-                     * When moves are enabled (sendMoves action) you will get a event for every move the printer does.
-                     * This can be used to provide a live preview of what the printer does.
-                     */
+                    var moveEvent = JsonSerializer.Deserialize<MoveEvent>(eventData);
+                    OnMoveReceived?.Invoke(printer, moveEvent);
                     break;
                 case EventConstants.LOG:
                     var logEvent = JsonSerializer.Deserialize<LogEvent>(eventData);
@@ -510,46 +525,29 @@ namespace RepetierMqtt
                     OnJobStartedReceived?.Invoke(printer, jobStartedEvent, timestamp);
                     break;
                 case EventConstants.PRINT_QUEUE_CHANGED:
-                    /* Payload: None
-                     * Gets triggered if a printer has a change in it's list of waiting prints.
-                     */
+                    OnPrintQueueChanged?.Invoke(printer);
                     break;
                 case EventConstants.FOLDERS_CHANGED:
-                    /* Payload: None
-                     * Gets triggered if the list of folders has changed.
-                     */
+                    OnFoldersChanged?.Invoke();
                     break;
                 case EventConstants.EEPROM_CLEAR:
-                    /* Payload: None
-                     * Gets triggered when eeprom load is started. 
-                     * Old values should be discarded and new values stored afterwards.
-                     */
+                    OnEepromLoadStarted?.Invoke();
                     break;
                 case EventConstants.EEPROM_DATA:
-                    /* Payload: One eeprom parameter description.
-                     * Gets triggered after eeprom load is started. 
-                     * Gets send for each eeprom entry the firmware sends to server.
-                     */
                     var eepromDataEvent = JsonSerializer.Deserialize<EepromDataEvent>(eventData);
-                    // TODO: event
+                    OnEepromEntryReceived?.Invoke(eepromDataEvent);
                     break;
                 case EventConstants.STATE:
                     var printerStateChangedEvent = JsonSerializer.Deserialize<PrinterStateChangeEvent>(eventData);
                     OnPrinterStateReceived?.Invoke(printer, printerStateChangedEvent.PrinterState, timestamp);
                     break;
                 case EventConstants.CONFIG:
-                    /* Payload: Config data for one printer.
-                     * Gets triggered when a configuration changes.
-                     */
                     var printerConfigEvent = JsonSerializer.Deserialize<PrinterConfig>(eventData);
-                    // TODO: event
+                    OnPrinterConfigReceived?.Invoke(printer, printerConfigEvent);
                     break;
                 case EventConstants.FIRMWARE_CHANGED:
-                    /* Payload: New firmware data.
-                     * Gets triggered when new firmware data were fetched from firmware.
-                     */
                     var firmwareData = JsonSerializer.Deserialize<FirmwareData>(eventData);
-                    // TODO: event
+                    OnFirmwareDataReceived?.Invoke(firmwareData.Firmware);
                     break;
                 case EventConstants.TEMP:
                     var tempChangeEvent = JsonSerializer.Deserialize<TempChangeEvent>(eventData);
