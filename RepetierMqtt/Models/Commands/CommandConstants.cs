@@ -86,7 +86,28 @@ namespace RepetierMqtt.Models.Commands
         public const string BABY_STEP = "babystep";
         public const string SEND_QUICK_COMMAND = "sendQuickCommand";
 
-        // undocumented commands
+        /* undocumented commands */
+
+        // {"action":"freeSpace","data":{},"printer":"EVOlizer","callback_id":26}
+        // Response: {"callback_id":491,"data":{"available":10418561024,"capacity":15566405632,"free":11104759808},"session":"5j!S4eyFE@!ITAo335L72x^1lUcGlLnJ"}
         public const string FREE_SPACE = "freeSpace";
+
+        // {"action":"webcamCloseStream","data":{"wcid":"2LExhGqWs8"},"printer":"EVOlizer","callback_id":793}
+        public const string WECAM_CLOSE_STREAM = "webcamCloseStream";
+
+        // {"action":"webCallsList","data":{},"printer":"","callback_id":11}
+
+        // {"action":"getDialogs","data":{"lang":"de"},"printer":"EVOlizer","callback_id":15}
+
+        // {"action":"getRecover","data":{},"printer":"EVOlizer","callback_id":17}
+
+        // {"action":"getExcludeRegions","data":{},"printer":"EVOlizer","callback_id":22}
+
+        // {"action":"addExcludeRegion","data":{"xmin":95.96153846153848,"ymin":35.384615384615365,"xmax":198.26923076923077,"ymax":157.69230769230768},"printer":"EVOlizer","callback_id":186}
+
+        // {"action":"delExcludeRegion","data":{"id":1,"xmax":198.2692260742188,"xmin":95.96154022216797,"ymax":157.6923065185547,"ymin":35.38461685180664},"printer":"EVOlizer","callback_id":294}
+
+        // {"action":"motorsOff","data":{},"printer":"EVOlizer","callback_id":219}
     }
+
 }
