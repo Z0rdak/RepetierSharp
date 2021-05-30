@@ -464,11 +464,11 @@ namespace RepetierMqtt
 
             switch (repetierBaseEvent.Event)
             {
-                case EventConstants.LOGOUT:
-                    OnLogoutReceived?.Invoke(timestamp);
-                    break;
                 case EventConstants.LOGIN_REQUIRED:
                     OnLoginRequiredReceived?.Invoke(timestamp);
+                    break;
+                case EventConstants.LOGOUT:
+                    OnLogoutReceived?.Invoke(timestamp);
                     break;
                 case EventConstants.USER_CREDENTIALS:
                     var userCredentialsEvent = JsonSerializer.Deserialize<UserCredentialsEvent>(eventData);
@@ -481,6 +481,12 @@ namespace RepetierMqtt
                 case EventConstants.MESSAGES_CHANGED:
                     OnMessagesChanged?.Invoke(timestamp);
                     SendCommand(MessagesCommand.Instance, printer);
+                    break;
+                case EventConstants.MOVE:
+                    /* Payload: {"x":1,"y":1,"z":0,"e":67.233,"de":0.023}
+                     * When moves are enabled (sendMoves action) you will get a event for every move the printer does.
+                     * This can be used to provide a live preview of what the printer does.
+                     */
                     break;
                 case EventConstants.LOG:
                     var logEvent = JsonSerializer.Deserialize<LogEvent>(eventData);
@@ -501,16 +507,89 @@ namespace RepetierMqtt
                     var jobStartedEvent = JsonSerializer.Deserialize<JobStartedEvent>(eventData);
                     OnJobStartedReceived?.Invoke(printer, jobStartedEvent, timestamp);
                     break;
+                case EventConstants.PRINT_QUEUE_CHANGED:
+                    /* Payload: None
+                     * Gets triggered if a printer has a change in it's list of waiting prints.
+                     */
+                    break;
+                case EventConstants.FOLDERS_CHANGED:
+                    /* Payload: None
+                     * Gets triggered if the list of folders has changed.
+                     */
+                    break;
+                case EventConstants.EEPROM_CLEAR:
+                    /* Payload: None
+                     * Gets triggered when eeprom load is started. 
+                     * Old values should be discarded and new values stored afterwards.
+                     */
+                    break;
+                case EventConstants.EEPROM_DATA:
+                    /* Payload: One eeprom parameter description.
+                     * Gets triggered after eeprom load is started. 
+                     * Gets send for each eeprom entry the firmware sends to server.
+                     */
+                    break;
                 case EventConstants.STATE:
                     var printerStateChangedEvent = JsonSerializer.Deserialize<PrinterStateChangeEvent>(eventData);
                     OnPrinterStateReceived?.Invoke(printer, printerStateChangedEvent.PrinterState, timestamp);
+                    break;
+                    break;
+                case EventConstants.CONFIG:
+                    /* Payload: Config data for one printer.
+                     * Gets triggered when a configuration changes.
+                     */
+                    break;
+                case EventConstants.FIRMWARE_CHANGED:
+                    /* Payload: New firmware data.
+                     * Gets triggered when new firmware data were fetched from firmware.
+                     */
                     break;
                 case EventConstants.TEMP:
                     var tempChangeEvent = JsonSerializer.Deserialize<TempChangeEvent>(eventData);
                     OnTempChangeReceived?.Invoke(printer, tempChangeEvent, timestamp);
                     break;
-                case EventConstants.CHANGE_FILAMENT:
+
+                case EventConstants.SETTINGS_CHANGED:
+                    /* Payload: List of new settings.
+                     * Gets triggered when a global setting variable got changed.
+                     */
+                    break;
+                case EventConstants.PRINTER_SETTINGS_CHANGED:
+                    /* Payload: {key:"key",value:"new value"}
+                     * Gets triggered everytime a printer setting gets changed.
+                     */
+                    break;
+                case EventConstants.MODEL_GROUPLIST_CHANGED:
+                    /* Payload: None
+                     * Gets triggered if a printer changes the list of groups for g-codes stored.
+                     * Clients should use this to update their lists.
+                     */
+                    break;
+                case EventConstants.PREPARE_JOB:
+                    /* Payload: None
+                     * Gets triggered if a model gets copied to job directory.
+                     * Since feedback is normally instant and large files can take some time this allows giving some feedback.
+                     */
+                    break;
+                case EventConstants.PREPARE_JOB_FINIHSED:
+                    /* Payload: None
+                     * Gets triggered at the end of copy model to job.
+                     * Used to hide messages from prepareJob.
+                     */
+                    break;
+                case EventConstants.CHANGE_FILAMENT_REQUESTED:
                     OnChangeFilamentReceived?.Invoke(printer, timestamp);
+                    break;
+                case EventConstants.REMOTE_SERVERS_CHANGED:
+                    /* Payload: None
+                     * Gets triggered when the content of remote lists has changed.
+                     */
+                    break;
+                case EventConstants.GET_EXTERNAL_LINKS:
+                    /* Payload: None
+                     * Returns a list of external links associated with the server.
+                     * Can be extended in the repetier-server.xml files.
+                     */
                     break;
                 default:
                     break;
