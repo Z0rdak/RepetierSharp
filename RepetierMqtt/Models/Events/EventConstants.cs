@@ -33,5 +33,7 @@ namespace RepetierMqtt.Models.Events
         public const string CHANGE_FILAMENT_REQUESTED = "changeFilamentRequested";
         public const string REMOTE_SERVERS_CHANGED = "remoteServersChanged";
         public const string GET_EXTERNAL_LINKS = "getExternalLinks";
+
+        // undocumented events
     }
 }

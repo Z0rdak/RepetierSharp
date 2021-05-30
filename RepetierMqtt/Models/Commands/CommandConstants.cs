@@ -85,5 +85,8 @@ namespace RepetierMqtt.Models.Commands
         public const string PREHEAT = "preheat";
         public const string BABY_STEP = "babystep";
         public const string SEND_QUICK_COMMAND = "sendQuickCommand";
+
+        // undocumented commands
+        public const string FREE_SPACE = "freeSpace";
     }
 }
