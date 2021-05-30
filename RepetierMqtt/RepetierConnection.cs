@@ -9,6 +9,8 @@ using RepetierMqtt.Models.Messages;
 using RepetierMqtt.Util;
 using RestSharp;
 using WebSocketSharp;
+using RepetierMqtt.Config;
+using RepetierMqtt.Models.Config;
 
 namespace RepetierMqtt
 {
@@ -528,36 +530,44 @@ namespace RepetierMqtt
                      * Gets triggered after eeprom load is started. 
                      * Gets send for each eeprom entry the firmware sends to server.
                      */
+                    var eepromDataEvent = JsonSerializer.Deserialize<EepromDataEvent>(eventData);
+                    // TODO: event
                     break;
                 case EventConstants.STATE:
                     var printerStateChangedEvent = JsonSerializer.Deserialize<PrinterStateChangeEvent>(eventData);
                     OnPrinterStateReceived?.Invoke(printer, printerStateChangedEvent.PrinterState, timestamp);
                     break;
-                    break;
                 case EventConstants.CONFIG:
                     /* Payload: Config data for one printer.
                      * Gets triggered when a configuration changes.
                      */
+                    var printerConfigEvent = JsonSerializer.Deserialize<PrinterConfig>(eventData);
+                    // TODO: event
                     break;
                 case EventConstants.FIRMWARE_CHANGED:
                     /* Payload: New firmware data.
                      * Gets triggered when new firmware data were fetched from firmware.
                      */
+                    var firmwareData = JsonSerializer.Deserialize<FirmwareData>(eventData);
+                    // TODO: event
                     break;
                 case EventConstants.TEMP:
                     var tempChangeEvent = JsonSerializer.Deserialize<TempChangeEvent>(eventData);
                     OnTempChangeReceived?.Invoke(printer, tempChangeEvent, timestamp);
                     break;
-
-                case EventConstants.SETTINGS_CHANGED:
+                case EventConstants.SETTING_CHANGED:
                     /* Payload: List of new settings.
                      * Gets triggered when a global setting variable got changed.
                      */
+                    // TODO: poco
+                    // TODO: event
                     break;
-                case EventConstants.PRINTER_SETTINGS_CHANGED:
+                case EventConstants.PRINTER_SETTING_CHANGED:
                     /* Payload: {key:"key",value:"new value"}
                      * Gets triggered everytime a printer setting gets changed.
                      */
+                    var printerSettings = JsonSerializer.Deserialize<KeyValuePair<string, string>>(eventData);
+                    // TODO: event
                     break;
                 case EventConstants.MODEL_GROUPLIST_CHANGED:
                     /* Payload: None
