@@ -108,6 +108,31 @@ namespace RepetierMqtt.Models.Commands
         // {"action":"delExcludeRegion","data":{"id":1,"xmax":198.2692260742188,"xmin":95.96154022216797,"ymax":157.6923065185547,"ymin":35.38461685180664},"printer":"EVOlizer","callback_id":294}
 
         // {"action":"motorsOff","data":{},"printer":"EVOlizer","callback_id":219}
+
+        // {"action":"getTimelapseVideos","data":{},"printer":"EVOlizer","callback_id":647}
+
+        // {"action":"projectsListServer","data":{},"printer":"EVOlizer","callback_id":929}
+        // Response: {"callback_id":931,"data":{"ok":true,"server":[{"name":"Erebus-42","uuid":"9503a55b-e012-4c0f-b597-caa85ece85ae"}]},"session":"5j!S4eyFE@!ITAo335L72x^1lUcGlLnJ"}
+
+        // {"action":"projectsGetFolder","data":{"serveruuid":"9503a55b-e012-4c0f-b597-caa85ece85ae","idx":"1"},"printer":"EVOlizer","callback_id":932}
+        // Response: {"callback_id":932,"data":{"folder":{"empty":true,"folders":[],"idx":1,"name":"root","parents":[],"projects":[],"version":1},"ok":true},"session":"5j!S4eyFE@!ITAo335L72x^1lUcGlLnJ"}
+
+        // {"action":"projectsCreateProject","data":{"serveruuid":"9503a55b-e012-4c0f-b597-caa85ece85ae","idx":1,"projectname":"test"},"printer":"EVOlizer","callback_id":1031}
+        // Response: {"callback_id":1031,"data":{"folder":{"empty":false,"folders":[],"idx":1,"name":"root","parents":[],"projects":[{"folder":1,"name":"test","preview":"","uuid":"efbaafb2-9a4e-4d59-81c6-e79ec15438aa","version":2}],
+
+        // {"action":"projectsCreateFolder","data":{"serveruuid":"9503a55b-e012-4c0f-b597-caa85ece85ae","idx":1,"foldername":"testDir"},"printer":"EVOlizer","callback_id":1123}
+        // Response: {"callback_id":1123,"data":{"folder":{"empty":false,"folders":[{"empty":true,"idx":2,"name":"testDir"}],"idx":1,"name":"root","parents":[],"projects":[{"folder":1,"name":"test","preview":"","uuid":"efbaafb2-9a4e-4d59-81c6-e79ec15438aa","version":2}],"version":3},"ok":true},"session":"5j!S4eyFE@!ITAo335L72x^1lUcGlLnJ"}
+
+        // {"action":"projectCopy","data":{"projectuuid":"efbaafb2-9a4e-4d59-81c6-e79ec15438aa","target_folder":1,"target_server":"9503a55b-e012-4c0f-b597-caa85ece85ae","serveruuid":"9503a55b-e012-4c0f-b597-caa85ece85ae","move":true},"printer":"EVOlizer","callback_id":1236}
+
+        // {"action":"projectsDeleteProject","data":{"serveruuid":"9503a55b-e012-4c0f-b597-caa85ece85ae","idx":1,"uuid":"efbaafb2-9a4e-4d59-81c6-e79ec15438aa"},"printer":"EVOlizer","callback_id":1324}
+
+        // {"action":"projectsDeleteFolder","data":{"serveruuid":"9503a55b-e012-4c0f-b597-caa85ece85ae","idx":1,"folderidx":2},"printer":"EVOlizer","callback_id":1378}
+
+        // {"action":"networkInterfaces","data":{},"printer":"EVOlizer","callback_id":1411}
+
+        // {"action":"getLicenceData","data":{},"printer":"","callback_id":1461}
+
     }
 
 }
