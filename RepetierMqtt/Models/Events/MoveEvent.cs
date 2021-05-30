@@ -32,5 +32,6 @@ namespace RepetierMqtt.Models.Events
         [JsonPropertyName("relative")]
         public bool RelativeMove { get; }
 
+        public MoveEvent() { }
     }
 }
