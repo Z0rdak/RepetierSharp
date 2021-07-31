@@ -134,6 +134,22 @@ namespace RepetierMqtt
         public delegate void RemoteServersChangedReceivedHandler(long timestamp);
 
         /// <summary>
+        /// Event: settingChanged
+        /// Gets triggered when a global setting variable got changed.
+        /// </summary>
+        public event SettingChangedReceivedHandler OnSettingChangedReceived;
+        public delegate void SettingChangedReceivedHandler(KeyValuePair<string, string> setting, long timestamp);
+
+        /// <summary>
+        /// Event: printerSettingChanged
+        /// Gets triggered everytime a printer setting gets changed.
+        /// </summary>
+        public event PrinterSettingChangedReceivedHandler OnPrinterSettingChangedReceived;
+        public delegate void PrinterSettingChangedReceivedHandler(KeyValuePair<string, string> printerSetting, string printer, long timestamp);
+
+        
+
+        /// <summary>
         /// Event: userCredentials
         /// When you reconnect a still existing session no login is required. As a first event you get the credentials of
         /// </summary>
@@ -592,18 +608,13 @@ namespace RepetierMqtt
                     OnTempChangeReceived?.Invoke(printer, tempChangeEvent, timestamp);
                     break;
                 case EventConstants.SETTING_CHANGED:
-                    /* Payload: List of new settings.
-                     * Gets triggered when a global setting variable got changed.
-                     */
-                    // TODO: poco
-                    // TODO: event
+                    // TODO: verify payload
+                    var setting = JsonSerializer.Deserialize<KeyValuePair<string, string>>(eventData);
+                    OnSettingChangedReceived?.Invoke(setting, timestamp);
                     break;
                 case EventConstants.PRINTER_SETTING_CHANGED:
-                    /* Payload: {key:"key",value:"new value"}
-                     * Gets triggered everytime a printer setting gets changed.
-                     */
                     var printerSettings = JsonSerializer.Deserialize<KeyValuePair<string, string>>(eventData);
-                    // TODO: event
+                    OnPrinterSettingChangedReceived?.Invoke(printerSettings, printer, timestamp);
                     break;
                 case EventConstants.MODEL_GROUPLIST_CHANGED:
                     OnModelGroupListChangedReceived?.Invoke(printer, timestamp);
