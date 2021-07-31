@@ -175,13 +175,12 @@ namespace RepetierMqtt
         private RestClient RestClient { get; set; }
 
         public string BaseURL { get; }                 // server baseUrl (IP-Address + port, e.g.: "127.0.0.1:3344")
-        public string ApiKey { get; set; }             // Authentification for Repetier-Server
-        private bool ApiKeyProvided { get; set; }
+        private string ApiKey { get; set; }             // Authentification for Repetier-Server
+        protected bool ApiKeyProvided { get; set; }
         private string SessionKey { get; set; }
         private string LoginName { get; set; }
         private string Password { get; set; }
-
-        public string ActivePrinter { get; private set; }
+        protected string ActivePrinter { get; private set; }
 
 
         /// <summary>
@@ -229,7 +228,7 @@ namespace RepetierMqtt
         {
             InitWebSocket();
             WebSocket.Connect();
-            PeriodicPing = new PeriodicTask(() => SendPing(), 1000);
+            PeriodicPing = new PeriodicTask(() => this.SendPing(), 1000);
         }
 
         /// <summary>
@@ -625,19 +624,12 @@ namespace RepetierMqtt
         }
 
         /// <summary>
-        /// TODO: print time is not available without prusa slicer - remove it?
         /// Initialize and start timers for cyclic WebSocket calls to repetier server.
         /// </summary>
-        private void StartWebSocketMessageTimers(int estimatedPrintTime = 5000)
+        private void StartWebSocketMessageTimers()
         {
-            var estimationExists = estimatedPrintTime != -1;
-            var defaultPollRate = 10000;
-            var pingDelay = int.Parse(ConfigurationManager.AppSettings["ping-delay"]);
-            var progressRate = estimationExists ? CalculatePollingInterval(estimatedPrintTime, 0.005) : defaultPollRate;
-            var stateRate = estimationExists ? CalculatePollingInterval(estimatedPrintTime, 0.01) : defaultPollRate;
-
-            PeriodicTaskMap.Add(CommandConstants.LIST_PRINTER, new PeriodicTask(() => SendListPrinters()));
-            PeriodicTaskMap.Add(CommandConstants.STATE_LIST, new PeriodicTask(() => SendStateList()));
+            PeriodicTaskMap.Add(CommandConstants.LIST_PRINTER, new PeriodicTask(() => this.SendListPrinters()));
+            PeriodicTaskMap.Add(CommandConstants.STATE_LIST, new PeriodicTask(() => this.SendStateList()));
         }
 
         /// <summary>
@@ -646,21 +638,38 @@ namespace RepetierMqtt
         /// </summary>
         public RepetierServerInformation GetRepetierServerInfo()
         {
-            var response = RestClient.Execute(ApiConstants.PRINTER_INFO_REQUEST);
+            var response = this.RestClient.Execute(ApiConstants.PRINTER_INFO_REQUEST);
             return JsonSerializer.Deserialize<RepetierServerInformation>(response.Content);
         }
 
         /// <summary>
-        /// TODO: is this still needed?
-        /// Calculates polling intervals for the WebSocket calls based on the estimated print time and a given factor.
+        /// Attempt login with the previously set credentials
         /// </summary>
-        /// <param name="estimatedPrintingTime"></param>
-        /// <param name="factor"></param>
-        /// <returns></returns>
-        private int CalculatePollingInterval(int estimatedPrintingTime, double factor)
+        public void Login()
         {
-            int pollinginterval = (int)(estimatedPrintingTime * 1000 * factor);
-            return pollinginterval < 3000 ? 3000 : pollinginterval;
+            if (!String.IsNullOrEmpty(LoginName) && !String.IsNullOrEmpty(Password))
+            {
+                Password = this.HashPassword(SessionKey, LoginName, Password);
+                this.SendCommand(new LoginCommand(LoginName, Password));
+            }
+        }
+
+        /// <summary>
+        /// Attempt login with the given user and password
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="password"></param>
+        public void Login(string user, string password)
+        {
+            if (!String.IsNullOrEmpty(SessionKey))
+            {
+                var pw = this.HashPassword(SessionKey, user, password);
+                this.SendCommand(new LoginCommand(user, pw));
+            }
+        }
+        private string HashPassword(string sessionKey, string login, string password)
+        {
+            return CommandManager.MD5(sessionKey + CommandManager.MD5(login + password));
         }
 
 
