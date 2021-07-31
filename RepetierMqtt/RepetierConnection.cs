@@ -88,11 +88,50 @@ namespace RepetierMqtt
         public delegate void ChangeFilamentReceivedHandler(string printer, long timestamp);
 
         /// <summary>
-        /// Event: printerListChanged
-        /// Gets triggered when a printer was added, deleted or modified.
+        /// Event: prepareJobFinished
+        /// Gets triggered if a model gets copied to job directory.
+        /// Since feedback is normally instant and large files can take some time this allows giving some feedback.
+        /// </summary>
+        public event OnPrepareJobReceivedHandler OnPrepareJobReceived;
+        public delegate void OnPrepareJobReceivedHandler(string printer, long timestamp);
+
+        /// <summary>
+        /// Event: prepareJobFinished
+        /// Gets triggered at the end of copy model to job.
+        /// Used to hide messages from prepareJob.
+        /// </summary>
+        public event OnPrepareJobFinishedReceivedHandler OnPrepareJobFinishedReceived;
+        public delegate void OnPrepareJobFinishedReceivedHandler(string printer, long timestamp);
+
+        /// <summary>
+        /// Event: OnModelGroupListChangedReceived
+        /// Gets triggered if a printer changes the list of groups for g-codes stored.
+        /// Clients should use this to update their lists.
         /// </summary>
         public event PrinterListChangedReceivedHandler OnPrinterListChanged;
         public delegate void PrinterListChangedReceivedHandler(List<Printer> printerList, long timestamp);
+
+        /// <summary>
+        /// Event: printerListChanged
+        /// Gets triggered when a printer was added, deleted or modified.
+        /// </summary>
+        public event ModelGroupListChangedReceivedHandler OnModelGroupListChangedReceived;
+        public delegate void ModelGroupListChangedReceivedHandler(string printer, long timestamp);
+
+        /// <summary>
+        /// Event: getExternalLinks
+        /// Returns a list of external links associated with the server.
+        /// Can be extended in the repetier-server.xml files.
+        /// </summary>
+        public event ExternalLinksReceivedHandler OnExternalLinksReceived;
+        public delegate void ExternalLinksReceivedHandler(long timestamp);
+
+        /// <summary>
+        /// Event: remoteServersChanged
+        /// Gets triggered when the content of remote lists has changed.
+        /// </summary>
+        public event RemoteServersChangedReceivedHandler OnRemoteServersChangedReceived;
+        public delegate void RemoteServersChangedReceivedHandler(long timestamp);
 
         /// <summary>
         /// Event: userCredentials
@@ -567,36 +606,22 @@ namespace RepetierMqtt
                     // TODO: event
                     break;
                 case EventConstants.MODEL_GROUPLIST_CHANGED:
-                    /* Payload: None
-                     * Gets triggered if a printer changes the list of groups for g-codes stored.
-                     * Clients should use this to update their lists.
-                     */
+                    OnModelGroupListChangedReceived?.Invoke(printer, timestamp);
                     break;
                 case EventConstants.PREPARE_JOB:
-                    /* Payload: None
-                     * Gets triggered if a model gets copied to job directory.
-                     * Since feedback is normally instant and large files can take some time this allows giving some feedback.
-                     */
+                    OnPrepareJobReceived?.Invoke(printer, timestamp);
                     break;
                 case EventConstants.PREPARE_JOB_FINIHSED:
-                    /* Payload: None
-                     * Gets triggered at the end of copy model to job.
-                     * Used to hide messages from prepareJob.
-                     */
+                    OnPrepareJobFinishedReceived?.Invoke(printer, timestamp);
                     break;
                 case EventConstants.CHANGE_FILAMENT_REQUESTED:
                     OnChangeFilamentReceived?.Invoke(printer, timestamp);
                     break;
                 case EventConstants.REMOTE_SERVERS_CHANGED:
-                    /* Payload: None
-                     * Gets triggered when the content of remote lists has changed.
-                     */
+                    OnRemoteServersChangedReceived?.Invoke(timestamp);
                     break;
                 case EventConstants.GET_EXTERNAL_LINKS:
-                    /* Payload: None
-                     * Returns a list of external links associated with the server.
-                     * Can be extended in the repetier-server.xml files.
-                     */
+                    OnExternalLinksReceived?.Invoke(timestamp);
                     break;
                 default:
                     break;
