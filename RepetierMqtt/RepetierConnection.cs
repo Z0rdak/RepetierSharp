@@ -9,6 +9,8 @@ using RepetierMqtt.Models.Messages;
 using RepetierMqtt.Util;
 using RestSharp;
 using WebSocketSharp;
+using RepetierMqtt.Config;
+using RepetierMqtt.Models.Config;
 
 namespace RepetierMqtt
 {
@@ -86,11 +88,66 @@ namespace RepetierMqtt
         public delegate void ChangeFilamentReceivedHandler(string printer, long timestamp);
 
         /// <summary>
-        /// Event: printerListChanged
-        /// Gets triggered when a printer was added, deleted or modified.
+        /// Event: prepareJobFinished
+        /// Gets triggered if a model gets copied to job directory.
+        /// Since feedback is normally instant and large files can take some time this allows giving some feedback.
+        /// </summary>
+        public event OnPrepareJobReceivedHandler OnPrepareJobReceived;
+        public delegate void OnPrepareJobReceivedHandler(string printer, long timestamp);
+
+        /// <summary>
+        /// Event: prepareJobFinished
+        /// Gets triggered at the end of copy model to job.
+        /// Used to hide messages from prepareJob.
+        /// </summary>
+        public event OnPrepareJobFinishedReceivedHandler OnPrepareJobFinishedReceived;
+        public delegate void OnPrepareJobFinishedReceivedHandler(string printer, long timestamp);
+
+        /// <summary>
+        /// Event: OnModelGroupListChangedReceived
+        /// Gets triggered if a printer changes the list of groups for g-codes stored.
+        /// Clients should use this to update their lists.
         /// </summary>
         public event PrinterListChangedReceivedHandler OnPrinterListChanged;
         public delegate void PrinterListChangedReceivedHandler(List<Printer> printerList, long timestamp);
+
+        /// <summary>
+        /// Event: printerListChanged
+        /// Gets triggered when a printer was added, deleted or modified.
+        /// </summary>
+        public event ModelGroupListChangedReceivedHandler OnModelGroupListChangedReceived;
+        public delegate void ModelGroupListChangedReceivedHandler(string printer, long timestamp);
+
+        /// <summary>
+        /// Event: getExternalLinks
+        /// Returns a list of external links associated with the server.
+        /// Can be extended in the repetier-server.xml files.
+        /// </summary>
+        public event ExternalLinksReceivedHandler OnExternalLinksReceived;
+        public delegate void ExternalLinksReceivedHandler(long timestamp);
+
+        /// <summary>
+        /// Event: remoteServersChanged
+        /// Gets triggered when the content of remote lists has changed.
+        /// </summary>
+        public event RemoteServersChangedReceivedHandler OnRemoteServersChangedReceived;
+        public delegate void RemoteServersChangedReceivedHandler(long timestamp);
+
+        /// <summary>
+        /// Event: settingChanged
+        /// Gets triggered when a global setting variable got changed.
+        /// </summary>
+        public event SettingChangedReceivedHandler OnSettingChangedReceived;
+        public delegate void SettingChangedReceivedHandler(KeyValuePair<string, string> setting, long timestamp);
+
+        /// <summary>
+        /// Event: printerSettingChanged
+        /// Gets triggered everytime a printer setting gets changed.
+        /// </summary>
+        public event PrinterSettingChangedReceivedHandler OnPrinterSettingChangedReceived;
+        public delegate void PrinterSettingChangedReceivedHandler(KeyValuePair<string, string> printerSetting, string printer, long timestamp);
+
+        
 
         /// <summary>
         /// Event: userCredentials
@@ -123,6 +180,27 @@ namespace RepetierMqtt
         /// </summary>
         public event MessagesChangedReceivedHandler OnMessagesChanged;
         public delegate void MessagesChangedReceivedHandler(long timestamp);
+
+        public event PrintQueueChangedReceived OnPrintQueueChanged;
+        public delegate void PrintQueueChangedReceived(string printer);
+
+        public event FoldersChangedReceived OnFoldersChanged;
+        public delegate void FoldersChangedReceived();
+
+        public event EepromLoadStartedReceived OnEepromLoadStarted;
+        public delegate void EepromLoadStartedReceived();
+
+        public event EepromDataReceived OnEepromEntryReceived;
+        public delegate void EepromDataReceived(EepromDataEvent eepromData);
+
+        public event PrinterConfigReceived OnPrinterConfigReceived;
+        public delegate void PrinterConfigReceived(string printer, PrinterConfig printerConfig);
+
+        public event FirmwareDataReceived OnFirmwareDataReceived;
+        public delegate void FirmwareDataReceived(FirmwareInfo firmwareInfo);
+
+        public event MoveEventReceived OnMoveReceived;
+        public delegate void MoveEventReceived(string printer, MoveEvent moveEvent);
         #endregion
 
         #region Event handler for received messages
@@ -140,10 +218,6 @@ namespace RepetierMqtt
         public event EventHandler<UserListMessage> OnUserListReceived;
         #endregion
 
-        // TODO: Move implement move, printqueueChanged, foldersChanged, eepromClear, eepromChanged, 
-        // config, firewareChanged, settingsChanged, printerSettingChanged, modelGroupListChanged,
-        // prepareJob, prepareJobFinished, remoteServersChanged and getExternalLinks events
-
         /// <summary>
         /// Command -> PeriodicTask
         /// e.g. "stateList" -> () -> {}
@@ -156,13 +230,12 @@ namespace RepetierMqtt
         private RestClient RestClient { get; set; }
 
         public string BaseURL { get; }                 // server baseUrl (IP-Address + port, e.g.: "127.0.0.1:3344")
-        public string ApiKey { get; set; }             // Authentification for Repetier-Server
-        private bool ApiKeyProvided { get; set; }
+        private string ApiKey { get; set; }             // Authentification for Repetier-Server
+        protected bool ApiKeyProvided { get; set; }
         private string SessionKey { get; set; }
         private string LoginName { get; set; }
         private string Password { get; set; }
-
-        public string ActivePrinter { get; private set; }
+        protected string ActivePrinter { get; private set; }
 
 
         /// <summary>
@@ -210,7 +283,7 @@ namespace RepetierMqtt
         {
             InitWebSocket();
             WebSocket.Connect();
-            PeriodicPing = new PeriodicTask(() => SendPing(), 1000);
+            PeriodicPing = new PeriodicTask(() => this.SendPing(), 1000);
         }
 
         /// <summary>
@@ -464,11 +537,11 @@ namespace RepetierMqtt
 
             switch (repetierBaseEvent.Event)
             {
-                case EventConstants.LOGOUT:
-                    OnLogoutReceived?.Invoke(timestamp);
-                    break;
                 case EventConstants.LOGIN_REQUIRED:
                     OnLoginRequiredReceived?.Invoke(timestamp);
+                    break;
+                case EventConstants.LOGOUT:
+                    OnLogoutReceived?.Invoke(timestamp);
                     break;
                 case EventConstants.USER_CREDENTIALS:
                     var userCredentialsEvent = JsonSerializer.Deserialize<UserCredentialsEvent>(eventData);
@@ -481,6 +554,10 @@ namespace RepetierMqtt
                 case EventConstants.MESSAGES_CHANGED:
                     OnMessagesChanged?.Invoke(timestamp);
                     SendCommand(MessagesCommand.Instance, printer);
+                    break;
+                case EventConstants.MOVE:
+                    var moveEvent = JsonSerializer.Deserialize<MoveEvent>(eventData);
+                    OnMoveReceived?.Invoke(printer, moveEvent);
                     break;
                 case EventConstants.LOG:
                     var logEvent = JsonSerializer.Deserialize<LogEvent>(eventData);
@@ -501,16 +578,61 @@ namespace RepetierMqtt
                     var jobStartedEvent = JsonSerializer.Deserialize<JobStartedEvent>(eventData);
                     OnJobStartedReceived?.Invoke(printer, jobStartedEvent, timestamp);
                     break;
+                case EventConstants.PRINT_QUEUE_CHANGED:
+                    OnPrintQueueChanged?.Invoke(printer);
+                    break;
+                case EventConstants.FOLDERS_CHANGED:
+                    OnFoldersChanged?.Invoke();
+                    break;
+                case EventConstants.EEPROM_CLEAR:
+                    OnEepromLoadStarted?.Invoke();
+                    break;
+                case EventConstants.EEPROM_DATA:
+                    var eepromDataEvent = JsonSerializer.Deserialize<EepromDataEvent>(eventData);
+                    OnEepromEntryReceived?.Invoke(eepromDataEvent);
+                    break;
                 case EventConstants.STATE:
                     var printerStateChangedEvent = JsonSerializer.Deserialize<PrinterStateChangeEvent>(eventData);
                     OnPrinterStateReceived?.Invoke(printer, printerStateChangedEvent.PrinterState, timestamp);
+                    break;
+                case EventConstants.CONFIG:
+                    var printerConfigEvent = JsonSerializer.Deserialize<PrinterConfig>(eventData);
+                    OnPrinterConfigReceived?.Invoke(printer, printerConfigEvent);
+                    break;
+                case EventConstants.FIRMWARE_CHANGED:
+                    var firmwareData = JsonSerializer.Deserialize<FirmwareData>(eventData);
+                    OnFirmwareDataReceived?.Invoke(firmwareData.Firmware);
                     break;
                 case EventConstants.TEMP:
                     var tempChangeEvent = JsonSerializer.Deserialize<TempChangeEvent>(eventData);
                     OnTempChangeReceived?.Invoke(printer, tempChangeEvent, timestamp);
                     break;
-                case EventConstants.CHANGE_FILAMENT:
+                case EventConstants.SETTING_CHANGED:
+                    // TODO: verify payload
+                    var setting = JsonSerializer.Deserialize<KeyValuePair<string, string>>(eventData);
+                    OnSettingChangedReceived?.Invoke(setting, timestamp);
+                    break;
+                case EventConstants.PRINTER_SETTING_CHANGED:
+                    var printerSettings = JsonSerializer.Deserialize<KeyValuePair<string, string>>(eventData);
+                    OnPrinterSettingChangedReceived?.Invoke(printerSettings, printer, timestamp);
+                    break;
+                case EventConstants.MODEL_GROUPLIST_CHANGED:
+                    OnModelGroupListChangedReceived?.Invoke(printer, timestamp);
+                    break;
+                case EventConstants.PREPARE_JOB:
+                    OnPrepareJobReceived?.Invoke(printer, timestamp);
+                    break;
+                case EventConstants.PREPARE_JOB_FINIHSED:
+                    OnPrepareJobFinishedReceived?.Invoke(printer, timestamp);
+                    break;
+                case EventConstants.CHANGE_FILAMENT_REQUESTED:
                     OnChangeFilamentReceived?.Invoke(printer, timestamp);
+                    break;
+                case EventConstants.REMOTE_SERVERS_CHANGED:
+                    OnRemoteServersChangedReceived?.Invoke(timestamp);
+                    break;
+                case EventConstants.GET_EXTERNAL_LINKS:
+                    OnExternalLinksReceived?.Invoke(timestamp);
                     break;
                 default:
                     break;
@@ -538,19 +660,12 @@ namespace RepetierMqtt
         }
 
         /// <summary>
-        /// TODO: print time is not available without prusa slicer - remove it?
         /// Initialize and start timers for cyclic WebSocket calls to repetier server.
         /// </summary>
-        private void StartWebSocketMessageTimers(int estimatedPrintTime = 5000)
+        private void StartWebSocketMessageTimers()
         {
-            var estimationExists = estimatedPrintTime != -1;
-            var defaultPollRate = 10000;
-            var pingDelay = int.Parse(ConfigurationManager.AppSettings["ping-delay"]);
-            var progressRate = estimationExists ? CalculatePollingInterval(estimatedPrintTime, 0.005) : defaultPollRate;
-            var stateRate = estimationExists ? CalculatePollingInterval(estimatedPrintTime, 0.01) : defaultPollRate;
-
-            PeriodicTaskMap.Add(CommandConstants.LIST_PRINTER, new PeriodicTask(() => SendListPrinters()));
-            PeriodicTaskMap.Add(CommandConstants.STATE_LIST, new PeriodicTask(() => SendStateList()));
+            PeriodicTaskMap.Add(CommandConstants.LIST_PRINTER, new PeriodicTask(() => this.SendListPrinters()));
+            PeriodicTaskMap.Add(CommandConstants.STATE_LIST, new PeriodicTask(() => this.SendStateList()));
         }
 
         /// <summary>
@@ -559,21 +674,38 @@ namespace RepetierMqtt
         /// </summary>
         public RepetierServerInformation GetRepetierServerInfo()
         {
-            var response = RestClient.Execute(ApiConstants.PRINTER_INFO_REQUEST);
+            var response = this.RestClient.Execute(ApiConstants.PRINTER_INFO_REQUEST);
             return JsonSerializer.Deserialize<RepetierServerInformation>(response.Content);
         }
 
         /// <summary>
-        /// TODO: is this still needed?
-        /// Calculates polling intervals for the WebSocket calls based on the estimated print time and a given factor.
+        /// Attempt login with the previously set credentials
         /// </summary>
-        /// <param name="estimatedPrintingTime"></param>
-        /// <param name="factor"></param>
-        /// <returns></returns>
-        private int CalculatePollingInterval(int estimatedPrintingTime, double factor)
+        public void Login()
         {
-            int pollinginterval = (int)(estimatedPrintingTime * 1000 * factor);
-            return pollinginterval < 3000 ? 3000 : pollinginterval;
+            if (!String.IsNullOrEmpty(LoginName) && !String.IsNullOrEmpty(Password))
+            {
+                Password = this.HashPassword(SessionKey, LoginName, Password);
+                this.SendCommand(new LoginCommand(LoginName, Password));
+            }
+        }
+
+        /// <summary>
+        /// Attempt login with the given user and password
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="password"></param>
+        public void Login(string user, string password)
+        {
+            if (!String.IsNullOrEmpty(SessionKey))
+            {
+                var pw = this.HashPassword(SessionKey, user, password);
+                this.SendCommand(new LoginCommand(user, pw));
+            }
+        }
+        private string HashPassword(string sessionKey, string login, string password)
+        {
+            return CommandManager.MD5(sessionKey + CommandManager.MD5(login + password));
         }
 
 
