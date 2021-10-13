@@ -8,19 +8,20 @@ namespace RepetierMqtt.Util
 {
     public class CommandManager
     {
-        public static int CallbackId { get => Next(); set { CallbackId = value; } }
+        public static int CallbackId { get => Next(); set { _callBackId = value; } }
+        private static int _callBackId;
 
         // CallbackId -> Command
         private static Dictionary<int, string> CallbackMap = new Dictionary<int, string>();
 
         public static int Next()
         {
-            if (CallbackId == int.MaxValue)
+            if (_callBackId == int.MaxValue)
             {
-                CallbackId = 0;
-                return CallbackId;
+                _callBackId = 1;
+                return _callBackId;
             }
-            return CallbackId += 1;
+            return _callBackId += 1;
         }
 
         public static RepetierBaseCommand CommandWithId(ICommandData command, string printer = "")
