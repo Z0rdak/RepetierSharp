@@ -1,79 +1,203 @@
 ﻿using MQTTnet;
 using MQTTnet.Client;
+using MQTTnet.Client.Connecting;
 using MQTTnet.Client.Options;
-using RepetierMqtt.Util;
+using MQTTnet.Protocol;
+using RepetierSharp.RepetierMqtt.Util;
 using System;
-using System.Configuration;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace RepetierMqtt
+namespace RepetierSharp.RepetierMqtt
 {
     public class RepetierMqttClient
     {
-        public RepetierConnection RepetierServer { get; private set; }
 
-        public IMqttClient MqttClient { get; private set; }
+        public class RepetierMqttClientBuilder
+        {
+
+            private RepetierMqttClient _repetierMqttClient = new RepetierMqttClient();
+
+            public RepetierMqttClientBuilder()
+            {
+
+            }
+
+            public RepetierMqttClientBuilder WithRepetierConnection(RepetierConnection repetierConnection)
+            {
+                _repetierMqttClient.RepetierConnection = repetierConnection;
+                return this;
+            }
+
+            public RepetierMqttClientBuilder WithMqttClientOptions(IMqttClientOptions options)
+            {
+                _repetierMqttClient.MqttClientOptions = options;
+                return this;
+            }
+
+            public RepetierMqttClientBuilder WithBaseTopic(string baseTopic)
+            {
+                _repetierMqttClient.BaseTopic = baseTopic;
+                // TODO: remove trailing /
+                return this;
+            }
+
+            public RepetierMqttClientBuilder TopicConfiguration(Tuple<string, string> commandTopicTuple)
+            {
+                _repetierMqttClient.TopicsForEvents.Add(commandTopicTuple.Item1, commandTopicTuple.Item2);
+                return this;
+            }
+
+            public RepetierMqttClientBuilder TopicConfiguration(string command, string topic)
+            {
+                _repetierMqttClient.TopicsForEvents.Add(command, topic);
+                return this;
+            }
+
+            public RepetierMqttClientBuilder WithSubscriptions(List<string> topics)
+            {
+                _repetierMqttClient.Topics.AddRange(topics);
+                return this;
+            }
+
+            public RepetierMqttClientBuilder WithSubscriptions(List<MqttTopicFilter> topics)
+            {
+                _repetierMqttClient.Subscriptions.AddRange(topics);
+                return this;
+            }
+
+            public RepetierMqttClientBuilder WithSubscription(string topic, Action action)
+            {
+                _repetierMqttClient.TopicActions.Add(topic, action);
+                return this;
+            }
+
+            public RepetierMqttClientBuilder WithReconnectDelay(uint delayInMs = 3000)
+            {
+                _repetierMqttClient.ReconnectDelay = delayInMs;
+                return this;
+            }
+
+            public RepetierMqttClientBuilder DefaultQoSLevel(uint qos = 0)
+            {
+                _repetierMqttClient.DefaultQoS = (MqttQualityOfServiceLevel) qos;
+                return this;
+            }
+
+            public RepetierMqttClientBuilder DefaultQoSLevel(MqttQualityOfServiceLevel qos = MqttQualityOfServiceLevel.AtMostOnce)
+            {
+                _repetierMqttClient.DefaultQoS = qos;
+                return this;
+            }
+
+
+
+            public RepetierMqttClient Build()
+            {
+                if (_repetierMqttClient.RepetierConnection == null)
+                {
+                    throw new ArgumentNullException("RepetierConnection needs to be provided");
+                }
+
+                if (_repetierMqttClient.MqttClientOptions == null)
+                {
+                    _repetierMqttClient.MqttClientOptions = MqttOptionsProvider.DefaultMqttClientOptions;
+                }
+
+                if (!string.IsNullOrEmpty(_repetierMqttClient.BaseTopic))
+                {
+                    _repetierMqttClient.Topics.ForEach(topic =>
+                    {
+                        var topicFilter = new MqttTopicFilterBuilder()
+                        .WithQualityOfServiceLevel(_repetierMqttClient.DefaultQoS)
+                        .WithTopic(topic)
+                        .Build();
+                        _repetierMqttClient.Subscriptions.Add(topicFilter);
+                    });
+                    _repetierMqttClient.Subscriptions.ForEach(topicFilter => topicFilter.Topic = $"{_repetierMqttClient.BaseTopic}/{topicFilter.Topic}");
+                }
+
+                _repetierMqttClient.MqttClient = new MqttFactory().CreateMqttClient();
+
+                _repetierMqttClient.MqttClient.UseConnectedHandler(async connectedArgs =>
+                {
+                    await _repetierMqttClient.MqttClient.SubscribeAsync(_repetierMqttClient.Subscriptions.ToArray());
+                });
+
+                _repetierMqttClient.MqttClient.UseDisconnectedHandler(async disconnectedArgs =>
+                {
+                    await Task.Delay(TimeSpan.FromMilliseconds(_repetierMqttClient.ReconnectDelay));
+                    try
+                    {
+                        await _repetierMqttClient.MqttClient.ConnectAsync(_repetierMqttClient.MqttClientOptions, CancellationToken.None);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.Error.WriteLine(e);
+                    }
+                });
+
+                _repetierMqttClient.MqttClient.UseApplicationMessageReceivedHandler(async e =>
+                {
+
+                    foreach (var (topic, action) in _repetierMqttClient.TopicActions)
+                    {
+                        // TODO:
+                    }
+
+
+                    foreach (var (topic, action) in _repetierMqttClient.TopicsForEvents)
+                    {
+                        // TODO:
+                    }
+
+
+
+                    await _repetierMqttClient.MqttClient.PublishAsync("");
+                });
+
+                return _repetierMqttClient;
+            }
+
+
+
+        }
+
+        private List<MqttTopicFilter> Subscriptions { get; set; } = new List<MqttTopicFilter>();
+
+        private List<string> Topics { get; set; } = new List<string>();
+
+        private Dictionary<string, Action> TopicActions { get; set; } = new Dictionary<string, Action>();
+
+        /// <summary>
+        /// TODO: add QOS?
+        /// Event -> Topic
+        /// </summary>
+        private Dictionary<string, string> TopicsForEvents { get; set; } = new Dictionary<string, string>();
+
+        private RepetierConnection RepetierConnection { get; set; }
+
+        public string BaseTopic { get; private set; }
+
+        private IMqttClient MqttClient { get; set; }
 
         private IMqttClientOptions MqttClientOptions { get; set; }
 
-        public RepetierMqttClient(string repetierServerUrl, string apiKey = "", IMqttClientOptions mqttClientOptions = null)
+        private uint ReconnectDelay { get; set; } = 3000;
+
+        private MqttQualityOfServiceLevel DefaultQoS { get; set; } = 0;
+
+        public RepetierMqttClient() { }
+
+        public Task<MqttClientConnectResult> Connect()
         {
-            RepetierServer = new RepetierConnection(repetierServerUrl);
-
-            MqttClient = new MqttFactory().CreateMqttClient();
-            MqttClientOptions = mqttClientOptions ?? MqttOptionsProvider.DefaultMqttClientOptions;
-
-            MqttClient.UseConnectedHandler(async e => 
-            {
-                Console.WriteLine("### CONNECTED WITH SERVER ###");
-
-                // Subscribe to a topic
-                await MqttClient.SubscribeAsync(new MqttTopicFilterBuilder().WithTopic("my/topic").Build());
-
-                Console.WriteLine("### SUBSCRIBED ###");
-                RepetierServer.Connect();
-            });
-
-            MqttClient.UseDisconnectedHandler(async e =>
-            {
-                Console.WriteLine("### DISCONNECTED FROM SERVER ###");
-                await Task.Delay(TimeSpan.FromSeconds(5));
-
-                try
-                {
-                    await MqttClient.ConnectAsync(MqttClientOptions, CancellationToken.None);
-                }
-                catch
-                {
-                    Console.WriteLine("### RECONNECTING FAILED ###");
-                }
-            });
-
-            MqttClient.UseApplicationMessageReceivedHandler(async e => 
-            {
-
-                var topic = e.ApplicationMessage.Topic;
-                var message = e.ApplicationMessage.Payload;
-                var printerSlug = "";
-                
-                if (topic == $"{repetierServerUrl}/{printerSlug}/Job/start")
-                {
-
-                }
-
-
-                await MqttClient.PublishAsync("");
-            });
-
+            return MqttClient.ConnectAsync(MqttClientOptions);
         }
 
-
-        public void Start()
+        public Task Disconnect()
         {
-            MqttClient.ConnectAsync(MqttClientOptions);
+            return MqttClient.DisconnectAsync();
         }
-
-     
     }
 }
