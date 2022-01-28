@@ -111,7 +111,7 @@ namespace RepetierSharp
         // TODO: replace eventhandler with delegates
         public event EventHandler<List<Message>> OnMessagesReceived;
         public event EventHandler<LoginMessage> OnLoginMessageReceived;
-        public event EventHandler<List<Printer>> OnPrinterListReceived;
+        public event EventHandler<Dictionary<string, PrinterState>> OnPrinterListReceived;
         public event EventHandler<Dictionary<string, PrinterState>> OnStateListReceived;
         public event EventHandler<List<Model>> OnModelListReceived;
         public event EventHandler<Model> OnModelInfoReceived;
@@ -216,7 +216,7 @@ namespace RepetierSharp
                     {
                         SessionId = message.SessionId;
                     }
-
+                    
                     var json = JsonSerializer.Deserialize<JsonDocument>(msgBytes);
                     var data = json.RootElement.GetProperty("data");
                     if (message.CallBackId == -1 || containsEvents)
@@ -225,7 +225,7 @@ namespace RepetierSharp
                         foreach (var eventData in data.EnumerateArray())
                         {
                             var repEvent = JsonSerializer.Deserialize<RepetierBaseEvent>(eventData.GetRawText());
-                            HandleEvent(repEvent, eventData.GetRawText(), timestamp);
+                            Task.Run(() => HandleEvent(repEvent, eventData.GetRawText(), timestamp)); ;
                         }
                     }
                     else
@@ -236,7 +236,7 @@ namespace RepetierSharp
                         }
                         else
                         {
-                            HandleMessage(message, data, timestamp);
+                            Task.Run(() => HandleMessage(message, data, timestamp));
                         }
                     }
                 }
@@ -364,7 +364,6 @@ namespace RepetierSharp
             var cmdData = commandDataObject.GetRawText();
             message.Data = Encoding.UTF8.GetBytes(commandDataObject.GetRawText());
 
-            Console.WriteLine($"[CommandResponse]: {commandStr}");
             switch (commandStr)
             {
                 case CommandConstants.LOGIN:
@@ -380,7 +379,7 @@ namespace RepetierSharp
                     OnResponse?.Invoke(message.CallBackId, commandStr, null);
                     break;
                 case CommandConstants.LIST_PRINTER:
-                    var ListprintersMessage = JsonSerializer.Deserialize<List<Printer>>(cmdData);
+                    var ListprintersMessage = JsonSerializer.Deserialize<Dictionary<string, PrinterState>>(cmdData);
                     var printerMsg = new ListPrinterMessage() { Printers = ListprintersMessage };
                     OnResponse?.Invoke(message.CallBackId, commandStr, printerMsg);
                     OnPrinterListReceived?.Invoke(this, ListprintersMessage);
@@ -514,8 +513,7 @@ namespace RepetierSharp
                     OnRepetierEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, userCredentialsEvent);
                     break;
                 case EventConstants.PRINTER_LIST_CHANGED:
-                    // TODO: type implementation
-                    var printerListChangedEvent = JsonSerializer.Deserialize<PrinterListChangedEvent>(eventData);
+                    var printerListChangedEvent = JsonSerializer.Deserialize<PrinterListChangedEvent>(eventAsJson);
                     OnPrinterListChanged?.Invoke(printerListChangedEvent.Printers, timestamp);
                     OnRepetierEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, printerListChangedEvent);
                     break;
@@ -605,8 +603,8 @@ namespace RepetierSharp
         public void SendCommand(ICommandData command, Type commandType, string printer)
         {
             var baseCommand = CommandManager.CommandWithId(command, commandType, printer);
-            Console.WriteLine($"\n[Sending]: {baseCommand.Command.GetType().Name}({baseCommand.CallbackId}) \n");
-            Console.WriteLine(baseCommand.ToString());
+            //Console.WriteLine($"\n[Sending]: {baseCommand.Command.GetType().Name}({baseCommand.CallbackId})\n");
+            Console.WriteLine(baseCommand.ToString()+"\n");
             Task.Run(() => WebSocketClient.Send(baseCommand.ToBytes()));
         }
 
