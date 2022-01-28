@@ -85,7 +85,11 @@ To get notified about repetier events it is possible to register and event handl
 Where `eventData` is a `IRepetierEvent` instance. The `eventName` can be used to determine the event and cast the event data to the corresponding type provided in the RepetierSharp namespace.
 
 At the moment the following repetier events are supported:
-- timerX
+
+<details>
+  <summary>**[Click to expand the list of supported events]**</summary>
+
+  - timerX
 - loginRequired
 - userCredentials
 - printerListChanged
@@ -112,6 +116,8 @@ At the moment the following repetier events are supported:
 - changeFilamentRequested
 - remoteServersChanged
 - getExternalLinks
+  </details>
+
 
 ### Commands
 
@@ -126,6 +132,10 @@ To get responses for the sent commands it is possible to register event handler 
 Where `callbackId` is the id corresponding to the sent command, `command` is the name of the command and `response` of the type `IRepetierMessage` is the actual response data. This data can be cast to the corresponding type by determining the command and using the provided types within the namespace - analogous to the events.
 
 At the moment the following commands (inclusive responses) are suppored: 
+
+<details>
+  <summary>**[Click to expand the list of supported commands]**</summary>
+
 - login
 - logout
 - listPrinter
@@ -149,6 +159,7 @@ At the moment the following commands (inclusive responses) are suppored:
 - startJob
 - stopJob
 - continueJob
+</details>
 
 ### REST-API
 
@@ -213,7 +224,7 @@ RepetierConnection rc = new RepetierConnectionBuilder()
 	.WithCyclicCommand(RepetierTimer.Timer3600, UpdateAvailableCommand.Instance)
 	.Build();
 ```
-In line 6 the command `updateAvailable` is added to the 1 hour timer queue so every hour RepetierSharp queries if there is a update for the Repetier Server available.
+In line 4 the command `updateAvailable` is added to the 1 hour timer queue so every hour RepetierSharp queries if there is a update for the Repetier Server available.
 
 ## Documentation
 
