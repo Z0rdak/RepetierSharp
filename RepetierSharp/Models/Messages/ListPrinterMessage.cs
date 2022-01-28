@@ -8,7 +8,7 @@ namespace RepetierSharp.Models.Messages
     public class ListPrinterMessage : IRepetierMessage
     {
         [JsonPropertyName("data")]
-        public List<Printer> Printers { get; set; } = new List<Printer>();
+        public Dictionary<string, PrinterState> Printers { get; set; } = new Dictionary<string, PrinterState>();
 
         public ListPrinterMessage() { }
     }
