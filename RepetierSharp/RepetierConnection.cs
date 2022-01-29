@@ -111,7 +111,7 @@ namespace RepetierSharp
         // TODO: replace eventhandler with delegates
         public event EventHandler<List<Message>> OnMessagesReceived;
         public event EventHandler<LoginMessage> OnLoginMessageReceived;
-        public event EventHandler<Dictionary<string, PrinterState>> OnPrinterListReceived;
+        public event EventHandler<List<Printer>> OnPrinterListReceived;
         public event EventHandler<Dictionary<string, PrinterState>> OnStateListReceived;
         public event EventHandler<List<Model>> OnModelListReceived;
         public event EventHandler<Model> OnModelInfoReceived;
@@ -151,7 +151,7 @@ namespace RepetierSharp
         private string Password { get; set; }
         private string LangKey { get; set; }
 
-        protected string ActivePrinter { get; private set; } = "";
+        public string ActivePrinter { get; private set; } = "";
 
         public RepetierConnection() { }
 
@@ -379,7 +379,7 @@ namespace RepetierSharp
                     OnResponse?.Invoke(message.CallBackId, commandStr, null);
                     break;
                 case CommandConstants.LIST_PRINTER:
-                    var ListprintersMessage = JsonSerializer.Deserialize<Dictionary<string, PrinterState>>(cmdData);
+                    var ListprintersMessage = JsonSerializer.Deserialize<List<Printer>>(cmdData);
                     var printerMsg = new ListPrinterMessage() { Printers = ListprintersMessage };
                     OnResponse?.Invoke(message.CallBackId, commandStr, printerMsg);
                     OnPrinterListReceived?.Invoke(this, ListprintersMessage);
@@ -477,6 +477,18 @@ namespace RepetierSharp
 
             switch (repetierEvent.Event)
             {
+                case EventConstants.JOBS_CHANGED:
+                    OnRepetierEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, null);
+                    this.ActivePrinter = repetierEvent.Printer;
+                    break;
+
+                /*
+                 * {"callback_id":-1,"data":[{"data":{"activeExtruder":0,"autostartNextPrint":false,"debugLevel":6,"doorOpen":false,"extruder":[{"error":0,"output":39.2156867980957,"tempRead":200.0,"tempSet":200.0},{"error":0,"output":0.0,"tempRead":20.0,"tempSet":0.0}],"fans":[{"on":false,"voltage":0}],"filterFan":false,"firmware":"Repetier_0.92.6","firmwareURL":"https://github.com/repetier/Repetier-Firmware/","flowMultiply":100,"hasXHome":true,"hasYHome":true,"hasZHome":true,"heatedBeds":[{"error":0,"output":0.0,"tempRead":20.0,"tempSet":0.0}],"heatedChambers":[],"layer":0,"lights":0,"notification":"","numExtruder":2,"powerOn":true,"rec":false,"sdcardMounted":true,"shutdownAfterPrint":false,"speedMultiply":100,"volumetric":false,"x":126.2020034790039,"y":106.0410003662109,"z":5.199999809265137},"event":"updatePrinterState","printer":"Cartesian"},{"data":{"activeExtruder":0,"autostartNextPrint":false,"debugLevel":6,"doorOpen":false,"extruder":[{"error":0,"output":39.2156867980957,"tempRead":200.0,"tempSet":200.0},{"error":0,"output":0.0,"tempRead":20.0,"tempSet":0.0}],"fans":[{"on":false,"voltage":0}],"filterFan":false,"firmware":"Repetier_0.92.6","firmwareURL":"https://github.com/repetier/Repetier-Firmware/","flowMultiply":100,"hasXHome":true,"hasYHome":true,"hasZHome":true,"heatedBeds":[{"error":0,"output":0.0,"tempRead":20.0,"tempSet":0.0}],"heatedChambers":[],"layer":0,"lights":0,"notification":"","numExtruder":2,"powerOn":true,"rec":false,"sdcardMounted":true,"shutdownAfterPrint":false,"speedMultiply":100,"volumetric":false,"x":126.2020034790039,"y":106.0410003662109,"z":5.199999809265137},"event":"updatePrinterState","printer":"Cartesian"},{"data":{"activeExtruder":0,"autostartNextPrint":false,"debugLevel":6,"doorOpen":false,"extruder":[{"error":0,"output":39.2156867980957,"tempRead":200.0,"tempSet":200.0},{"error":0,"output":0.0,"tempRead":20.0,"tempSet":0.0}],"fans":[{"on":false,"voltage":0}],"filterFan":false,"firmware":"Repetier_0.92.6","firmwareURL":"https://github.com/repetier/Repetier-Firmware/","flowMultiply":100,"hasXHome":true,"hasYHome":true,"hasZHome":true,"heatedBeds":[{"error":0,"output":0.0,"tempRead":20.0,"tempSet":0.0}],"heatedChambers":[],"layer":0,"lights":0,"notification":"","numExtruder":2,"powerOn":true,"rec":false,"sdcardMounted":true,"shutdownAfterPrint":false,"speedMultiply":100,"volumetric":false,"x":0.0,"y":0.0,"z":20.0},"event":"updatePrinterState","printer":"Cartesian"}],"eventList":true}
+                 * 
+                 * dispatcherCount
+                 * 
+                 */
+
                 case EventConstants.TIMER_30:
                 case EventConstants.TIMER_60:
                 case EventConstants.TIMER_300:
@@ -576,7 +588,7 @@ namespace RepetierSharp
                     OnPrinterSettingChangedReceived?.Invoke(printerSetting, repetierEvent.Printer, timestamp);
                     OnRepetierEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, printerSetting);
                     break;
-                case EventConstants.JOBS_CHANGED:
+                //case EventConstants.JOBS_CHANGED:
                 case EventConstants.LOGOUT:
                 case EventConstants.PRINT_QUEUE_CHANGED:
                 case EventConstants.FOLDERS_CHANGED:
@@ -594,13 +606,23 @@ namespace RepetierSharp
             }
         }
 
+        public void SendCommand(ICommandData command)
+        {
+            SendCommand(command, command.GetType(), ActivePrinter);
+        }
 
-        public void SendCommand(ICommandData command, Type commandType)
+
+        public void SendCommand(ICommandData command, string printer)
+        {
+            SendCommand(command, command.GetType(), printer);
+        }
+
+        protected void SendCommand(ICommandData command, Type commandType)
         {
             SendCommand(command, commandType, ActivePrinter);
         }
 
-        public void SendCommand(ICommandData command, Type commandType, string printer)
+        protected void SendCommand(ICommandData command, Type commandType, string printer)
         {
             var baseCommand = CommandManager.CommandWithId(command, commandType, printer);
             //Console.WriteLine($"\n[Sending]: {baseCommand.Command.GetType().Name}({baseCommand.CallbackId})\n");
