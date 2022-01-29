@@ -1,8 +1,11 @@
-﻿namespace RepetierSharp.Models.Messages
+﻿using System.Text.Json.Serialization;
+
+namespace RepetierSharp.Models.Messages
 {
     public class PingMessage : IRepetierMessage
     {
-        // no payload
+        [JsonPropertyName("source")] // "source": "gui"
+        public string Source { get; set; }
 
         public PingMessage() { }
     }
