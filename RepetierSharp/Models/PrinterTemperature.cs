@@ -20,6 +20,8 @@ namespace RepetierSharp.Models
         [JsonPropertyName("tempSet")]
         public double Set { get; set; }
 
+        public PrinterTemperature() { }
+
         public override string ToString()
         {
             return $"{Read} -> {Set}";

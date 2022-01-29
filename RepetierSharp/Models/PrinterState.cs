@@ -89,5 +89,7 @@ namespace RepetierSharp.Models
 
         [JsonPropertyName("z")]
         public double Z { get; set; }
+
+        public PrinterState() { }
     }
 }

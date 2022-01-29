@@ -5,7 +5,7 @@ namespace RepetierSharp.Models
     public class TempHistorySet
     {
         [JsonPropertyName("O")]
-        public int Out { get; set; }
+        public double Out { get; set; }
 
         [JsonPropertyName("S")]
         public double Set { get; set; }
