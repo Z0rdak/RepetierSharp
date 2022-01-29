@@ -14,7 +14,7 @@ namespace RepetierSharp.Models.Commands
 
         [JsonPropertyName("permission")]
         public int Permission { get; }
-
+        [JsonIgnore]
         public string CommandIdentifier => CommandConstants.UPDATE_USER;
 
         public UpdateUserCommand(string user, int permission, string password = "")

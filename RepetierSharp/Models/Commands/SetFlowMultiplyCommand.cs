@@ -6,7 +6,7 @@ namespace RepetierSharp.Models.Commands
     {
         [JsonPropertyName("speed")]
         public int FlowMultiplierInPercent { get; set; }
-
+        [JsonIgnore]
         public string CommandIdentifier => CommandConstants.SET_FLOW_MULTIPLY;
 
         public SetFlowMultiplyCommand(int flowMultiplier)

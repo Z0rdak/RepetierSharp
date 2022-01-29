@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace RepetierSharp.Models.Commands
 {
@@ -10,7 +11,7 @@ namespace RepetierSharp.Models.Commands
         public int ExtruderNo { get; set; }
         public int HeatedBedNo { get; set; }
         public int HeatedChamberNo { get; set; }
-
+        [JsonIgnore]
         public string CommandIdentifier => CommandConstants.COOLDOWN;
 
         public CooldownCommand(int extruderNo, int heatedBedNo, int heatedChamberNo)

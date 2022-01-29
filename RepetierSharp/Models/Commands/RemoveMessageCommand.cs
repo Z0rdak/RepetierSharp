@@ -12,7 +12,7 @@ namespace RepetierSharp.Models.Commands
 
         [JsonPropertyName("a")]
         public string A { get; } // empty or unpause ?
-
+        [JsonIgnore]
         public string CommandIdentifier => CommandConstants.REMOVE_MESSAGE;
 
         public RemoveMessageCommand(int messageId, string a = "")

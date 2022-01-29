@@ -9,7 +9,7 @@ namespace RepetierSharp.Models.Commands
     {
         [JsonPropertyName("id")]
         public int JobId { get; }
-
+        [JsonIgnore]
         public string CommandIdentifier => CommandConstants.JOB_INFO;
 
         public JobInfoCommand(int jobId)

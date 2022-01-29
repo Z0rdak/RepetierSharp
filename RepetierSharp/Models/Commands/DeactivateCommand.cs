@@ -9,7 +9,7 @@ namespace RepetierSharp.Models.Commands
     {
         [JsonPropertyName("printer")]
         public string PrinterSlug { get; }
-
+        [JsonIgnore]
         public string CommandIdentifier => CommandConstants.DEACTIVATE;
 
         public DeactivateCommand(string printer)

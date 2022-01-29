@@ -14,7 +14,7 @@ namespace RepetierSharp.Models.Commands
 
         public const int MAX_THROTTLE = 255;
         public const int FAN_OFF = 0;
-
+        [JsonIgnore]
         public string CommandIdentifier => CommandConstants.SET_FAN_SPEED;
 
         public SetFanSpeedCommand(int fanSpeed, int fanId = 0)

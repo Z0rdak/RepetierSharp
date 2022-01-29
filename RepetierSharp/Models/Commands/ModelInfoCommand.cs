@@ -8,7 +8,7 @@ namespace RepetierSharp.Models.Commands
     {
         [JsonPropertyName("id")]
         public int Id { get; }
-
+        [JsonIgnore]
         public string CommandIdentifier => CommandConstants.MODEL_INFO;
 
         public ModelInfoCommand(int modelId)

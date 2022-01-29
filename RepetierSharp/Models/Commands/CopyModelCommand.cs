@@ -7,6 +7,7 @@ namespace RepetierSharp.Models.Commands
 {
     public class CopyModelCommand : ICommandData
     {
+        [JsonIgnore]
         public string CommandIdentifier => CommandConstants.COPY_MODEL;
 
         [JsonPropertyName("id")]

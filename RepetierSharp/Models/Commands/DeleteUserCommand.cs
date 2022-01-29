@@ -8,7 +8,7 @@ namespace RepetierSharp.Models.Commands
     {
         [JsonPropertyName("login")]
         public string User { get; }
-
+        [JsonIgnore]
         public string CommandIdentifier => CommandConstants.DELETE_USER;
 
         public DeleteUserCommand(string user)

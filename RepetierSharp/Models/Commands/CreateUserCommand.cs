@@ -14,7 +14,7 @@ namespace RepetierSharp.Models.Commands
 
         [JsonPropertyName("permission")]
         public int Permission { get; }
-
+        [JsonIgnore]
         public string CommandIdentifier => CommandConstants.CREATE_USER;
 
         public CreateUserCommand(string user, string password, int permission)

@@ -7,7 +7,7 @@ namespace RepetierSharp.Models.Commands
     {
         [JsonPropertyName("cmd")]
         public string GCode { get; }
-
+        [JsonIgnore]
         public string CommandIdentifier => CommandConstants.SEND;
 
         public SendCommand(string gcode)

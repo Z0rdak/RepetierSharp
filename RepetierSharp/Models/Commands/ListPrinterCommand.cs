@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace RepetierSharp.Models.Commands
 {
     public class ListPrinterCommand : ICommandData
     {
+        [JsonIgnore]
         public string CommandIdentifier => CommandConstants.LIST_PRINTER;
 
         private ListPrinterCommand() { }
