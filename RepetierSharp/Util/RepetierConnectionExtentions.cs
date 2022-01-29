@@ -11,7 +11,7 @@ namespace RepetierSharp.Extentions
         /// </summary>
         public static void QueryPrinterList(this RepetierConnection rc)
         {
-            rc.SendCommand(ListPrinterCommand.Instance, typeof(ListPrinterCommand));
+            rc.SendCommand(ListPrinterCommand.Instance);
         }
 
         /// <summary>
@@ -20,7 +20,7 @@ namespace RepetierSharp.Extentions
         /// </summary>
         public static void QueryPrinterStateList(this RepetierConnection rc, bool includeHistory = false)
         {
-            rc.SendCommand(new StateListCommand(includeHistory), typeof(StateListCommand));
+            rc.SendCommand(new StateListCommand(includeHistory));
         }
 
         /// <summary>
@@ -29,88 +29,88 @@ namespace RepetierSharp.Extentions
         /// </summary>
         public static void StopJob(this RepetierConnection rc)
         {
-            rc.SendCommand(StopJobCommand.Instance, typeof(StopJobCommand));
+            rc.SendCommand(StopJobCommand.Instance);
         }
 
         public static void Logout(this RepetierConnection rc)
         {
-            rc.SendCommand(LogoutCommand.Instance, typeof(LogoutCommand));
+            rc.SendCommand(LogoutCommand.Instance);
         }
 
         public static void EnqueueJob(this RepetierConnection rc, int modelId, bool autostart = true)
         {
-            rc.SendCommand(new CopyModelCommand(modelId, autostart), typeof(CopyModelCommand));
+            rc.SendCommand(new CopyModelCommand(modelId, autostart));
         }
 
         public static void GetModelInfo(this RepetierConnection rc, int modelId)
         {
-            rc.SendCommand(new ModelInfoCommand(modelId), typeof(ModelInfoCommand));
+            rc.SendCommand(new ModelInfoCommand(modelId));
         }
 
         public static void GetJobInfo(this RepetierConnection rc, int jobId)
         {
-            rc.SendCommand(new JobInfoCommand(jobId), typeof(JobInfoCommand));
+            rc.SendCommand(new JobInfoCommand(jobId));
         }
 
         public static void StartJob(this RepetierConnection rc, int jobId)
         {
-            rc.SendCommand(new StartJobCommand(jobId), typeof(StartJobCommand));
+            rc.SendCommand(new StartJobCommand(jobId));
         }
 
         public static void ContinueJob(this RepetierConnection rc)
         {
-            rc.SendCommand(ContinueJobCommand.Instance, typeof(ContinueJobCommand));
+            rc.SendCommand(ContinueJobCommand.Instance);
         }
 
         public static void RemoveJob(this RepetierConnection rc, int jobId)
         {
-            rc.SendCommand(new RemoveJobCommand(jobId), typeof(RemoveJobCommand));
+            rc.SendCommand(new RemoveJobCommand(jobId));
         } 
 
         public static void ActivatePrinter(this RepetierConnection rc, string printerSlug)
         {
-            rc.SendCommand(new ActivateCommand(printerSlug), typeof(ActivateCommand));
+            rc.SendCommand(new ActivateCommand(printerSlug));
         }
 
         public static void DeactivatePrinter(this RepetierConnection rc, string printerSlug)
         {
-            rc.SendCommand(new DeactivateCommand(printerSlug), typeof(DeactivateCommand));
+            rc.SendCommand(new DeactivateCommand(printerSlug));
         }
 
         public static void CreateUser(this RepetierConnection rc, string user, string password, int permission)
         {
-            rc.SendCommand(new CreateUserCommand(user, password, permission), typeof(CreateUserCommand));
+            rc.SendCommand(new CreateUserCommand(user, password, permission));
         } 
 
         public static void UpdateUser(this RepetierConnection rc, string user, int permission, string password = "")
         {
-            rc.SendCommand(new UpdateUserCommand(user, permission, password), typeof(UpdateUserCommand));
+            rc.SendCommand(new UpdateUserCommand(user, permission, password));
         }
 
         public static void DeleteUser(this RepetierConnection rc, string user)
         {
-            rc.SendCommand(new DeleteUserCommand(user), typeof(DeleteUserCommand));
+            rc.SendCommand(new DeleteUserCommand(user));
         } 
 
         public static void Preheat(this RepetierConnection rc, int extruderNo, int heatedBedNo, int heatedChamberNo)
         {
-            rc.SendCommand(new PreheatCommand(extruderNo, heatedBedNo, heatedChamberNo), typeof(PreheatCommand));
+            rc.SendCommand(new PreheatCommand(extruderNo, heatedBedNo, heatedChamberNo));
         }
 
         public static void PreheatAll(this RepetierConnection rc)
         {
-            rc.SendCommand(new PreheatCommand((int)ExtruderConstants.All, 1, 1), typeof(PreheatCommand));
+            rc.SendCommand(new PreheatCommand((int)ExtruderConstants.All, 1, 1));
         }
 
         public static void PreheatActive(this RepetierConnection rc)
         {
-            rc.SendCommand(new PreheatCommand((int)ExtruderConstants.Active, 1, 1), typeof(PreheatCommand));
+            rc.SendCommand(new PreheatCommand((int)ExtruderConstants.Active, 1, 1));
         }
 
 
-        public static void Cooldown(this RepetierConnection rc, int extruderNo, int heatedBedNo, int heatedChamberNo)
+        public static void Cooldown(this RepetierConnection rc, int heatedBedNo, int heatedChamberNo)
         {
-            rc.SendCommand(new CooldownCommand((int)ExtruderConstants.All, heatedBedNo, heatedChamberNo), typeof(CooldownCommand));
+            rc.SendCommand(new CooldownCommand((int)ExtruderConstants.All, heatedBedNo, heatedChamberNo));
         }
 
         public static void SetTemperature(this RepetierConnection rc, TemperatureTarget targetType, int temperature, int targetId = 0)
@@ -133,22 +133,22 @@ namespace RepetierSharp.Extentions
 
         public static void SetExtruderTemp(this RepetierConnection rc, int temperature, int extruderNo = 0)
         {
-            rc.SendCommand(new SetExtruderTempCommand(temperature, extruderNo), typeof(SetExtruderTempCommand));
+            rc.SendCommand(new SetExtruderTempCommand(temperature, extruderNo));
         }
 
         public static void SetHeatedBedTemp(this RepetierConnection rc, int temperature, int heatedBedId = 0)
         {
-            rc.SendCommand(new SetHeatedBedTempCommand(temperature, heatedBedId), typeof(SetHeatedBedTempCommand));
+            rc.SendCommand(new SetHeatedBedTempCommand(temperature, heatedBedId));
         }
 
         public static void SetHeatedChamberTemp(this RepetierConnection rc, int temperature, int heatedChamberId = 0)
         {
-            rc.SendCommand(new SetHeatedChamberTempCommand(temperature, heatedChamberId), typeof(SetHeatedChamberTempCommand));
+            rc.SendCommand(new SetHeatedChamberTempCommand(temperature, heatedChamberId));
         }
 
         public static void SetFanSpeed(this RepetierConnection rc, int fanSpeed, int fanId = 0)
         {
-            rc.SendCommand(new SetFanSpeedCommand(fanSpeed, fanId), typeof(SetFanSpeedCommand));
+            rc.SendCommand(new SetFanSpeedCommand(fanSpeed, fanId));
         }
 
         public static void TurnOffFan(this RepetierConnection rc, int fanId = 0)
@@ -163,17 +163,17 @@ namespace RepetierSharp.Extentions
 
         public static void SetFlowMultiplier(this RepetierConnection rc, int flowMultiplier)
         {
-            rc.SendCommand(new SetFlowMultiplyCommand(flowMultiplier), typeof(SetFlowMultiplyCommand));
+            rc.SendCommand(new SetFlowMultiplyCommand(flowMultiplier));
         }
 
         public static void SetSpeedMultiplier(this RepetierConnection rc, int speedMultiplier)
         {
-            rc.SendCommand(new SetSpeedMultiplyCommand(speedMultiplier), typeof(SetSpeedMultiplyCommand));
+            rc.SendCommand(new SetSpeedMultiplyCommand(speedMultiplier));
         }
 
         public static void QueryOpenMessages(this RepetierConnection rc)
         {
-            rc.SendCommand(MessagesCommand.Instance, typeof(MessagesCommand));
+            rc.SendCommand(MessagesCommand.Instance);
         }
     }
 }
