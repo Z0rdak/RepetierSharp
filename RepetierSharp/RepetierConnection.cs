@@ -73,41 +73,44 @@ namespace RepetierSharp
         #endregion
 
         public event LogEventReceived OnLogReceived;
-        public delegate void LogEventReceived(LogEvent logEvent);
+        public delegate void LogEventReceived(Log logEvent);
 
         public event JobFinishedReceivedHandler OnJobFinishedReceived;
-        public delegate void JobFinishedReceivedHandler(string printer, JobFinishedEvent jobFinished, long timestamp);
+        public delegate void JobFinishedReceivedHandler(string printer, JobState jobFinished);
 
         public event JobStartedReceivedHandler OnJobStartedReceived;
-        public delegate void JobStartedReceivedHandler(string printer, JobStartedEvent jobStarted, long timestamp);
+        public delegate void JobStartedReceivedHandler(string printer, JobStarted jobStarted);
 
         public event JobStartedFailedHandler OnJobStartedFailed;
-        public delegate void JobStartedFailedHandler(string printer, IRestResponse response, long timestamp);
+        public delegate void JobStartedFailedHandler(string printer, IRestResponse response);
 
         public event JobKilledReceivedHandler OnJobKilledReceived;
-        public delegate void JobKilledReceivedHandler(string printer, JobKilledEvent jobKilled, long timestamp);
+        public delegate void JobKilledReceivedHandler(string printer, JobState jobKilled);
+
+        public event JobDeactivatedReceivedHandler OnJobDeactivatedReceived;
+        public delegate void JobDeactivatedReceivedHandler(string printer, JobState jobKilled);
 
         public event JobsChangedReceivedHandler OnJobsChanged;
-        public delegate void JobsChangedReceivedHandler(string printer, long timestamp);
+        public delegate void JobsChangedReceivedHandler(string printer);
 
         public event PrinterStateReceivedHandler OnPrinterStateReceived;
-        public delegate void PrinterStateReceivedHandler(string printer, PrinterState printerState, long timestamp);
+        public delegate void PrinterStateReceivedHandler(string printer, PrinterState printerState);
 
         public event TemperatureChangeReceivedHandler OnTempChangeReceived;
-        public delegate void TemperatureChangeReceivedHandler(string printer, TempChangeEvent tempChange, long timestamp);
+        public delegate void TemperatureChangeReceivedHandler(string printer, Temp tempChange);
 
         // same as OnPrinterListReceived ?
         public event PrinterListChangedReceivedHandler OnPrinterListChanged;
-        public delegate void PrinterListChangedReceivedHandler(List<Printer> printerList, long timestamp);
+        public delegate void PrinterListChangedReceivedHandler(List<Printer> printerList);
 
         public event PrinterSettingChangedReceivedHandler OnPrinterSettingChangedReceived;
-        public delegate void PrinterSettingChangedReceivedHandler(SettingChangedEvent printerSetting, string printer, long timestamp);
+        public delegate void PrinterSettingChangedReceivedHandler(SettingChanged printerSetting, string printer);
 
         public event UserCredentialsReceivedHandler OnUserCredentialsReceived;
-        public delegate void UserCredentialsReceivedHandler(UserCredentialsEvent userCredentials, long timestamp);
+        public delegate void UserCredentialsReceivedHandler(UserCredentials userCredentials);
 
         public event LoginRequiredReceivedHandler OnLoginRequiredReceived;
-        public delegate void LoginRequiredReceivedHandler(long timestamp);
+        public delegate void LoginRequiredReceivedHandler();
         // TODO: replace eventhandler with delegates
         public event EventHandler<List<Message>> OnMessagesReceived;
         public event EventHandler<LoginMessage> OnLoginMessageReceived;
@@ -119,9 +122,15 @@ namespace RepetierSharp
         public event EventHandler<List<Model>> OnJobListReceived;
 
         /* ################################################################## */
+        public event RawRepetierEventReceived OnRawRepetierEvent;
+        public delegate void RawRepetierEventReceived(string eventName, string printer, byte[] payload);
+
         // TODO: Add events to all messages / events
         public event RepetierEventReceived OnRepetierEvent;
         public delegate void RepetierEventReceived(string eventName, string printer, IRepetierEvent repetierEvent);
+
+        public event RawCommandResponseReceived OnRawResponse;
+        public delegate void RawCommandResponseReceived(int callbackID, string command, byte[] response);
 
         public event CommandResponseReceived OnResponse;
         public delegate void CommandResponseReceived(int callbackID, string command, IRepetierMessage message);
@@ -207,7 +216,6 @@ namespace RepetierSharp
                 }
                 try
                 {
-                    long timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
                     byte[] msgBytes = Encoding.UTF8.GetBytes(msg.Text);
                     var message = JsonSerializer.Deserialize<RepetierBaseMessage>(msgBytes);
                     var containsEvents = message.HasEvents != null && message.HasEvents == true;
@@ -216,7 +224,7 @@ namespace RepetierSharp
                     {
                         SessionId = message.SessionId;
                     }
-                    
+
                     var json = JsonSerializer.Deserialize<JsonDocument>(msgBytes);
                     var data = json.RootElement.GetProperty("data");
                     if (message.CallBackId == -1 || containsEvents)
@@ -225,18 +233,27 @@ namespace RepetierSharp
                         foreach (var eventData in data.EnumerateArray())
                         {
                             var repEvent = JsonSerializer.Deserialize<RepetierBaseEvent>(eventData.GetRawText());
-                            Task.Run(() => HandleEvent(repEvent, eventData.GetRawText(), timestamp)); ;
+                            Task.Run(() =>
+                            {
+                                OnRawRepetierEvent?.Invoke(repEvent.Event, repEvent.Printer, Encoding.UTF8.GetBytes(eventData.GetRawText()));
+                                HandleEvent(repEvent, eventData.GetRawText());
+                            });
                         }
                     }
                     else
                     {
+
                         if (msg.Text.Contains("permissionDenied"))
                         {
                             OnPermissionDenied?.Invoke(message.CallBackId);
                         }
                         else
                         {
-                            Task.Run(() => HandleMessage(message, data, timestamp));
+                            Task.Run(() =>
+                            {
+                                OnRawResponse?.Invoke(message.CallBackId, CommandManager.CommandIdentifierFor(message.CallBackId), Encoding.UTF8.GetBytes(data.GetRawText()));
+                                HandleMessage(message, data);
+                            });
                         }
                     }
                 }
@@ -343,7 +360,7 @@ namespace RepetierSharp
                 var Response = RestClient.Execute(request);
                 if (Response.StatusCode != HttpStatusCode.OK)
                 {
-                    OnJobStartedFailed?.Invoke(printer, Response, DateTimeOffset.Now.ToUnixTimeSeconds());
+                    OnJobStartedFailed?.Invoke(printer, Response);
                     return;
                 }
                 if (Response.ErrorException != null)
@@ -358,7 +375,7 @@ namespace RepetierSharp
             }
         }
 
-        private void HandleMessage(RepetierBaseMessage message, JsonElement commandDataObject, long timestamp)
+        private void HandleMessage(RepetierBaseMessage message, JsonElement commandDataObject)
         {
             var commandStr = CommandManager.CommandIdentifierFor(message.CallBackId);
             var cmdData = commandDataObject.GetRawText();
@@ -403,6 +420,7 @@ namespace RepetierSharp
                     OnModelListReceived?.Invoke(this, modelList);
                     break;
                 case CommandConstants.LIST_JOBS:
+                    // fixme
                     var jobList = JsonSerializer.Deserialize<List<Model>>(cmdData);
                     OnJobListReceived?.Invoke(this, jobList);
                     break;
@@ -468,7 +486,7 @@ namespace RepetierSharp
         /// Handles an incoming repetier event.
         /// The event data is then forwarded by calling their corresponding event handlers.
         /// </summary>
-        private void HandleEvent(RepetierBaseEvent repetierEvent, string eventAsJson, long timestamp)
+        private void HandleEvent(RepetierBaseEvent repetierEvent, string eventAsJson)
         {
             var json = JsonSerializer.Deserialize<JsonDocument>(eventAsJson);
             var dataJsonObject = json.RootElement.GetProperty("data");
@@ -494,7 +512,7 @@ namespace RepetierSharp
                 case EventConstants.TIMER_300:
                 case EventConstants.TIMER_1800:
                 case EventConstants.TIMER_3600:
-                    RepetierTimer timer = (RepetierTimer) int.Parse(repetierEvent.Event[5..]);
+                    RepetierTimer timer = (RepetierTimer)int.Parse(repetierEvent.Event[5..]);
                     if (QueryIntervals.ContainsKey(timer))
                     {
                         QueryIntervals[timer].ForEach(command =>
@@ -507,7 +525,7 @@ namespace RepetierSharp
                 case EventConstants.LOGIN_REQUIRED:
                     if (AuthType == AuthenticationType.Credentials)
                     {
-                        var loginRequiredEvent = JsonSerializer.Deserialize<LoginRequiredEvent>(eventData);
+                        var loginRequiredEvent = JsonSerializer.Deserialize<LoginRequired>(eventData);
                         OnRepetierEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, loginRequiredEvent);
                         SessionId = loginRequiredEvent.SessionId;
                         Login();
@@ -516,17 +534,17 @@ namespace RepetierSharp
                     {
                         throw new InvalidOperationException("Credentials not supplied.");
                     }
-                    OnLoginRequiredReceived?.Invoke(timestamp);
-               
+                    OnLoginRequiredReceived?.Invoke();
+
                     break;
                 case EventConstants.USER_CREDENTIALS:
-                    var userCredentialsEvent = JsonSerializer.Deserialize<UserCredentialsEvent>(eventData);
-                    OnUserCredentialsReceived?.Invoke(userCredentialsEvent, timestamp);
+                    var userCredentialsEvent = JsonSerializer.Deserialize<UserCredentials>(eventData);
+                    OnUserCredentialsReceived?.Invoke(userCredentialsEvent);
                     OnRepetierEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, userCredentialsEvent);
                     break;
                 case EventConstants.PRINTER_LIST_CHANGED:
-                    var printerListChangedEvent = JsonSerializer.Deserialize<PrinterListChangedEvent>(eventAsJson);
-                    OnPrinterListChanged?.Invoke(printerListChangedEvent.Printers, timestamp);
+                    var printerListChangedEvent = JsonSerializer.Deserialize<PrinterListChanged>(eventAsJson);
+                    OnPrinterListChanged?.Invoke(printerListChangedEvent.Printers);
                     OnRepetierEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, printerListChangedEvent);
                     break;
                 case EventConstants.MESSAGES_CHANGED:
@@ -534,36 +552,36 @@ namespace RepetierSharp
                     SendCommand(MessagesCommand.Instance, typeof(MessagesCommand), repetierEvent.Printer);
                     break;
                 case EventConstants.MOVE:
-                    var moveEvent = JsonSerializer.Deserialize<MoveEvent>(eventData);
+                    var moveEvent = JsonSerializer.Deserialize<Move>(eventData);
                     OnRepetierEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, moveEvent);
                     break;
                 case EventConstants.LOG:
-                    var logEvent = JsonSerializer.Deserialize<LogEvent>(eventData);
+                    var logEvent = JsonSerializer.Deserialize<Log>(eventData);
                     OnLogReceived?.Invoke(logEvent);
                     OnRepetierEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, logEvent);
                     break;
                 case EventConstants.JOB_FINISHED:
-                    var jobFinishedEvent = JsonSerializer.Deserialize<JobFinishedEvent>(eventData);
-                    OnJobFinishedReceived?.Invoke(repetierEvent.Printer, jobFinishedEvent, timestamp);
+                    var jobFinishedEvent = JsonSerializer.Deserialize<JobState>(eventData);
+                    OnJobFinishedReceived?.Invoke(repetierEvent.Printer, jobFinishedEvent);
                     OnRepetierEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, jobFinishedEvent);
                     break;
                 case EventConstants.JOB_KILLED:
-                    var jobKilledEvent = JsonSerializer.Deserialize<JobKilledEvent>(eventData);
-                    OnJobKilledReceived?.Invoke(repetierEvent.Printer, jobKilledEvent, timestamp);
+                    var jobKilledEvent = JsonSerializer.Deserialize<JobState>(eventData);
+                    OnJobKilledReceived?.Invoke(repetierEvent.Printer, jobKilledEvent);
                     OnRepetierEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, jobKilledEvent);
                     break;
                 case EventConstants.JOB_STARTED:
-                    var jobStartedEvent = JsonSerializer.Deserialize<JobStartedEvent>(eventData);
-                    OnJobStartedReceived?.Invoke(repetierEvent.Printer, jobStartedEvent, timestamp);
+                    var jobStartedEvent = JsonSerializer.Deserialize<JobStarted>(eventData);
+                    OnJobStartedReceived?.Invoke(repetierEvent.Printer, jobStartedEvent);
                     OnRepetierEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, jobStartedEvent);
-                    break;            
+                    break;
                 case EventConstants.EEPROM_DATA:
-                    var eepromDataEvent = JsonSerializer.Deserialize<EepromDataEvent>(eventData);
-                    OnRepetierEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, eepromDataEvent);
+                    var eepromDataEvents = JsonSerializer.Deserialize<List<EepromData>>(eventData);
+                    eepromDataEvents.ForEach(eepromData => OnRepetierEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, eepromData));
                     break;
                 case EventConstants.STATE:
-                    var printerStateChangedEvent = JsonSerializer.Deserialize<PrinterStateChangeEvent>(eventData);
-                    OnPrinterStateReceived?.Invoke(repetierEvent.Printer, printerStateChangedEvent.PrinterState, timestamp);
+                    var printerStateChangedEvent = JsonSerializer.Deserialize<PrinterStateChange>(eventData);
+                    OnPrinterStateReceived?.Invoke(repetierEvent.Printer, printerStateChangedEvent.PrinterState);
                     OnRepetierEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, printerStateChangedEvent);
                     break;
                 case EventConstants.CONFIG:
@@ -575,17 +593,17 @@ namespace RepetierSharp
                     OnRepetierEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, firmwareData);
                     break;
                 case EventConstants.TEMP:
-                    var tempChangeEvent = JsonSerializer.Deserialize<TempChangeEvent>(eventData);
+                    var tempChangeEvent = JsonSerializer.Deserialize<Temp>(eventData);
                     OnRepetierEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, tempChangeEvent);
-                    OnTempChangeReceived?.Invoke(repetierEvent.Printer, tempChangeEvent, timestamp);
+                    OnTempChangeReceived?.Invoke(repetierEvent.Printer, tempChangeEvent);
                     break;
                 case EventConstants.SETTING_CHANGED:
                     //var settings = JsonSerializer.Deserialize<List<SettingChangedEvent>>(eventData);
                     //OnRepetierEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, settings);
                     break;
                 case EventConstants.PRINTER_SETTING_CHANGED:
-                    var printerSetting = JsonSerializer.Deserialize<SettingChangedEvent>(eventData);
-                    OnPrinterSettingChangedReceived?.Invoke(printerSetting, repetierEvent.Printer, timestamp);
+                    var printerSetting = JsonSerializer.Deserialize<SettingChanged>(eventData);
+                    OnPrinterSettingChangedReceived?.Invoke(printerSetting, repetierEvent.Printer);
                     OnRepetierEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, printerSetting);
                     break;
                 //case EventConstants.JOBS_CHANGED:
@@ -626,7 +644,10 @@ namespace RepetierSharp
         {
             var baseCommand = CommandManager.CommandWithId(command, commandType, printer);
             //Console.WriteLine($"\n[Sending]: {baseCommand.Command.GetType().Name}({baseCommand.CallbackId})\n");
-            Console.WriteLine(baseCommand.ToString()+"\n");
+            if (!(baseCommand.Command.CommandIdentifier == CommandConstants.PING))
+            {
+                Console.WriteLine($"Send [{baseCommand.CallbackId}]: {baseCommand}");
+            }
             Task.Run(() => WebSocketClient.Send(baseCommand.ToBytes()));
         }
 
