@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 
 namespace RepetierSharp.Models.Commands
 {
-    class ListJobsCommand : ICommandData
+    public class ListJobsCommand : ICommandData
     {
         [JsonIgnore]
         public string CommandIdentifier => CommandConstants.LIST_JOBS;

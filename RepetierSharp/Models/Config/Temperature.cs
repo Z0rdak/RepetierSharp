@@ -5,10 +5,10 @@ namespace RepetierSharp.Config
     public class Temperature
     {
         [JsonPropertyName("name")]
-        public string Name { get; }
+        public string Name { get; set; }
 
         [JsonPropertyName("temp")]
-        public int Temp { get; }
+        public int Temp { get; set; }
     }
 
 }

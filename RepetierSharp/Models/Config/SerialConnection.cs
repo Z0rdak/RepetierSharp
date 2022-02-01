@@ -5,19 +5,19 @@ namespace RepetierSharp.Config
     public class SerialConnection
     {
         [JsonPropertyName("baudrate")]
-        public int Baudrate { get; }
+        public int Baudrate { get; set; }
 
         [JsonPropertyName("device")]
-        public string Device { get; }
+        public string Device { get; set; }
 
         [JsonPropertyName("inputBufferSize")]
-        public int InputBufferSize { get; }
+        public int InputBufferSize { get; set; }
 
         [JsonPropertyName("pingPong")]
-        public bool PingPong { get; }
+        public bool PingPong { get; set; }
 
         [JsonPropertyName("protocol")]
-        public int Protocol { get; }
+        public int Protocol { get; set; }
     }
 
 }

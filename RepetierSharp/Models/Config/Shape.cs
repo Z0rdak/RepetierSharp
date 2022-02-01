@@ -6,16 +6,16 @@ namespace RepetierSharp.Config
     public class Shape
     {
         [JsonPropertyName("basicShape")]
-        public BasicShape BasicShape { get; }
+        public BasicShape BasicShape { get; set; }
 
         [JsonPropertyName("gridColor")]
-        public string GridColor { get; }
+        public string GridColor { get; set; }
 
         [JsonPropertyName("gridSpacing")]
-        public int GridSpacing { get; }
+        public int GridSpacing { get; set; }
 
         [JsonPropertyName("marker")]
-        public List<object> Marker { get; }
+        public List<object> Marker { get; set; }
     }
 
 }

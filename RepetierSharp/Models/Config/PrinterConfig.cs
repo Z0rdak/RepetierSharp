@@ -9,28 +9,28 @@ namespace RepetierSharp.Config
     public class PrinterConfig : IRepetierEvent
     {
         [JsonPropertyName("connection")]
-        public Connection Connection { get; }
+        public Connection Connection { get; set; }
 
         [JsonPropertyName("extruders")]
-        public List<Extruder> Extruders { get; }
+        public List<Extruder> Extruders { get; set; }
 
         [JsonPropertyName("general")]
-        public General General { get; }
+        public General General { get; set; }
 
         [JsonPropertyName("heatedBed")]
-        public HeatedBed HeatedBed { get; }
+        public HeatedBed HeatedBed { get; set; }
 
         [JsonPropertyName("movement")]
-        public Movement Movement { get; }
+        public Movement Movement { get; set; }
 
         [JsonPropertyName("quickCommands")]
-        public List<QuickCommand> QuickCommands { get; }
+        public List<QuickCommand> QuickCommands { get; set; }
 
         [JsonPropertyName("shape")]
-        public Shape Shape { get; }
+        public Shape Shape { get; set; }
 
         [JsonPropertyName("webcam")]
-        public Webcam Webcam { get; }
+        public Webcam Webcam { get; set; }
     }
 
 }

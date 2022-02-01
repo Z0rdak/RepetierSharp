@@ -9,28 +9,28 @@ namespace RepetierSharp.Models.Events
     public class MoveEvent : IRepetierEvent
     {
         [JsonPropertyName("x")]
-        public float X { get; }
+        public float X { get; set; }
 
         [JsonPropertyName("y")]
-        public float Y { get; }
+        public float Y { get; set; }
 
         [JsonPropertyName("z")]
-        public float Z { get; }
+        public float Z { get; set; }
 
         [JsonPropertyName("e")]
-        public float Exruder { get; }
+        public float Exruder { get; set; }
 
         /// <summary>
         /// mm/s
         /// </summary>
         [JsonPropertyName("speed")]
-        public float Speed { get; }
+        public float Speed { get; set; }
 
         /// <summary>
         /// relative (bool = true) = positions are relative
         /// </summary>
         [JsonPropertyName("relative")]
-        public bool RelativeMove { get; }
+        public bool RelativeMove { get; set; }
 
         public MoveEvent() { }
     }
