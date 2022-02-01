@@ -2,11 +2,12 @@
 
 namespace RepetierSharp.Models.Events
 {
-    public class JobStartedEvent : IRepetierEvent
+    [EventId("jobStarted")]
+    public class JobStarted : IRepetierEvent
     {
         [JsonPropertyName("start")]
         public long StartTime { get; set; }
 
-        public JobStartedEvent() { }
+        public JobStarted() { }
     }
 }

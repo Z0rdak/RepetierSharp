@@ -2,11 +2,12 @@
 
 namespace RepetierSharp.Models.Events
 {
-    public class LayerChangedEvent : IRepetierEvent
+    [EventId("layerChanged")]
+    public class LayerChanged : IRepetierEvent
     {
         [JsonPropertyName("layer")]
         public int Layer { get; set; }
 
-        public LayerChangedEvent() { }
+        public LayerChanged() { }
     }
 }

@@ -2,7 +2,8 @@
 
 namespace RepetierSharp.Models.Events
 {
-    public class TempChangeEvent : IRepetierEvent
+    [EventId("temp")]
+    public class Temp : IRepetierEvent
     {
         [JsonPropertyName("O")]
         public double Output { get; set; }
@@ -19,7 +20,7 @@ namespace RepetierSharp.Models.Events
         [JsonPropertyName("t")]
         public long Timestamp { get; set; }
 
-        public TempChangeEvent() { }
+        public Temp() { }
     }
 
 }

@@ -3,7 +3,8 @@ using System.Text.Json.Serialization;
 
 namespace RepetierSharp.Models.Events
 {
-    public class LogEvent : IRepetierEvent
+    [EventId("log")]
+    public class Log : IRepetierEvent
     {
         [JsonPropertyName("id")]
         public int Id { get; set; }
@@ -17,7 +18,7 @@ namespace RepetierSharp.Models.Events
         [JsonPropertyName("type")]
         public LogType LogType { get; set; }
 
-        public LogEvent() { }
+        public Log() { }
     }
 
 }

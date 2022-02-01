@@ -2,11 +2,12 @@
 
 namespace RepetierSharp.Models.Events
 {
-    public class LoginRequiredEvent : IRepetierEvent
+    [EventId("loginRequired")]
+    public class LoginRequired : IRepetierEvent
     {
         [JsonPropertyName("session")]
         public string SessionId { get; set; }
-        public LoginRequiredEvent() { }
+        public LoginRequired() { }
     }
 
 }

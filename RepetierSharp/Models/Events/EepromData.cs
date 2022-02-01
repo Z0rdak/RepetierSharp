@@ -5,7 +5,8 @@ using System.Text.Json.Serialization;
 
 namespace RepetierSharp.Models.Events
 {
-    public class EepromDataEvent : IRepetierEvent
+    [EventId("eepromData")]
+    public class EepromData : IRepetierEvent
     {
         [JsonPropertyName("pos")]
         public string Pos { get; set; }
@@ -22,6 +23,6 @@ namespace RepetierSharp.Models.Events
         [JsonPropertyName("valueOrig")]
         public string ValueOrig { get; set; }
 
-        public EepromDataEvent() { }
+        public EepromData() { }
     }
 }

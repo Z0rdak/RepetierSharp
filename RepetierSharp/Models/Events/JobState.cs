@@ -2,7 +2,8 @@
 
 namespace RepetierSharp.Models.Events
 {
-    public class JobKilledEvent : IRepetierEvent
+    [EventId("jobKilled", "jobDeactivated", "jobFinished")]
+    public class JobState : IRepetierEvent
     {
         [JsonPropertyName("start")]
         public long StartTime { get; set; }
@@ -16,6 +17,6 @@ namespace RepetierSharp.Models.Events
         [JsonPropertyName("lines")]
         public uint PrintedLines { get; set; }
 
-        public JobKilledEvent() { }
+        public JobState() { }
     }
 }

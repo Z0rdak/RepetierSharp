@@ -4,12 +4,13 @@ using System.Text.Json.Serialization;
 
 namespace RepetierSharp.Models.Events
 {
-    public class PrinterListChangedEvent : IRepetierEvent
+    [EventId("printerListChanged")]
+    public class PrinterListChanged : IRepetierEvent
     {
         [JsonPropertyName("data")]
         public List<Printer> Printers { get; set; } = new List<Printer>();
 
-        public PrinterListChangedEvent() { }
+        public PrinterListChanged() { }
         // Payload: List of printers like in listPrinters response.
     }
 

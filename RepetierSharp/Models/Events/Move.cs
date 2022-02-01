@@ -5,8 +5,8 @@ using System.Text.Json.Serialization;
 
 namespace RepetierSharp.Models.Events
 {
-    // TODO: SendMoves & hiveMoves commands
-    public class MoveEvent : IRepetierEvent
+    [EventId("move")]
+    public class Move : IRepetierEvent
     {
         [JsonPropertyName("x")]
         public float X { get; set; }
@@ -32,6 +32,6 @@ namespace RepetierSharp.Models.Events
         [JsonPropertyName("relative")]
         public bool RelativeMove { get; set; }
 
-        public MoveEvent() { }
+        public Move() { }
     }
 }
