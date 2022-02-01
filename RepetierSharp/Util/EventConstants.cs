@@ -6,6 +6,16 @@ namespace RepetierSharp.Models.Events
 {
     public static class EventConstants
     {
+
+        public static readonly Dictionary<string, Type> EventMap = new Dictionary<string, Type>()
+        {
+            ["log"] = typeof(Log),
+            ["move"] = typeof(Move),
+            ["layerChanged"] = typeof(LayerChanged)
+        };
+
+
+        public const string LAYER_CHANGED = "layerChanged";
         public const string LOGIN_REQUIRED = "loginRequired";
         public const string LOGOUT = "logout";
         public const string USER_CREDENTIALS = "userCredentials";
@@ -33,6 +43,7 @@ namespace RepetierSharp.Models.Events
         public const string CHANGE_FILAMENT_REQUESTED = "changeFilamentRequested";
         public const string REMOTE_SERVERS_CHANGED = "remoteServersChanged";
         public const string GET_EXTERNAL_LINKS = "getExternalLinks";
+        public const string UPDATE_PRINTER_STATE = "updatePrinterState";
 
         public const string TIMER_30 = "timer30";
         public const string TIMER_60 = "timer60";
