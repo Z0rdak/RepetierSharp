@@ -53,7 +53,8 @@ namespace RepetierSharp
                 return this;
             }
 
-            public RepetierConnectionBuilder WithTls(bool useTls = true)
+            // TODO: seems to not be supported
+            private RepetierConnectionBuilder WithTls(bool useTls = true)
             {
                 _repetierConnection.UseTls = useTls;
                 return this;
