@@ -41,11 +41,11 @@ Simply start by creating an instance of the `RepetierConnection` class. To estab
 The most basic configuration to setup a working `RepetierConnection` looks like this:
 
 ```csharp
-	RepetierConnection rc = new RepetierConnectionBuilder()
-		.WithHost("demo.repetier-server.com", 4000)
-		.Build();
+RepetierConnection rc = new RepetierConnectionBuilder()
+	.WithHost("demo.repetier-server.com", 4000)
+	.Build();
 
-	rc.Connect();
+rc.Connect();
 ```
 
 This gives you access to the repetier server with the global user profile.
@@ -73,6 +73,26 @@ rc.Connect();
 ```
 When both, API-Key and user credentials are supplied, the last option will be used.
 
+### More examples
+
+Create a connection, register and event handler for successfull connection, which activates the printer with the slug "Delta" and enqueues and starts the job with the id 6.
+
+```csharp
+RepetierConnection rc = new RepetierConnectionBuilder()
+	.WithHost("demo.repetier-server.com", 4000)
+	.WithApiKey("6ed22859-9e72-4f24-928f-0430ef08e3b9")
+	.Build();
+
+rc.OnRepetierConnected += () =>
+{
+	Console.WriteLine("Connected!");
+	rc.ActivatePrinter("Delta");
+	rc.EnqueueJob(6);
+};
+
+rc.Connect();
+```
+
 ## Features
 
 The following commands and events are named after the Repetier Server commands/events from the API documentation
@@ -82,10 +102,10 @@ At the moment RepetierSharp supports the following features:
 
 To get notified about repetier events it is possible to register and event handler like this:
 ```csharp
-	rc.OnRepetierEvent += (eventName, printer, eventData) => 
-	{
-		// handle events
-	};
+rc.OnEvent += (eventName, printer, eventData) => 
+{
+	// handle event
+};
 ```
 
 Where `eventData` is a `IRepetierEvent` instance. The `eventName` can be used to determine the event and cast the event data to the corresponding type provided in the RepetierSharp namespace.
@@ -100,8 +120,6 @@ At the moment the following repetier events are supported:
 - userCredentials
 - printerListChanged
 - messagesChanged
-- move
-- log
 - jobFinished
 - jobKilled
 - jobStarted
@@ -124,15 +142,25 @@ At the moment the following repetier events are supported:
 - getExternalLinks
   </details>
 
+Since there are many events and serialization for all events is still not implemented RepetierSharp also provides an event handler for the raw event data:
+
+```csharp
+rc.OnRawEvent += (eventName, printer, eventData) => 
+{
+	// handle eventData
+};
+```
+
+Where `eventData` is of type `byte[]` and contains the data from the `data` field of the event from original json sent by the server (see [documentation](https://prgdoc.repetier-server.com/v1/docs/index.html#/en/web-api/websocket/events)). 
 
 ### Commands
 
 To get responses for the sent commands it is possible to register event handler similar as for the events:
 ```csharp
-	rc.OnResponse += (callbackId, command, response) =>
-	{
-		// handle response
-	};
+rc.OnResponse += (callbackId, command, response) =>
+{
+	// handle response
+};
 ```
 
 Where `callbackId` is the id corresponding to the sent command, `command` is the name of the command and `response` of the type `IRepetierMessage` is the actual response data. This data can be cast to the corresponding type by determining the command and using the provided types within the namespace - analogous to the events.
@@ -146,7 +174,6 @@ At the moment the following commands (inclusive responses) are suppored:
 - logout
 - listPrinter
 - stateList
-- response
 - messages
 - listModels
 - listJobs
@@ -167,6 +194,17 @@ At the moment the following commands (inclusive responses) are suppored:
 - continueJob
 </details>
 
+Analogous to the events there are many commands and serialization for all is not yet implemented. Therefore RepetierSharp also provides an event handler for the raw command response data:
+
+```csharp
+rc.OnRawResponse += (callbackId, command, responseData) => 
+{
+	// handle command response
+};
+```
+
+Where `responseData` is of type `byte[]` and contains the data from the `data` field of the command from original json sent by the server (see [documentation](https://prgdoc.repetier-server.com/v1/docs/index.html#/en/web-api/websocket/index)). 
+
 ### REST-API
 
 Additionally there are some functions levering the REST-API directly:
@@ -174,12 +212,12 @@ Additionally there are some functions levering the REST-API directly:
 - To start a print directly use:
 
 ```csharp
-	rc.UploadAndStartPrint("/path/to/gcode/file.gcode", "printerSlug");
+rc.UploadAndStartPrint("/path/to/gcode/file.gcode", "printerSlug");
 ```
 - or just upload a gcode file by using:
 
 ```csharp
-	rc.UploadGCode("/path/to/gcode/file.gcode", "group", "printerSlug");
+rc.UploadGCode("/path/to/gcode/file.gcode", "group", "printerSlug");
 ```
 
 ### Event handler
@@ -234,7 +272,7 @@ In line 4 the command `updateAvailable` is added to the 1 hour timer queue so ev
 
 ## Documentation
 
-TODO: Wiki
+TBD
 
 ## Roadmap
 
