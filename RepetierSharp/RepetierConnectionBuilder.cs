@@ -47,7 +47,7 @@ namespace RepetierSharp
                 return this;
             }
 
-            public RepetierConnectionBuilder UseLang(string lang = "US")
+            public RepetierConnectionBuilder UseLang(string lang = "en")
             {
                 _repetierConnection.LangKey = lang;
                 return this;
