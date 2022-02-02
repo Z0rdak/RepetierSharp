@@ -25,7 +25,7 @@ namespace RepetierSharp.Models.Commands
         public const string JOB_INFO = "jobInfo";
         public const string START_JOB = "startJob";
         public const string STOP_JOB = "stopJob";
-        public const string CONTINUE_JOB = "continuejob";
+        public const string CONTINUE_JOB = "continueJob";
         public const string REMOVE_JOB = "removeJob";
         public const string GET_PRINTER_CONFIG = "getPrinterConfig";
         public const string SET_PRINTER_CONFIG = "setPrinterConfig";
