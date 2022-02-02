@@ -6,7 +6,7 @@ namespace RepetierSharp.Config
     public class Extruder
     {
         [JsonPropertyName("acceleration")]
-        public int Acceleration { get; set; }
+        public double Acceleration { get; set; }
 
         [JsonPropertyName("cooldownPerSecond")]
         public double CooldownPerSecond { get; set; }
