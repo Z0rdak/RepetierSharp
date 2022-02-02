@@ -3,9 +3,11 @@ using MQTTnet.Client;
 using MQTTnet.Client.Connecting;
 using MQTTnet.Client.Options;
 using MQTTnet.Protocol;
+using RepetierSharp.Models.Commands;
 using RepetierSharp.RepetierMqtt.Util;
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -67,9 +69,9 @@ namespace RepetierSharp.RepetierMqtt
                 return this;
             }
 
-            public RepetierMqttClientBuilder WithSubscription(string topic, Action action)
+            public RepetierMqttClientBuilder WithSubscription(string topic, string command)
             {
-                _repetierMqttClient.TopicActions.Add(topic, action);
+                _repetierMqttClient.TopicActions.Add(topic, command);
                 return this;
             }
 
@@ -105,6 +107,7 @@ namespace RepetierSharp.RepetierMqtt
                     _repetierMqttClient.MqttClientOptions = MqttOptionsProvider.DefaultMqttClientOptions;
                 }
 
+                // create subscriptions
                 if (!string.IsNullOrEmpty(_repetierMqttClient.BaseTopic))
                 {
                     _repetierMqttClient.Topics.ForEach(topic =>
@@ -138,23 +141,29 @@ namespace RepetierSharp.RepetierMqtt
                     }
                 });
 
+                _repetierMqttClient.RepetierConnection.OnResponse += async (callbackID, command, response) =>
+                {
+                    // TODO: check mapping and publish response
+                    if (_repetierMqttClient.TopicActions.TryGetValue(command, out var topic))
+                    {
+                        // map for serialization? include printer? placeholder for printer?
+                        await _repetierMqttClient.MqttClient.PublishAsync(topic, Encoding.UTF8.GetBytes(""));
+                    }
+                };
+
+                _repetierMqttClient.RepetierConnection.OnEvent += async (eventName, printer, eventData) =>
+                {
+                    // TODO: check mapping and publish eventData
+                    if(_repetierMqttClient.TopicsForEvents.TryGetValue(eventName, out var topic))
+                    {
+                        // map for serialization? include printer? placeholder for printer?
+                        await _repetierMqttClient.MqttClient.PublishAsync(topic, Encoding.UTF8.GetBytes(""));
+                    }
+                };
+
                 _repetierMqttClient.MqttClient.UseApplicationMessageReceivedHandler(async e =>
                 {
-
-                    foreach (var (topic, action) in _repetierMqttClient.TopicActions)
-                    {
-                        // TODO:
-                    }
-
-
-                    foreach (var (topic, action) in _repetierMqttClient.TopicsForEvents)
-                    {
-                        // TODO:
-                    }
-
-
-
-                    await _repetierMqttClient.MqttClient.PublishAsync("");
+                    
                 });
 
                 return _repetierMqttClient;
@@ -168,7 +177,10 @@ namespace RepetierSharp.RepetierMqtt
 
         private List<string> Topics { get; set; } = new List<string>();
 
-        private Dictionary<string, Action> TopicActions { get; set; } = new Dictionary<string, Action>();
+        private Dictionary<string, string> TopicActions { get; set; } = new Dictionary<string, string>();
+
+        // Topic -> Command to execute
+        private Dictionary<string, ICommandData> CommandMapping { get; set; } = new Dictionary<string, ICommandData>();
 
         /// <summary>
         /// TODO: add QOS?

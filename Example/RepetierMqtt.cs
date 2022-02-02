@@ -7,6 +7,7 @@ using System.Text;
 using static RepetierSharp.RepetierConnection;
 using static RepetierSharp.RepetierMqtt.RepetierMqttClient;
 using static RepetierSharp.Extentions.RepetierConnectionExtentions;
+using RepetierSharp.Models.Events;
 
 namespace RepetierSharp.Example
 {
@@ -14,12 +15,31 @@ namespace RepetierSharp.Example
     {
         public static void Main(string[] args)
         {
-            var RepetierConnection = new RepetierConnectionBuilder()
-                .WithHost("localhost", 3344)                
-                .WithApiKey("api-key")
+            RepetierConnection rc = new RepetierConnectionBuilder()
+                .WithHost("demo.repetier-server.com", 4006)
+                .WithApiKey("7075e377-7472-447a-b77e-86d481995e7b")
+                .QueryPrinterInterval(RepetierTimer.Timer60)
+                .QueryStateInterval(RepetierTimer.Timer30)
                 .Build();
 
-            RepetierConnection.Connect();
+            rc.Connect();
+
+
+            rc.OnEvent += (string eventName, string printer, IRepetierEvent eventData) =>
+            {
+                if (!(eventName == "temp"))
+                {
+                    Console.WriteLine($"Event={eventName}, Printer={printer}");
+                }
+
+            };
+
+            rc.OnResponse += (id, command, response) =>
+            {
+                Console.WriteLine($"Receive [{id}]: {command}");
+            };
+
+
 
             var topics = new List<MqttTopicFilter>{
                 new MqttTopicFilterBuilder()
@@ -29,18 +49,19 @@ namespace RepetierSharp.Example
             };
 
             var MqttClient = new RepetierMqttClientBuilder()
-                .WithRepetierConnection(RepetierConnection)
+                .WithRepetierConnection(rc)
                 .WithBaseTopic("RepetierMqtt/Test")
                 .WithMqttClientOptions(MqttOptionsProvider.DefaultMqttClientOptions)
                 .DefaultQoSLevel(MqttQualityOfServiceLevel.ExactlyOnce)
                 .WithReconnectDelay(1000)
-                .WithSubscription("Hallo/Welt", () => Console.WriteLine("Hallo Welt!"))
+                .WithSubscription("Hallo/Welt", "ping")
                 .WithSubscriptions(new List<string> { "Test", "Test1", "Test2" })
                 .WithSubscriptions(topics)
                 .Build();
 
             MqttClient.Connect();
 
+            
       
         }
     }
