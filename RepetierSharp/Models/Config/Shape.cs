@@ -28,13 +28,13 @@ namespace RepetierSharp.Config
         public string Color { get; set; }
 
         [JsonPropertyName("radius")]
-        public int Radius { get; set; }
+        public double Radius { get; set; }
 
         [JsonPropertyName("shape")]
         public string Shape { get; set; }
 
         [JsonPropertyName("x")]
-        public int X { get; set; }
+        public double X { get; set; }
 
         [JsonPropertyName("xMax")]
         public double XMax { get; set; }
@@ -43,7 +43,7 @@ namespace RepetierSharp.Config
         public double XMin { get; set; }
 
         [JsonPropertyName("y")]
-        public int Y { get; set; }
+        public double Y { get; set; }
 
         [JsonPropertyName("yMax")]
         public double YMax { get; set; }
