@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace RepetierSharp.Config
 {
+    // TODO: base class for extruder, bed and chamber
     public class Extruder
     {
         [JsonPropertyName("acceleration")]
