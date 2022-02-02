@@ -82,7 +82,7 @@ namespace RepetierSharp
         public event JobStartedReceivedHandler OnJobStarted;
         public delegate void JobStartedReceivedHandler(string printer, JobStarted jobStarted);
 
-        public event JobStartFailedHandler OnJobStartFailed;
+        public event JobStartFailedHandler OnRESTCallFailed;
         public delegate void JobStartFailedHandler(string printer, IRestResponse response);
 
         public event JobKilledReceivedHandler OnJobKilled;
@@ -133,7 +133,8 @@ namespace RepetierSharp
         public delegate void CommandResponseReceived(int callbackID, string command, IRepetierMessage message);
 
         /// <summary>
-        /// 
+        /// Fired whenever a event from the repetier server is received. 
+        /// The payload is the raw event itself (content of the data field of the json from the documentation).
         /// </summary>
         /// <param name="eventName"> Name of the received event </param>
         /// <param name="printer"> Printer associated with the event or empty if global </param>
@@ -142,7 +143,8 @@ namespace RepetierSharp
         public event RawRepetierEventReceived OnRawRepetierEvent;
 
         /// <summary>
-        /// 
+        /// Fired whenever a command response from the repetier server is received. 
+        /// The payload is the raw response itself (content of the data field of the json from the documentation).
         /// </summary>
         /// <param name="callbackID"> CallBackId to identify the received command response </param>
         /// <param name="command"> Name of the command associated with the received response </param>
@@ -295,12 +297,17 @@ namespace RepetierSharp
         private IRestRequest StartPrintRequest(string gcodeFilePath, string printerName)
         {
             var GCODEFileName = Path.GetFileNameWithoutExtension(gcodeFilePath);
-            var request = new RestRequest($"/printer/{printerName}", Method.POST)
-                .AddFile("gcode", GCODEFileName)
+            var request = new RestRequest($"/printer/job/{printerName}", Method.POST)
+                .AddFile("gcode", gcodeFilePath)
                 .AddHeader("Content-Type", "multipart/form-data")
                 .AddParameter("a", "upload")
                 .AddParameter("sess", SessionId)
                 .AddParameter("name", GCODEFileName);
+            return WithApiKeyHeader(request);
+        }
+
+        private IRestRequest WithApiKeyHeader(IRestRequest request)
+        {
             if (AuthType == AuthenticationType.ApiKey)
             {
                 request = request.AddHeader("x-api-key", ApiKey);
@@ -308,50 +315,63 @@ namespace RepetierSharp
             return request;
         }
 
-        // TODO: Test
+        /// <summary>
+        /// Create a REST request for uploading a gcode file
+        /// </summary>
+        /// <param name="gcodeFilePath"> The path of the file to upload (/path/file.gcode) </param>
+        /// <param name="printer"> Printer slug to upload to </param>
+        /// <param name="group"> Group to add gcode to </param>
+        /// <param name="overwrite"> Flag to overwrite existing file with the same name </param>
+        /// <returns></returns>
         private IRestRequest UploadModel(string gcodeFilePath, string printer, string group, bool overwrite = false)
         {
             var GCODEFileName = Path.GetFileNameWithoutExtension(gcodeFilePath);
             var request = new RestRequest($"/printer/model/{printer}", Method.POST)
-                .AddFile("gcode", GCODEFileName)
+                .AddFile("gcode", gcodeFilePath)
                 .AddHeader("Content-Type", "multipart/form-data")
                 .AddParameter("a", "upload")
                 .AddParameter("sess", SessionId)
                 .AddParameter("group", group)
                 .AddParameter("overwrite", overwrite)
                 .AddParameter("name", GCODEFileName);
-            if (AuthType == AuthenticationType.ApiKey)
-            {
-                request = request.AddHeader("x-api-key", ApiKey);
-            }
-            return request;
+            return WithApiKeyHeader(request);
         }
 
-        private IRestRequest StartPrintRequest(string gcodeFilePath)
-        {
-            return StartPrintRequest(gcodeFilePath, ActivePrinter);
-        }
-
+        /// <summary>
+        /// Upload a gcode file via REST API
+        /// </summary>
+        /// <param name="gcodeFilePath"> The path of the file to upload (/path/file.gcode) </param>
+        /// <param name="printer"> Printer slug to upload to </param>
+        /// <param name="group"> Group to add gcode to </param>
+        /// <param name="overwrite"> Flag to overwrite existing file with the same name </param>
         public void UploadGCode(string gcodeFilePath, string group, string printer, bool overwrite = false)
         {
+            // TODO: Event
+            /*
+             * [gcodeInfoUpdated@Delta]: {"data":{"list":"models","modelId":18,"modelPath":"/home/demorepetier/storage/7/printer/Delta/models/00000018_Fuss_0.2mm_ABS_EL-11_2h24m.gin","slug":"Delta"},"event":"gcodeInfoUpdated","printer":"Delta"}
+             */
             try
             {
                 var request = UploadModel(gcodeFilePath, printer, group, overwrite);
                 var Response = RestClient.Execute(request);
-                if (Response.StatusCode != HttpStatusCode.OK)
-                {
-                    // TODO event 
-                    return;
-                }
-                if (Response.ErrorException != null)
-                {
-                    throw new Exception($"Exception in UploadGCode: {Response.ErrorException.Message}");
-                }
+                HandleRestResponse(Response, printer);
             }
             catch (Exception ex)
             {
-                // TODO: event?
                 Console.Error.WriteLine($"{ex}");
+            }
+        }
+        
+        private void HandleRestResponse(IRestResponse response, string printer)
+        {
+            if (response.StatusCode != HttpStatusCode.OK)
+            {
+                OnRESTCallFailed?.Invoke(printer, response);
+                return;
+            }
+            if (response.ErrorException != null)
+            {
+                throw new Exception($"Exception executing RestRequest: {response.ErrorException.Message}");
             }
         }
 
@@ -361,23 +381,15 @@ namespace RepetierSharp
         /// <param name="GCODEFilePath"></param>
         public void UploadAndStartPrint(string GCODEFilePath, string printer)
         {
+            // FIXME: does not work?
             try
             {
                 var request = StartPrintRequest(GCODEFilePath, printer);
                 var Response = RestClient.Execute(request);
-                if (Response.StatusCode != HttpStatusCode.OK)
-                {
-                    OnJobStartFailed?.Invoke(printer, Response);
-                    return;
-                }
-                if (Response.ErrorException != null)
-                {
-                    throw new Exception($"Exception in UploadAndStartPrinting: {Response.ErrorException.Message}");
-                }
+                HandleRestResponse(Response, printer);
             }
             catch (Exception ex)
             {
-                // TODO: event?
                 Console.Error.WriteLine($"{ex}");
             }
         }
@@ -505,20 +517,202 @@ namespace RepetierSharp
             var eventData = dataJsonObject.GetRawText();
             repetierEvent.Data = Encoding.UTF8.GetBytes(dataJsonObject.GetRawText());
 
+
+            // TODO: event updatePrinterState
+            #region event comment updatePrinterState
+            /* 
+             * {
+    "callback_id": -1,
+    "data": [
+        {
+            "data": {
+                "activeExtruder": 0,
+                "autostartNextPrint": false,
+                "debugLevel": 6,
+                "doorOpen": false,
+                "extruder": [
+                    {
+                        "error": 0,
+                        "output": 39.2156867980957,
+                        "tempRead": 200.0,
+                        "tempSet": 200.0
+                    },
+                    {
+                        "error": 0,
+                        "output": 0.0,
+                        "tempRead": 20.0,
+                        "tempSet": 0.0
+                    }
+                ],
+                "fans": [
+                    {
+                        "on": false,
+                        "voltage": 0
+                    }
+                ],
+                "filterFan": false,
+                "firmware": "Repetier_0.92.6",
+                "firmwareURL": "https://github.com/repetier/Repetier-Firmware/",
+                "flowMultiply": 100,
+                "hasXHome": true,
+                "hasYHome": true,
+                "hasZHome": true,
+                "heatedBeds": [
+                    {
+                        "error": 0,
+                        "output": 0.0,
+                        "tempRead": 20.0,
+                        "tempSet": 0.0
+                    }
+                ],
+                "heatedChambers": [],
+                "layer": 0,
+                "lights": 0,
+                "notification": "",
+                "numExtruder": 2,
+                "powerOn": true,
+                "rec": false,
+                "sdcardMounted": true,
+                "shutdownAfterPrint": false,
+                "speedMultiply": 100,
+                "volumetric": false,
+                "x": 126.20200347900391,
+                "y": 106.04100036621089,
+                "z": 5.1999998092651367
+            },
+            "event": "updatePrinterState",
+            "printer": "Cartesian"
+        },
+        {
+            "data": {
+                "activeExtruder": 0,
+                "autostartNextPrint": false,
+                "debugLevel": 6,
+                "doorOpen": false,
+                "extruder": [
+                    {
+                        "error": 0,
+                        "output": 39.2156867980957,
+                        "tempRead": 200.0,
+                        "tempSet": 200.0
+                    },
+                    {
+                        "error": 0,
+                        "output": 0.0,
+                        "tempRead": 20.0,
+                        "tempSet": 0.0
+                    }
+                ],
+                "fans": [
+                    {
+                        "on": false,
+                        "voltage": 0
+                    }
+                ],
+                "filterFan": false,
+                "firmware": "Repetier_0.92.6",
+                "firmwareURL": "https://github.com/repetier/Repetier-Firmware/",
+                "flowMultiply": 100,
+                "hasXHome": true,
+                "hasYHome": true,
+                "hasZHome": true,
+                "heatedBeds": [
+                    {
+                        "error": 0,
+                        "output": 0.0,
+                        "tempRead": 20.0,
+                        "tempSet": 0.0
+                    }
+                ],
+                "heatedChambers": [],
+                "layer": 0,
+                "lights": 0,
+                "notification": "",
+                "numExtruder": 2,
+                "powerOn": true,
+                "rec": false,
+                "sdcardMounted": true,
+                "shutdownAfterPrint": false,
+                "speedMultiply": 100,
+                "volumetric": false,
+                "x": 126.20200347900391,
+                "y": 106.04100036621089,
+                "z": 5.1999998092651367
+            },
+            "event": "updatePrinterState",
+            "printer": "Cartesian"
+        },
+        {
+            "data": {
+                "activeExtruder": 0,
+                "autostartNextPrint": false,
+                "debugLevel": 6,
+                "doorOpen": false,
+                "extruder": [
+                    {
+                        "error": 0,
+                        "output": 39.2156867980957,
+                        "tempRead": 200.0,
+                        "tempSet": 200.0
+                    },
+                    {
+                        "error": 0,
+                        "output": 0.0,
+                        "tempRead": 20.0,
+                        "tempSet": 0.0
+                    }
+                ],
+                "fans": [
+                    {
+                        "on": false,
+                        "voltage": 0
+                    }
+                ],
+                "filterFan": false,
+                "firmware": "Repetier_0.92.6",
+                "firmwareURL": "https://github.com/repetier/Repetier-Firmware/",
+                "flowMultiply": 100,
+                "hasXHome": true,
+                "hasYHome": true,
+                "hasZHome": true,
+                "heatedBeds": [
+                    {
+                        "error": 0,
+                        "output": 0.0,
+                        "tempRead": 20.0,
+                        "tempSet": 0.0
+                    }
+                ],
+                "heatedChambers": [],
+                "layer": 0,
+                "lights": 0,
+                "notification": "",
+                "numExtruder": 2,
+                "powerOn": true,
+                "rec": false,
+                "sdcardMounted": true,
+                "shutdownAfterPrint": false,
+                "speedMultiply": 100,
+                "volumetric": false,
+                "x": 0.0,
+                "y": 0.0,
+                "z": 20.0
+            },
+            "event": "updatePrinterState",
+            "printer": "Cartesian"
+        }
+    ],
+    "eventList": true
+}
+             */
+            #endregion
+
             switch (repetierEvent.Event)
             {
                 case EventConstants.JOBS_CHANGED:
                     OnRepetierEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, null);
                     this.ActivePrinter = repetierEvent.Printer;
                     break;
-
-                /*
-                 * {"callback_id":-1,"data":[{"data":{"activeExtruder":0,"autostartNextPrint":false,"debugLevel":6,"doorOpen":false,"extruder":[{"error":0,"output":39.2156867980957,"tempRead":200.0,"tempSet":200.0},{"error":0,"output":0.0,"tempRead":20.0,"tempSet":0.0}],"fans":[{"on":false,"voltage":0}],"filterFan":false,"firmware":"Repetier_0.92.6","firmwareURL":"https://github.com/repetier/Repetier-Firmware/","flowMultiply":100,"hasXHome":true,"hasYHome":true,"hasZHome":true,"heatedBeds":[{"error":0,"output":0.0,"tempRead":20.0,"tempSet":0.0}],"heatedChambers":[],"layer":0,"lights":0,"notification":"","numExtruder":2,"powerOn":true,"rec":false,"sdcardMounted":true,"shutdownAfterPrint":false,"speedMultiply":100,"volumetric":false,"x":126.2020034790039,"y":106.0410003662109,"z":5.199999809265137},"event":"updatePrinterState","printer":"Cartesian"},{"data":{"activeExtruder":0,"autostartNextPrint":false,"debugLevel":6,"doorOpen":false,"extruder":[{"error":0,"output":39.2156867980957,"tempRead":200.0,"tempSet":200.0},{"error":0,"output":0.0,"tempRead":20.0,"tempSet":0.0}],"fans":[{"on":false,"voltage":0}],"filterFan":false,"firmware":"Repetier_0.92.6","firmwareURL":"https://github.com/repetier/Repetier-Firmware/","flowMultiply":100,"hasXHome":true,"hasYHome":true,"hasZHome":true,"heatedBeds":[{"error":0,"output":0.0,"tempRead":20.0,"tempSet":0.0}],"heatedChambers":[],"layer":0,"lights":0,"notification":"","numExtruder":2,"powerOn":true,"rec":false,"sdcardMounted":true,"shutdownAfterPrint":false,"speedMultiply":100,"volumetric":false,"x":126.2020034790039,"y":106.0410003662109,"z":5.199999809265137},"event":"updatePrinterState","printer":"Cartesian"},{"data":{"activeExtruder":0,"autostartNextPrint":false,"debugLevel":6,"doorOpen":false,"extruder":[{"error":0,"output":39.2156867980957,"tempRead":200.0,"tempSet":200.0},{"error":0,"output":0.0,"tempRead":20.0,"tempSet":0.0}],"fans":[{"on":false,"voltage":0}],"filterFan":false,"firmware":"Repetier_0.92.6","firmwareURL":"https://github.com/repetier/Repetier-Firmware/","flowMultiply":100,"hasXHome":true,"hasYHome":true,"hasZHome":true,"heatedBeds":[{"error":0,"output":0.0,"tempRead":20.0,"tempSet":0.0}],"heatedChambers":[],"layer":0,"lights":0,"notification":"","numExtruder":2,"powerOn":true,"rec":false,"sdcardMounted":true,"shutdownAfterPrint":false,"speedMultiply":100,"volumetric":false,"x":0.0,"y":0.0,"z":20.0},"event":"updatePrinterState","printer":"Cartesian"}],"eventList":true}
-                 * 
-                 * dispatcherCount
-                 * 
-                 */
-
                 case EventConstants.TIMER_30:
                 case EventConstants.TIMER_60:
                 case EventConstants.TIMER_300:
@@ -558,10 +752,16 @@ namespace RepetierSharp
                     var printerListChangedEvent = JsonSerializer.Deserialize<PrinterListChanged>(eventAsJson);
                     OnPrinterListChanged?.Invoke(printerListChangedEvent.Printers);
                     OnRepetierEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, printerListChangedEvent);
+                    /* 
+                    var printerList = JsonSerializer.Deserialize<Printer[]>(eventAsJson);
+                    var printerListChangedEvent = new PrinterListChanged() { Printers = new List<Printer>(printerList) };
+                    OnPrinterListChanged?.Invoke(new List<Printer>(printerList));
+                    OnRepetierEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, printerListChangedEvent);
+                    */
                     break;
                 case EventConstants.MESSAGES_CHANGED:
                     OnRepetierEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, null);
-                    SendCommand(MessagesCommand.Instance, typeof(MessagesCommand), repetierEvent.Printer);
+                    SendCommand(MessagesCommand.Instance, repetierEvent.Printer);
                     break;
                 case EventConstants.MOVE:
                     var moveEvent = JsonSerializer.Deserialize<Move>(eventData);
@@ -597,8 +797,309 @@ namespace RepetierSharp
                     OnRepetierEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, printerStateChangedEvent);
                     break;
                 case EventConstants.CONFIG:
-                    var printerConfigEvent = JsonSerializer.Deserialize<PrinterConfig>(eventData);
-                    OnRepetierEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, printerConfigEvent);
+                    #region config serialization
+                    //var printerConfigEvent = JsonSerializer.Deserialize<PrinterConfig>(eventData);
+                    /*
+                     * {
+    "buttonCommands": [
+        {
+            "command": "",
+            "name": "Auto Bed Leveling"
+        },
+        {
+            "command": "",
+            "name": "Home"
+        },
+        {
+            "command": "",
+            "name": "Home X"
+        },
+        {
+            "command": "",
+            "name": "Home Y"
+        },
+        {
+            "command": "",
+            "name": "Home Z"
+        },
+        {
+            "command": "",
+            "name": "Light Off"
+        },
+        {
+            "command": "",
+            "name": "Light On"
+        },
+        {
+            "command": "",
+            "name": "Motors Off"
+        },
+        {
+            "command": "",
+            "name": "Power Off"
+        },
+        {
+            "command": "",
+            "name": "Power On"
+        }
+    ],
+    "connection": {
+        "connectionMethod": 0,
+        "continueAfterFastReconnect": true,
+        "ip": {
+            "address": "",
+            "port": 23
+        },
+        "lcdTimeMode": 4,
+        "password": "",
+        "pipe": {
+            "file": ""
+        },
+        "powerOffIdleMinutes": 0,
+        "powerOffMaxTemperature": 50,
+        "resetScript": "",
+        "serial": {
+            "baudrate": 250000,
+            "communicationTimeout": 30.0,
+            "connectionDelay": 0,
+            "device": "VirtualCartesian",
+            "dtr": -1,
+            "emergencySolution": 0,
+            "inputBufferSize": 127,
+            "interceptor": true,
+            "malyanHack": false,
+            "maxParallelCommands": 0,
+            "pingPong": false,
+            "rts": -1,
+            "usbreset": 0,
+            "visibleWithoutRunning": false
+        }
+    },
+    "extruders": [
+        {
+            "acceleration": 10000.0,
+            "alias": "",
+            "changeFastDistance": 0.0,
+            "changeSlowDistance": 0.0,
+            "cooldownPerSecond": 0.5,
+            "eJerk": 50.0,
+            "extrudeSpeed": 2.0,
+            "filamentDiameter": 1.75,
+            "heatupPerSecond": 2.0,
+            "lastTemp": 235,
+            "maxSpeed": 100.0,
+            "maxTemp": 260,
+            "num": 0,
+            "offset": 0.0,
+            "offsetX": 0.0,
+            "offsetY": 0.0,
+            "retractSpeed": 30.0,
+            "supportTemperature": true,
+            "tempMaster": 0,
+            "temperatures": [
+                {
+                    "name": "ABS 245",
+                    "temp": 245.0
+                },
+                {
+                    "name": "PLA 210",
+                    "temp": 210.0
+                },
+                {
+                    "name": "PLA 195",
+                    "temp": 195.0
+                }
+            ],
+            "toolDiameter": 0.4,
+            "toolType": 0
+        },
+        {
+            "acceleration": 10000.0,
+            "alias": "",
+            "changeFastDistance": 0.0,
+            "changeSlowDistance": 0.0,
+            "cooldownPerSecond": 0.5,
+            "eJerk": 50.0,
+            "extrudeSpeed": 2.0,
+            "filamentDiameter": 1.75,
+            "heatupPerSecond": 2.0,
+            "lastTemp": 0,
+            "maxSpeed": 100.0,
+            "maxTemp": 260,
+            "num": 1,
+            "offset": 0.0,
+            "offsetX": 0.0,
+            "offsetY": 0.0,
+            "retractSpeed": 30.0,
+            "supportTemperature": true,
+            "tempMaster": 1,
+            "temperatures": [
+                {
+                    "name": "ABS 245",
+                    "temp": 245.0
+                },
+                {
+                    "name": "PLA 210",
+                    "temp": 210.0
+                },
+                {
+                    "name": "PLA 195",
+                    "temp": 195.0
+                }
+            ],
+            "toolDiameter": 0.4,
+            "toolType": 0
+        }
+    ],
+    "gcodeReplacements": [],
+    "general": {
+        "active": true,
+        "defaultVolumetric": false,
+        "doorHandling": 1,
+        "eepromType": "repetier",
+        "firmwareName": "Repetier-Firmware",
+        "g9091OverrideE": false,
+        "heatedBed": true,
+        "logHistory": true,
+        "manufacturer": "",
+        "model": "",
+        "name": "Cartesian",
+        "numFans": 1,
+        "pauseHandling": 0,
+        "pauseSeconds": 120,
+        "printerHomepage": "",
+        "printerManual": "",
+        "printerVariant": "cartesian",
+        "sdcard": false,
+        "slug": "Cartesian",
+        "softwareLight": false,
+        "softwarePower": false,
+        "tempUpdateEvery": 1,
+        "useModelFromSlug": "",
+        "useOwnModelRepository": true
+    },
+    "heatedBeds": [
+        {
+            "alias": "",
+            "cooldownPerSecond": 0.5,
+            "heatupPerSecond": 1.5,
+            "lastTemp": 88,
+            "maxTemp": 120,
+            "offset": 0,
+            "temperatures": [
+                {
+                    "name": "ABS",
+                    "temp": 115.0
+                },
+                {
+                    "name": "PLA",
+                    "temp": 50.0
+                }
+            ]
+        }
+    ],
+    "heatedChambers": [],
+    "movement": {
+        "G10Distance": 30.0,
+        "G10LongDistance": 20.0,
+        "G10Speed": 20.0,
+        "G10ZLift": 20.0,
+        "G11ExtraDistance": 0.0,
+        "G11ExtraLongDistance": 0.0,
+        "G11Speed": 20.0,
+        "allEndstops": true,
+        "autolevel": false,
+        "defaultAcceleration": 10000.0,
+        "defaultRetractAcceleration": 4000.0,
+        "defaultTravelAcceleration": 10000.0,
+        "invertX": false,
+        "invertY": false,
+        "invertZ": false,
+        "maxXYSpeed": 20000.0,
+        "maxZSpeed": 2.0,
+        "movebuffer": 24,
+        "timeMultiplier": 1.0,
+        "xEndstop": true,
+        "xHome": 0.0,
+        "xMax": 200.0,
+        "xMin": 0.0,
+        "xyJerk": 30.0,
+        "xyPrintAcceleration": 750.0,
+        "xySpeed": 100.0,
+        "xyTravelAcceleration": 750.0,
+        "yEndstop": true,
+        "yHome": 0.0,
+        "yMax": 200.0,
+        "yMin": 0.0,
+        "zEndstop": true,
+        "zHome": 0.0,
+        "zJerk": 0.3,
+        "zMax": 180.0,
+        "zMin": 0.0,
+        "zPrintAcceleration": 50.0,
+        "zSpeed": 2.0,
+        "zTravelAcceleration": 50.0
+    },
+    "properties": {},
+    "quickCommands": [],
+    "recover": {
+        "delayBeforeReconnect": 30,
+        "enabled": false,
+        "extraZOnFirmwareDetect": 0.0,
+        "firmwarePowerlossSignal": "",
+        "maxTimeForAutocontinue": 300,
+        "procedure": "G28 X0 Y0 R0",
+        "reactivateBedOnConnect": true,
+        "replayExtruderSwitches": false,
+        "runOnConnect": "G28 X0 Y0 R0"
+    },
+    "responseEvents": [],
+    "shape": {
+        "basicShape": {
+            "angle": 45.0,
+            "color": "#dddddd",
+            "radius": 100,
+            "shape": "rectangle",
+            "x": 0,
+            "xMax": 200.0,
+            "xMin": 0.0,
+            "y": 0,
+            "yMax": 200.0,
+            "yMin": 0.0
+        },
+        "gridColor": "#454545",
+        "gridSpacing": 10.0,
+        "marker": []
+    },
+    "webcams": [
+        {
+            "dynamicUrl": "Enter your dynamic image URL here",
+            "forceSnapshotPosition": false,
+            "method": 3,
+            "orientation": 0,
+            "pos": 0,
+            "reloadInterval": 10.0,
+            "snapshotDelay": 800,
+            "snapshotStabilizeTime": 50,
+            "snapshotX": 100.0,
+            "snapshotY": 200.0,
+            "staticUrl": "Enter your static image URL here",
+            "timelapseBitrate": 1000,
+            "timelapseFramerate": 30,
+            "timelapseHeight": 0.1,
+            "timelapseInterval": 20.0,
+            "timelapseLayer": 1,
+            "timelapseMethod": 0,
+            "timelapseSelected": 0
+        }
+    ],
+    "wizardCommands": []
+}
+                     * 
+                     * 
+                     */
+                    #endregion
+                    //OnRepetierEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, printerConfigEvent);
                     break;
                 case EventConstants.FIRMWARE_CHANGED:
                     var firmwareData = JsonSerializer.Deserialize<FirmwareData>(eventData);
