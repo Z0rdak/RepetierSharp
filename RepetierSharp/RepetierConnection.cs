@@ -381,7 +381,6 @@ namespace RepetierSharp
         /// <param name="GCODEFilePath"></param>
         public void UploadAndStartPrint(string GCODEFilePath, string printer)
         {
-            // FIXME: does not work?
             try
             {
                 var request = StartPrintRequest(GCODEFilePath, printer);
