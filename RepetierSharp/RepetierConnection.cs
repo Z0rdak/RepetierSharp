@@ -21,57 +21,6 @@ namespace RepetierSharp
 {
     public partial class RepetierConnection
     {
-        #region oldeventhandler
-        /*
-        
-        public event ModelGroupListChangedReceivedHandler OnModelGroupListChangedReceived;
-        public delegate void ModelGroupListChangedReceivedHandler(string printer, long timestamp);
- 
-        public event ChangeFilamentReceivedHandler OnChangeFilamentReceived;
-        public delegate void ChangeFilamentReceivedHandler(string printer, long timestamp);
-
-        public event OnPrepareJobReceivedHandler OnPrepareJobReceived;
-        public delegate void OnPrepareJobReceivedHandler(string printer, long timestamp);
-
-        public event OnPrepareJobFinishedReceivedHandler OnPrepareJobFinishedReceived;
-        public delegate void OnPrepareJobFinishedReceivedHandler(string printer, long timestamp);
-
-        public event ExternalLinksReceivedHandler OnExternalLinksReceived;
-        public delegate void ExternalLinksReceivedHandler(long timestamp);
-
-        public event RemoteServersChangedReceivedHandler OnRemoteServersChangedReceived;
-        public delegate void RemoteServersChangedReceivedHandler(long timestamp);
-        
-        public event EepromLoadStartedReceived OnEepromLoadStarted;
-        public delegate void EepromLoadStartedReceived();
-
-        public event EepromDataReceived OnEepromEntryReceived;
-        public delegate void EepromDataReceived(EepromDataEvent eepromData);
-
-        public event FoldersChangedReceived OnFoldersChanged;
-        public delegate void FoldersChangedReceived();
-        
-        public event PrinterConfigReceived OnPrinterConfigReceived;
-        public delegate void PrinterConfigReceived(string printer, PrinterConfig printerConfig);
-
-        public event FirmwareDataReceived OnFirmwareDataReceived;
-        public delegate void FirmwareDataReceived(FirmwareInfo firmwareInfo);
-        
-        public event PrintQueueChangedReceived OnPrintQueueChanged;
-        public delegate void PrintQueueChangedReceived(string printer);
-
-        public event MoveEventReceived OnMoveReceived;
-        public delegate void MoveEventReceived(string printer, MoveEvent moveEvent);
-
-        public event MessagesAvailableHandler OnMessagesAvailable;
-        public delegate void MessagesAvailableHandler(long timestamp);
-
-        public event LogoutReceivedHandler OnLogoutReceived;
-        public delegate void LogoutReceivedHandler(long timestamp);
-
-        */
-        #endregion
-
         #region Common EventHandler
         public event LogEventReceived OnLogReceived;
         public delegate void LogEventReceived(Log logEvent);
@@ -123,8 +72,7 @@ namespace RepetierSharp
 
         public event PrinterStatesReceivedHandler OnPrinterStates;
         public delegate void PrinterStatesReceivedHandler(StateListMessage printerStates);
-
-#endregion
+        #endregion
 
         public event RepetierEventReceived OnEvent;
         public delegate void RepetierEventReceived(string eventName, string printer, IRepetierEvent repetierEvent);
@@ -168,7 +116,7 @@ namespace RepetierSharp
         private CommandManager CommandManager { get; set; } = new CommandManager();
         private WebsocketClient WebSocketClient { get; set; }
         private RestClient RestClient { get; set; }
-        private bool UseTls { get; set; }
+        private bool UseTls { get; set; } // not yet implemented
         public string BaseURL { get; private set; }
         private string ApiKey { get; set; }
         private AuthenticationType AuthType { get; set; } = AuthenticationType.None;
@@ -180,7 +128,7 @@ namespace RepetierSharp
         public string ActivePrinter { get; set; } = "";
         #endregion
 
-        public RepetierConnection() { }
+        private RepetierConnection() { }
 
         /// <summary>
         /// Retrieve printer name or API-key (or both) via REST-API
