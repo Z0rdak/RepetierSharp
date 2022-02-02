@@ -8,7 +8,7 @@ namespace RepetierSharp.Config
         public string Name { get; set; }
 
         [JsonPropertyName("temp")]
-        public int Temp { get; set; }
+        public double Temp { get; set; }
     }
 
 }
