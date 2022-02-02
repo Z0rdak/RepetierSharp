@@ -152,12 +152,18 @@ namespace RepetierSharp
         public delegate void RawCommandResponseReceived(int callbackID, string command, byte[] response);
         public event RawCommandResponseReceived OnRawResponse;
 
+        /// <summary>
+        /// Gets called when the connection with the server is established successfully for the first time.
+        /// </summary>
+        public delegate void RepetierServerConnected();
+        public event RepetierServerConnected OnRepetierConnected;
+
         #region Properties
         /// <summary>
         /// TODO: add possibility to change Ping interval
         /// </summary>
         private Timer PeriodicPingTimer { get; set; }
-        private uint PingInterval { get; set; } = 3000;
+        private uint PingInterval { get; set; } = 10000;
         private Dictionary<RepetierTimer, List<ICommandData>> QueryIntervals { get; set; } = new Dictionary<RepetierTimer, List<ICommandData>>();
         private CommandManager CommandManager { get; set; } = new CommandManager();
         private WebsocketClient WebSocketClient { get; set; }
@@ -171,7 +177,7 @@ namespace RepetierSharp
         private string LoginName { get; set; }
         private string Password { get; set; }
         private string LangKey { get; set; }
-        public string ActivePrinter { get; private set; } = "";
+        public string ActivePrinter { get; set; } = "";
         #endregion
 
         public RepetierConnection() { }
@@ -206,7 +212,7 @@ namespace RepetierSharp
             {
                 if (info.Type == ReconnectionType.Initial)
                 {
-                    Console.WriteLine($"[WebSocket] Connection established ({info.Type})");
+                    OnRepetierConnected?.Invoke();
                     // Only query messages at this point when using a api-key or no auth
                     if (this.AuthType != AuthenticationType.Credentials)
                     {
