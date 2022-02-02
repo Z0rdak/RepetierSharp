@@ -29,12 +29,21 @@ namespace RepetierSharp.Extentions
         }
 
         /// <summary>
-        /// Send a single "stopJob" meassage to repetier server.
-        /// The printer will stop the current print and trigger a "jobKilled" event
+        /// Stop the current print and trigger a "jobKilled" event.
         /// </summary>
+        /// <param name="rc"></param>
         public static void StopJob(this RepetierConnection rc)
         {
             rc.SendCommand(StopJobCommand.Instance);
+        }
+
+        /// <summary>
+        /// Initiate an emergency stop.
+        /// </summary>
+        /// <param name="rc"></param>
+        public static void EmergencyStop(this RepetierConnection rc)
+        {
+            rc.SendCommand(EmergencyStopCommand.Instance);
         }
 
         /// <summary>
@@ -113,6 +122,7 @@ namespace RepetierSharp.Extentions
         /// <param name="printerSlug"> Printer to activate. </param>
         public static void ActivatePrinter(this RepetierConnection rc, string printerSlug)
         {
+            rc.ActivePrinter = printerSlug;
             rc.SendCommand(new ActivateCommand(printerSlug));
         }
 
@@ -123,6 +133,7 @@ namespace RepetierSharp.Extentions
         /// <param name="printerSlug"> Printer to deactivate. </param>
         public static void DeactivatePrinter(this RepetierConnection rc, string printerSlug)
         {
+            rc.ActivePrinter = "";
             rc.SendCommand(new DeactivateCommand(printerSlug));
         }
 
