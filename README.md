@@ -282,6 +282,6 @@ There are also some events and commands that are not documented in the API - wit
 
 I am also in the process of writing a library which provides a mqtt client that uses RepetierSharp.
 
-## Contribute
+## Contribution
 
 TODO: Issue/bug template
