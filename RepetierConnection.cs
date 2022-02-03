@@ -810,7 +810,7 @@ namespace RepetierSharp
             Task.Run(() => WebSocketClient.Send(baseCommand.ToBytes()));
         }
 
-        protected void SendCommand(string command, string printer, Dictionary<string, object> data)
+        public void SendCommand(string command, string printer, Dictionary<string, object> data)
         {
             var baseCommand = CommandManager.CommandWithId(command, printer, data);
             Task.Run(() => WebSocketClient.Send(baseCommand.ToBytes()));
