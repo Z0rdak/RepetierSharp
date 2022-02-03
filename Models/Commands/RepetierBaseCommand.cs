@@ -43,6 +43,16 @@ namespace RepetierSharp.Models.Commands
             this.Printer = printer;
         }
 
+        public RepetierBaseCommand(Dictionary<string, object> data, string command, string printer, int callbackId)
+        {
+            this.Action = command;
+            this.Command = null;
+            this.CallbackId = callbackId;
+            this.CommandType = null;
+            this.Data = data;
+            this.Printer = printer;
+        }
+
         public override string ToString()
         {   
             return JsonSerializer.Serialize(this);
