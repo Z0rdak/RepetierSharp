@@ -18,7 +18,7 @@ It's an event-driven, easy to use client with a fluent api, which uses the http 
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
     <NeutralLanguage>en</NeutralLanguage>
-    <PackageTags>Repetier-Server, 3D-Printing, Websocket, API-Client, MQTT</PackageTags>
+    <PackageTags>Repetier-Server, 3D-Printing, Websocket, API-Client</PackageTags>
     <Version>0.1.2</Version>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <SignAssembly>false</SignAssembly>
