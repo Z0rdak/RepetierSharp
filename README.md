@@ -75,7 +75,7 @@ When both, API-Key and user credentials are supplied, the last option will be us
 
 ### More examples
 
-Create a connection, register and event handler for successfull connection, which activates the printer with the slug "Delta" and enqueues and starts the job with the id 6.
+Create a connection, register an event handler for successfull connection, which activates the printer with the slug "Delta" and enqueues and starts the job with the id 6.
 
 ```csharp
 RepetierConnection rc = new RepetierConnectionBuilder()
