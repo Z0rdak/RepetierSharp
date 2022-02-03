@@ -807,13 +807,16 @@ namespace RepetierSharp
         protected void SendCommand(ICommandData command, Type commandType, string printer)
         {
             var baseCommand = CommandManager.CommandWithId(command, commandType, printer);
-            //Console.WriteLine($"\n[Sending]: {baseCommand.Command.GetType().Name}({baseCommand.CallbackId})\n");
-            if (!(baseCommand.Command.CommandIdentifier == CommandConstants.PING))
-            {
-                Console.WriteLine($"Send [{baseCommand.CallbackId}]: {baseCommand}");
-            }
             Task.Run(() => WebSocketClient.Send(baseCommand.ToBytes()));
         }
+
+        protected void SendCommand(string command, string printer, Dictionary<string, object> data)
+        {
+            var baseCommand = CommandManager.CommandWithId(command, printer, data);
+            Task.Run(() => WebSocketClient.Send(baseCommand.ToBytes()));
+        }
+
+        
 
         /// <summary>
         /// Attempt login with the previously set credentials

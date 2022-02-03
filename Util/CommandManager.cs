@@ -34,6 +34,13 @@ namespace RepetierSharp.Util
             return new RepetierBaseCommand(command, printer, callbackId, commandType);
         }
 
+        public RepetierBaseCommand CommandWithId(string command, string printer = "", Dictionary<string, object> data)
+        {
+            var callbackId = Next();
+            CallbackMap.Add(callbackId, command);
+            return new RepetierBaseCommand(data, command, printer, callbackId);
+        }
+
         public string CommandIdentifierFor(int callbackId)
         {
             if (CallbackMap.TryGetValue(callbackId, out var commandIdentifier))
