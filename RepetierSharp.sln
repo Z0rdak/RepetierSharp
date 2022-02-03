@@ -3,17 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29806.167
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RepetierSharp", "RepetierSharp\RepetierSharp.csproj", "{0C878EF3-7885-43EC-A32B-B6F3FB43EA70}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RepetierMqtt", "RepetierMqtt\RepetierMqtt.csproj", "{553FE5C8-6381-4B6D-A9D9-22BB0BF43239}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E89F7FFF-AF68-494B-BDF9-3BB51D1B5407}"
-	ProjectSection(SolutionItems) = preProject
-		LICENSE.txt = LICENSE.txt
-		README.md = README.md
-	EndProjectSection
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Example", "Example\Example.csproj", "{081543B1-1896-48A5-B52B-A7EB62B438C5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RepetierSharp", "RepetierSharp.csproj", "{B862E4CF-7B20-4EAC-9AD9-7E781BB5BC17}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,18 +11,10 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{0C878EF3-7885-43EC-A32B-B6F3FB43EA70}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0C878EF3-7885-43EC-A32B-B6F3FB43EA70}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0C878EF3-7885-43EC-A32B-B6F3FB43EA70}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0C878EF3-7885-43EC-A32B-B6F3FB43EA70}.Release|Any CPU.Build.0 = Release|Any CPU
-		{553FE5C8-6381-4B6D-A9D9-22BB0BF43239}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{553FE5C8-6381-4B6D-A9D9-22BB0BF43239}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{553FE5C8-6381-4B6D-A9D9-22BB0BF43239}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{553FE5C8-6381-4B6D-A9D9-22BB0BF43239}.Release|Any CPU.Build.0 = Release|Any CPU
-		{081543B1-1896-48A5-B52B-A7EB62B438C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{081543B1-1896-48A5-B52B-A7EB62B438C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{081543B1-1896-48A5-B52B-A7EB62B438C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{081543B1-1896-48A5-B52B-A7EB62B438C5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B862E4CF-7B20-4EAC-9AD9-7E781BB5BC17}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B862E4CF-7B20-4EAC-9AD9-7E781BB5BC17}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B862E4CF-7B20-4EAC-9AD9-7E781BB5BC17}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B862E4CF-7B20-4EAC-9AD9-7E781BB5BC17}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
