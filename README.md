@@ -280,7 +280,7 @@ The goal for this project is to add most (or even all) used WebSocket commands a
 
 There are also some events and commands that are not documented in the API - with some time and effort, I will try to reconstruct these and integrate them into RepetierSharp.
 
-I am also in the process of writing a library which provides a mqtt client that uses RepetierSharp.
+There is also a [MQTT client](https://github.com/Z0rdak/RepetierMqtt) using this library, to forward the events and command responses to a configurable broker.
 
 ## Contribution
 
