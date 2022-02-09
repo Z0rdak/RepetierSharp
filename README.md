@@ -18,7 +18,7 @@ Note that you are still able to use RepetierSharp by just using the version inde
 
 ### Framework support
 
-Currently RepetierSharp supports .NET Core 3.1 with plans to also support .NET 5 and above.
+Currently RepetierSharp supports .NET Core 3.1, .NET 5 and .NET 6.
 
 ### Problem
 
