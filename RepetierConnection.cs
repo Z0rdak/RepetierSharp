@@ -32,7 +32,7 @@ namespace RepetierSharp
         public delegate void JobStartedReceivedHandler(string printer, JobStarted jobStarted);
 
         public event JobStartFailedHandler OnRESTCallFailed;
-        public delegate void JobStartFailedHandler(string printer, IRestResponse response);
+        public delegate void JobStartFailedHandler(string printer, RestResponse response);
 
         public event JobKilledReceivedHandler OnJobKilled;
         public delegate void JobKilledReceivedHandler(string printer, JobState jobKilled);
@@ -134,9 +134,9 @@ namespace RepetierSharp
         /// Retrieve printer name or API-key (or both) via REST-API
         /// If ApiKey or PrinterSlug are not empty, they will not be overwritten by the retrieved information. 
         /// </summary>
-        public RepetierServerInformation GetRepetierServerInfo()
+        public async Task<RepetierServerInformation> GetRepetierServerInfoAsync()
         {
-            var response = RestClient.Execute(ApiConstants.PRINTER_INFO_REQUEST);
+            var response = await RestClient.ExecuteAsync(ApiConstants.PRINTER_INFO_REQUEST);
             return JsonSerializer.Deserialize<RepetierServerInformation>(response.Content);
         }
 
@@ -248,10 +248,10 @@ namespace RepetierSharp
             this.WebSocketClient = null;
         }
 
-        private IRestRequest StartPrintRequest(string gcodeFilePath, string printerName)
+        private RestRequest StartPrintRequest(string gcodeFilePath, string printerName)
         {
             var GCODEFileName = Path.GetFileNameWithoutExtension(gcodeFilePath);
-            var request = new RestRequest($"/printer/job/{printerName}", Method.POST)
+            var request = new RestRequest($"/printer/job/{printerName}", Method.Post)
                 .AddFile("gcode", gcodeFilePath)
                 .AddHeader("Content-Type", "multipart/form-data")
                 .AddParameter("a", "upload")
@@ -260,7 +260,7 @@ namespace RepetierSharp
             return WithApiKeyHeader(request);
         }
 
-        private IRestRequest WithApiKeyHeader(IRestRequest request)
+        private RestRequest WithApiKeyHeader(RestRequest request)
         {
             if (AuthType == AuthenticationType.ApiKey)
             {
@@ -277,10 +277,10 @@ namespace RepetierSharp
         /// <param name="group"> Group to add gcode to </param>
         /// <param name="overwrite"> Flag to overwrite existing file with the same name </param>
         /// <returns></returns>
-        private IRestRequest UploadModel(string gcodeFilePath, string printer, string group, bool overwrite = false)
+        private RestRequest UploadModel(string gcodeFilePath, string printer, string group, bool overwrite = false)
         {
             var GCODEFileName = Path.GetFileNameWithoutExtension(gcodeFilePath);
-            var request = new RestRequest($"/printer/model/{printer}", Method.POST)
+            var request = new RestRequest($"/printer/model/{printer}", Method.Post)
                 .AddFile("gcode", gcodeFilePath)
                 .AddHeader("Content-Type", "multipart/form-data")
                 .AddParameter("a", "upload")
@@ -307,16 +307,19 @@ namespace RepetierSharp
             try
             {
                 var request = UploadModel(gcodeFilePath, printer, group, overwrite);
-                var Response = RestClient.Execute(request);
-                HandleRestResponse(Response, printer);
+                Task.Run(async () =>
+                {
+                    var Response = await RestClient.ExecuteAsync(request);
+                    HandleRestResponse(Response, printer);
+                });
             }
             catch (Exception ex)
             {
                 Console.Error.WriteLine($"{ex}");
             }
         }
-        
-        private void HandleRestResponse(IRestResponse response, string printer)
+
+        private void HandleRestResponse(RestResponse response, string printer)
         {
             if (response.StatusCode != HttpStatusCode.OK)
             {
@@ -338,8 +341,11 @@ namespace RepetierSharp
             try
             {
                 var request = StartPrintRequest(GCODEFilePath, printer);
-                var Response = RestClient.Execute(request);
-                HandleRestResponse(Response, printer);
+                Task.Run(async () =>
+                {
+                    var Response = await RestClient.ExecuteAsync(request);
+                    HandleRestResponse(Response, printer);
+                });
             }
             catch (Exception ex)
             {
@@ -750,7 +756,7 @@ namespace RepetierSharp
                     OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, printerStateChangedEvent);
                     break;
                 case EventConstants.CONFIG:
-                    var printerConfigEvent = JsonSerializer.Deserialize<PrinterConfig>(eventData); 
+                    var printerConfigEvent = JsonSerializer.Deserialize<PrinterConfig>(eventData);
                     OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, printerConfigEvent);
                     break;
                 case EventConstants.FIRMWARE_CHANGED:
@@ -816,7 +822,7 @@ namespace RepetierSharp
             Task.Run(() => WebSocketClient.Send(baseCommand.ToBytes()));
         }
 
-        
+
 
         /// <summary>
         /// Attempt login with the previously set credentials

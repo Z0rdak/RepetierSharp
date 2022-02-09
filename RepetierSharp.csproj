@@ -2,15 +2,17 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFrameworks>netcoreapp3.1;net5.0;net6.0</TargetFrameworks>
     <StartupObject></StartupObject>
     <AssemblyName>RepetierSharp</AssemblyName>
     <RootNamespace>RepetierSharp</RootNamespace>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Authors>Marcel Bartholet</Authors>
     <Company />
-    <Description>RepetierSharp is a client for communication with the repetier server software (https://www.repetier-server.com/).
-It's an event-driven, easy to use client with a fluent api, which uses the http and websocket API of the repetier server to control your 3d printers and get information about them.</Description>
+    <Description>
+      RepetierSharp is a client for communication with the repetier server software (https://www.repetier-server.com/).
+      It's an event-driven, easy to use client with a fluent api, which uses the http and websocket API of the repetier server to control your 3d printers and get information about them.
+    </Description>
     <Copyright />
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     <PackageProjectUrl>https://www.nuget.org/packages/RepetierSharp/</PackageProjectUrl>
@@ -19,7 +21,7 @@ It's an event-driven, easy to use client with a fluent api, which uses the http 
     <FileVersion>1.0.0.0</FileVersion>
     <NeutralLanguage>en</NeutralLanguage>
     <PackageTags>Repetier-Server, 3D-Printing, Websocket, API-Client</PackageTags>
-    <Version>0.1.4</Version>
+    <Version>0.1.5</Version>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <SignAssembly>false</SignAssembly>
   </PropertyGroup>
@@ -31,8 +33,8 @@ It's an event-driven, easy to use client with a fluent api, which uses the http 
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="RestSharp" Version="106.15.0" />
-    <PackageReference Include="System.Text.Json" Version="5.0.2" />
+    <PackageReference Include="RestSharp" Version="107.2.1" />
+    <PackageReference Include="System.Text.Json" Version="6.0.2" />
     <PackageReference Include="Websocket.Client" Version="4.4.43" />
   </ItemGroup>
 

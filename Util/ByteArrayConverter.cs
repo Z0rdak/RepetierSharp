@@ -54,7 +54,7 @@ namespace RepetierSharp.Util
     {
         internal static JsonSerializerOptions IngoreNullableFieldsOptions => new JsonSerializerOptions
         {
-            IgnoreNullValues = true,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
             WriteIndented = true
         };
     }

@@ -10,6 +10,6 @@ namespace RepetierSharp.Util
     {
         public const string PRINTER_INFO_PATH = "/printer/info";
 
-        public static readonly IRestRequest PRINTER_INFO_REQUEST = new RestRequest(PRINTER_INFO_PATH, Method.GET);
+        public static readonly RestRequest PRINTER_INFO_REQUEST = new RestRequest(PRINTER_INFO_PATH, Method.Get);
     }
 }
