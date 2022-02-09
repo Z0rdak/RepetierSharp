@@ -4,6 +4,7 @@
     <OutputType>Library</OutputType>
     <TargetFrameworks>netcoreapp3.1;net5.0;net6.0</TargetFrameworks>
     <StartupObject></StartupObject>
+    <Title>RepetierSharp</Title>
     <AssemblyName>RepetierSharp</AssemblyName>
     <RootNamespace>RepetierSharp</RootNamespace>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -24,6 +25,8 @@
     <Version>0.1.5</Version>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <SignAssembly>false</SignAssembly>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>
@@ -42,6 +45,13 @@
     <None Include="LICENSE.txt">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
     </None>
   </ItemGroup>
 
