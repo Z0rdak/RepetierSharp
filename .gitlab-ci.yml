@@ -1,0 +1,18 @@
+﻿image: mcr.microsoft.com/dotnet/sdk:6.0
+
+stages:
+  - test
+
+dotnet-format-test:
+  stage: test
+  before_script:
+    - dotnet tool install -g dotnet-format --version "6.*" --add-source https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet6/nuget/v3/index.json
+  script:
+    - dotnet format .\RepetierSharp.csproj -v diag --verify-no-changes --report format.json
+  artifacts:
+    when: on_failure
+    paths:
+      - format.json
+  tags:
+    - .NET6
+    - Docker
