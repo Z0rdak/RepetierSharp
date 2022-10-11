@@ -54,7 +54,7 @@ namespace RepetierSharp.Models.Commands
         }
 
         public override string ToString()
-        {   
+        {
             return JsonSerializer.Serialize(this);
         }
 

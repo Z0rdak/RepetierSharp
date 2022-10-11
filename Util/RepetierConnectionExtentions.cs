@@ -113,7 +113,7 @@ namespace RepetierSharp.Extentions
         public static void RemoveJob(this RepetierConnection rc, int jobId)
         {
             rc.SendCommand(new RemoveJobCommand(jobId));
-        } 
+        }
 
         /// <summary>
         /// Activate printer with given printerSlug.
@@ -140,7 +140,7 @@ namespace RepetierSharp.Extentions
         public static void CreateUser(this RepetierConnection rc, string user, string password, int permission)
         {
             rc.SendCommand(new CreateUserCommand(user, password, permission));
-        } 
+        }
 
         public static void UpdateUser(this RepetierConnection rc, string user, int permission, string password = "")
         {
@@ -150,7 +150,7 @@ namespace RepetierSharp.Extentions
         public static void DeleteUser(this RepetierConnection rc, string user)
         {
             rc.SendCommand(new DeleteUserCommand(user));
-        } 
+        }
 
         public static void Preheat(this RepetierConnection rc, int extruderNo, int heatedBedNo, int heatedChamberNo)
         {

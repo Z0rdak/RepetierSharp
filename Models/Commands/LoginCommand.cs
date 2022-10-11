@@ -15,7 +15,7 @@ namespace RepetierSharp.Models.Commands
         public bool? LongLivedSession { get; private set; }
         [JsonIgnore]
         public string CommandIdentifier => CommandConstants.LOGIN;
-        
+
         public LoginCommand(string name, string password, bool longLived = false)
         {
             LoginName = name;

@@ -135,6 +135,6 @@ namespace RepetierSharp.Models.Commands
 
         // {"action":"canUploadGCodeWithSize","data":{"size":4681434},"printer":"Cartesian","callback_id":531}
 
-}
+    }
 
 }

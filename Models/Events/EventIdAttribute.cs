@@ -7,7 +7,7 @@ namespace RepetierSharp.Models.Events
     {
         public List<string> EventNames { get; } = new List<string>();
 
-        public EventIdAttribute(string eventName) 
+        public EventIdAttribute(string eventName)
         {
             EventNames.Add(eventName);
         }

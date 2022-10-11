@@ -16,7 +16,7 @@ namespace RepetierSharp.Models.Commands
         [JsonPropertyName("autostart")]
         public bool Autostart { get; }
 
-        public CopyModelCommand(int modelId, bool autostart = true) 
+        public CopyModelCommand(int modelId, bool autostart = true)
         {
             this.Id = modelId;
             this.Autostart = autostart;
