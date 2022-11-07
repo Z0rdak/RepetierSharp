@@ -45,11 +45,6 @@ namespace RepetierSharp
                 return _repetierConnection;
             }
 
-            private RepetierConnectionBuilder WithCyclicRequest(uint seconds, string command)
-            {
-                return this;
-            }
-
             public RepetierConnectionBuilder UseLang(string lang = "en")
             {
                 _repetierConnection.Session.LangKey = lang;
@@ -73,11 +68,6 @@ namespace RepetierSharp
             {
                 _repetierConnection.BaseURL = $"{baseUrl}:{port}";
                 return this;
-            }
-
-            private RepetierConnectionBuilder ActivatePrinter(string printerSlug)
-            {
-                throw new NotImplementedException();
             }
 
             public RepetierConnectionBuilder PingInterval(uint interval = 3000)
