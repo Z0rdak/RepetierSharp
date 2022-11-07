@@ -1,6 +1,6 @@
 # RepetierSharp - A simple, event driven [Repetier Server](https://www.repetier-server.com/ "Repetier Server") client
 
-![NuGet downloads](https://img.shields.io/nuget/dt/RepetierSharp?label=Nuget%3A%20RepetierSharp)
+![NuGet downloads](https://img.shields.io/nuget/dt/RepetierSharp)
 ![Nuget version](https://img.shields.io/nuget/v/RepetierSharp)
 
 ## Introduction
