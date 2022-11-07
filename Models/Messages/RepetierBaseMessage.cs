@@ -1,8 +1,4 @@
-﻿using RepetierSharp.Models.Messages;
-using System.Collections.Generic;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using static RepetierSharp.Models.Commands.RepetierBaseCommand;
+﻿using System.Text.Json.Serialization;
 
 namespace RepetierSharp.Models.Messages
 {

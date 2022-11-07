@@ -1,5 +1,4 @@
-﻿using RepetierSharp.Models.Messages;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace RepetierSharp.Models.Events

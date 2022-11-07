@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace RepetierSharp.Models.Commands
+﻿namespace RepetierSharp.Models.Commands
 {
     public static class CommandConstants
     {

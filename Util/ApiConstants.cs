@@ -1,8 +1,4 @@
 ﻿using RestSharp;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace RepetierSharp.Util
 {

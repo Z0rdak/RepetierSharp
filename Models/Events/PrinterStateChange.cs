@@ -1,6 +1,4 @@
-﻿using RepetierSharp.Models;
-
-namespace RepetierSharp.Models.Events
+﻿namespace RepetierSharp.Models.Events
 {
     [EventId("state")]
     public class PrinterStateChange : IRepetierEvent

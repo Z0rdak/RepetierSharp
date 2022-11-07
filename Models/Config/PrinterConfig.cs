@@ -1,9 +1,7 @@
-﻿using RepetierSharp.Models.Config;
-using RepetierSharp.Models.Events;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using RepetierSharp.Models.Config;
+using RepetierSharp.Models.Events;
 
 namespace RepetierSharp.Config
 {

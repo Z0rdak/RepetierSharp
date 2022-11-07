@@ -1,8 +1,6 @@
-﻿using RepetierSharp.Models;
-using RepetierSharp.Models.Commands;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using RepetierSharp.Models.Commands;
 
 namespace RepetierSharp.Util
 {
