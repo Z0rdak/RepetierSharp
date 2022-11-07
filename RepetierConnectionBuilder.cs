@@ -45,7 +45,7 @@ namespace RepetierSharp
                 return _repetierConnection;
             }
 
-            public RepetierConnectionBuilder WithCyclicRequest(uint seconds, string command)
+            private RepetierConnectionBuilder WithCyclicRequest(uint seconds, string command)
             {
                 return this;
             }
@@ -75,7 +75,7 @@ namespace RepetierSharp
                 return this;
             }
 
-            public RepetierConnectionBuilder ActivatePrinter(string printerSlug)
+            private RepetierConnectionBuilder ActivatePrinter(string printerSlug)
             {
                 throw new NotImplementedException();
             }
@@ -102,7 +102,7 @@ namespace RepetierSharp
                 return this;
             }
 
-            public RepetierConnectionBuilder WithPrehasedCredentials(string login, string passwordMD5)
+            private RepetierConnectionBuilder WithPrehasedCredentials(string login, string passwordMD5)
             {
                 throw new NotImplementedException();
             }
