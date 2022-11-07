@@ -12,7 +12,7 @@ https://www.repetier-server.com/
 
 ### Versioning
 
-This library is build against and tested with RepetierServer version 1.2.0. The serialization for most commands and events should be working with earlier versions, but there is the possibilty of crashes when using RepetierSharp with earlier versions due to undocumented changes.
+This library is up to date with RepetierServer version 1.2.0. The serialization for most commands and events should be working with earlier versions, but there is the possibilty of crashes when using RepetierSharp with earlier versions due to undocumented changes.
 
 Note that you are still able to use RepetierSharp by just using the version independent event handlers for events and command responses: `OnRawEvent(string eventName, string printer, byte[] payload)` and `OnRawResponse(int callbackID, string command, byte[] response)` respectively.
 
@@ -20,15 +20,9 @@ Note that you are still able to use RepetierSharp by just using the version inde
 
 Currently RepetierSharp supports .NET Core 3.1, .NET 5 and .NET 6.
 
-### Problem
-
-I quite enjoy using the Repetier Server software to control/manage our 3d printers. But I could not find any client implementing the Repetier Server API. This was needed because I wanted to control the Repetier Server programmatically to automate certain tasks.
-
-[Repetier Server API](https://prgdoc.repetier-server.com/v1/docs/index.html#/en/index)
-
 ## Getting started
 
-**DISCLAIMER:** *RepetierSharp is still in beta. Bugs are to be expected - please bear with me and help improving RepetierSharp by submitting issues on [GitHub](https://github.com/Z0rdak/RepetierSharp/issues).*
+**DISCLAIMER:** *RepetierSharp is still in beta. Bugs are to be expected - please help improving RepetierSharp by submitting issues on [GitHub](https://github.com/Z0rdak/RepetierSharp/issues).*
 
 The following sections show some examples on how to use the RepetierSharp client. The examples are not exhaustive. I will try to write a more thourough documentation as soon as possible.
 
@@ -214,11 +208,23 @@ Additionally there are some functions levering the REST-API directly:
 ```csharp
 rc.UploadAndStartPrint("/path/to/gcode/file.gcode", "printerSlug");
 ```
+
+```csharp
+byte[] file = Files.ReadAllBytes("/path/to/gcode/file.gcode"):
+rc.UploadAndStartPrint("file.gcode", fileBytes, "printerSlug");
+```
+
 - or just upload a gcode file by using:
 
 ```csharp
-rc.UploadGCode("/path/to/gcode/file.gcode", "group", "printerSlug");
+rc.UploadGCode("/path/to/gcode/file.gcode", "printerSlug", "group");
 ```
+
+```csharp
+byte[] file = Files.ReadAllBytes("/path/to/gcode/file.gcode"):
+rc.UploadGCode("file.gcode", fileBytes, "printerSlug", "group");
+```
+
 
 ### Event handler
 
@@ -272,7 +278,7 @@ In line 4 the command `updateAvailable` is added to the 1 hour timer queue so ev
 
 ## Documentation
 
-TBD
+The wiki is still under construction. If you have any issues feel free to open an issue.
 
 ## Roadmap
 
@@ -280,8 +286,8 @@ The goal for this project is to add most (or even all) used WebSocket commands a
 
 There are also some events and commands that are not documented in the API - with some time and effort, I will try to reconstruct these and integrate them into RepetierSharp.
 
-There is also a [MQTT client](https://github.com/Z0rdak/RepetierMqtt) using this library, to forward the events and command responses to a configurable broker.
+There is also a [MQTT client](https://github.com/Z0rdak/RepetierMqtt) using this library, to forward the events and command responses to a configurable broker. Since version 1.3 Repetier Server brings native MQTT support, which is very similar to the interface RepetierMqtt is providing.
 
 ## Contribution
 
-TODO: Issue/bug template
+If you have any issues or found bugs feel free to open an issue.
