@@ -1,5 +1,4 @@
 ﻿using RepetierSharp.Models.Commands;
-using RepetierSharp.Models.Events;
 
 namespace RepetierSharp.Extentions
 {
@@ -113,28 +112,6 @@ namespace RepetierSharp.Extentions
         public static void RemoveJob(this RepetierConnection rc, int jobId)
         {
             rc.SendCommand(new RemoveJobCommand(jobId));
-        }
-
-        /// <summary>
-        /// Activate printer with given printerSlug.
-        /// </summary>
-        /// <param name="rc"></param>
-        /// <param name="printerSlug"> Printer to activate. </param>
-        public static void ActivatePrinter(this RepetierConnection rc, string printerSlug)
-        {
-            rc.ActivePrinter = printerSlug;
-            rc.SendCommand(new ActivateCommand(printerSlug));
-        }
-
-        /// <summary>
-        /// Deactivate printer with given printerSlug.
-        /// </summary>
-        /// <param name="rc"></param>
-        /// <param name="printerSlug"> Printer to deactivate. </param>
-        public static void DeactivatePrinter(this RepetierConnection rc, string printerSlug)
-        {
-            rc.ActivePrinter = "";
-            rc.SendCommand(new DeactivateCommand(printerSlug));
         }
 
         public static void CreateUser(this RepetierConnection rc, string user, string password, int permission)
