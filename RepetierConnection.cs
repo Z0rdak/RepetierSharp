@@ -1,24 +1,24 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Net;
+using System.Text;
 using System.Text.Json;
-using RepetierSharp.Models.Events;
+using System.Threading.Tasks;
+using RepetierSharp.Config;
+using RepetierSharp.Extentions;
 using RepetierSharp.Models;
 using RepetierSharp.Models.Commands;
+using RepetierSharp.Models.Config;
+using RepetierSharp.Models.Events;
 using RepetierSharp.Models.Messages;
 using RepetierSharp.Util;
 using RestSharp;
-using RepetierSharp.Config;
-using RepetierSharp.Models.Config;
-using System.Text;
-using System.Threading;
-using System.Net;
 using Websocket.Client;
-using System.Threading.Tasks;
-using RepetierSharp.Extentions;
-using System.IO;
 
 namespace RepetierSharp
 {
+
     public partial class RepetierConnection
     {
         #region Common EventHandler
@@ -31,7 +31,7 @@ namespace RepetierSharp
         public event JobStartedReceivedHandler OnJobStarted;
         public delegate void JobStartedReceivedHandler(string printer, JobStarted jobStarted);
 
-        public event JobStartFailedHandler OnRESTCallFailed;
+        public event JobStartFailedHandler OnRestRequestFailed;
         public delegate void JobStartFailedHandler(string printer, RestResponse response);
 
         public event JobKilledReceivedHandler OnJobKilled;
@@ -107,25 +107,17 @@ namespace RepetierSharp
         public event RepetierServerConnected OnRepetierConnected;
 
         #region Properties
-        /// <summary>
-        /// TODO: add possibility to change Ping interval
-        /// </summary>
-        private Timer PeriodicPingTimer { get; set; }
-        private uint PingInterval { get; set; } = 10000;
+        // TODO: ensure proper values, send ExtendPing on change?
+        public uint PingInterval { get; set; } = 10000;
+        private long lastPingTimestamp = 0;
+
         private Dictionary<RepetierTimer, List<ICommandData>> QueryIntervals { get; set; } = new Dictionary<RepetierTimer, List<ICommandData>>();
         private CommandManager CommandManager { get; set; } = new CommandManager();
         private WebsocketClient WebSocketClient { get; set; }
         private RestClient RestClient { get; set; }
-        private bool UseTls { get; set; } // not yet implemented
+        private RepetierSession Session { get; set; }
         public string BaseURL { get; private set; }
-        private string ApiKey { get; set; }
-        private AuthenticationType AuthType { get; set; } = AuthenticationType.None;
-        private string SessionId { get; set; }
-        private bool LongLivedSession { get; set; }
-        private string LoginName { get; set; }
-        private string Password { get; set; }
-        private string LangKey { get; set; }
-        public string ActivePrinter { get; set; } = "";
+        public string ActivePrinter { get; private set; } = "";
         #endregion
 
         private RepetierConnection() { }
@@ -143,11 +135,11 @@ namespace RepetierSharp
         /// <summary>
         /// Open WebSocket connection to repetier server and start communication.
         /// </summary>
-        public void Connect()
+        public async void Connect()
         {
             InitWebSocket();
-            WebSocketClient.StartOrFail();
-            PeriodicPingTimer = CyclicCallHelper.CreateCyclicCall(() => this.SendPing(), PingInterval);
+            await WebSocketClient.StartOrFail()
+                .ContinueWith(t => SendPing());
         }
 
         /// <summary>
@@ -155,18 +147,19 @@ namespace RepetierSharp
         /// </summary>
         private void InitWebSocket()
         {
-            WebSocketClient.ReconnectTimeout = TimeSpan.FromSeconds(30);
+            WebSocketClient.ReconnectTimeout = TimeSpan.FromSeconds(15);
             WebSocketClient.ReconnectionHappened.Subscribe(info =>
             {
                 if (info.Type == ReconnectionType.Initial)
                 {
                     OnRepetierConnected?.Invoke();
                     // Only query messages at this point when using a api-key or no auth
-                    if (this.AuthType != AuthenticationType.Credentials)
+                    if (Session.AuthType != AuthenticationType.Credentials)
                     {
                         this.QueryOpenMessages();
                     }
                 }
+                SendPing();
             });
 
             WebSocketClient.DisconnectionHappened.Subscribe(info =>
@@ -176,19 +169,29 @@ namespace RepetierSharp
 
             WebSocketClient.MessageReceived.Subscribe(msg =>
             {
-                if (msg.MessageType != System.Net.WebSockets.WebSocketMessageType.Text || msg.Text == null && msg.Text.Length == 0)
+                // each message send to and from the Repetier Server is a valid JSON message
+                if (msg.MessageType != System.Net.WebSockets.WebSocketMessageType.Text || string.IsNullOrEmpty(msg.Text))
                 {
                     return;
                 }
                 try
                 {
+                    // Send ping if neccessary
+                    var timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+                    if (lastPingTimestamp + PingInterval < DateTimeOffset.Now.ToUnixTimeSeconds())
+                    {
+                        lastPingTimestamp = timestamp;
+                        SendPing();
+                    }
+
+                    // handle command response or event
                     byte[] msgBytes = Encoding.UTF8.GetBytes(msg.Text);
                     var message = JsonSerializer.Deserialize<RepetierBaseMessage>(msgBytes);
                     var containsEvents = message.HasEvents != null && message.HasEvents == true;
 
-                    if (string.IsNullOrEmpty(SessionId) && !string.IsNullOrEmpty(message.SessionId))
+                    if (string.IsNullOrEmpty(Session.SessionId) && !string.IsNullOrEmpty(message.SessionId))
                     {
-                        SessionId = message.SessionId;
+                        Session.SessionId = message.SessionId;
                     }
 
                     var json = JsonSerializer.Deserialize<JsonDocument>(msgBytes);
@@ -208,7 +211,6 @@ namespace RepetierSharp
                     }
                     else
                     {
-
                         if (msg.Text.Contains("permissionDenied"))
                         {
                             OnPermissionDenied?.Invoke(message.CallBackId);
@@ -242,29 +244,48 @@ namespace RepetierSharp
         /// </summary>
         public void Close()
         {
-            this.PeriodicPingTimer.Dispose();
-            this.PeriodicPingTimer = null;
-            this.WebSocketClient.Dispose();
-            this.WebSocketClient = null;
+            WebSocketClient.Dispose();
+            WebSocketClient = null;
         }
 
-        private RestRequest StartPrintRequest(string gcodeFilePath, string printerName)
+        private RestRequest StartPrintRequest(string gcodeFilePath, string printerName, bool autostart = true)
         {
             var GCODEFileName = Path.GetFileNameWithoutExtension(gcodeFilePath);
             var request = new RestRequest($"/printer/job/{printerName}", Method.Post)
                 .AddFile("gcode", gcodeFilePath)
                 .AddHeader("Content-Type", "multipart/form-data")
                 .AddParameter("a", "upload")
-                .AddParameter("sess", SessionId)
+                .AddParameter("autostart", autostart ? 1 : 0)
                 .AddParameter("name", GCODEFileName);
+
+            if (!string.IsNullOrEmpty(Session.SessionId))
+            {
+                request = request.AddParameter("sess", Session.SessionId);
+            }
+            return WithApiKeyHeader(request);
+        }
+
+        private RestRequest StartPrintRequest(string fileName, byte[] data, string printerName, bool autostart = true)
+        {
+            var request = new RestRequest($"/printer/job/{printerName}", Method.Post)
+                .AddFile("gcode", data, fileName)
+                .AddHeader("Content-Type", "multipart/form-data")
+                .AddParameter("a", "upload")
+                .AddParameter("autostart", autostart ? 1 : 0)
+                .AddParameter("name", fileName);
+
+            if (!string.IsNullOrEmpty(Session.SessionId))
+            {
+                request = request.AddParameter("sess", Session.SessionId);
+            }
             return WithApiKeyHeader(request);
         }
 
         private RestRequest WithApiKeyHeader(RestRequest request)
         {
-            if (AuthType == AuthenticationType.ApiKey)
+            if (Session.AuthType == AuthenticationType.ApiKey)
             {
-                request = request.AddHeader("x-api-key", ApiKey);
+                request = request.AddHeader("x-api-key", Session.ApiKey);
             }
             return request;
         }
@@ -284,12 +305,43 @@ namespace RepetierSharp
                 .AddFile("gcode", gcodeFilePath)
                 .AddHeader("Content-Type", "multipart/form-data")
                 .AddParameter("a", "upload")
-                .AddParameter("sess", SessionId)
                 .AddParameter("group", group)
                 .AddParameter("overwrite", overwrite)
                 .AddParameter("name", GCODEFileName);
+
+            if (!string.IsNullOrEmpty(Session.SessionId))
+            {
+                request = request.AddParameter("sess", Session.SessionId);
+            }
             return WithApiKeyHeader(request);
         }
+
+        /// <summary>
+        /// Create a REST request for uploading a gcode file.
+        /// </summary>
+        /// <param name="fileName">  The name of the file to upload (file.gcode) </param>
+        /// <param name="file"> The content of the actual gcode file </param>
+        /// <param name="printer"> Printer slug to upload to </param>
+        /// <param name="group"> Group to add gcode to </param>
+        /// <param name="overwrite"> Flag to overwrite existing file with the same name </param>
+        /// <returns></returns>
+        private RestRequest UploadModel(string fileName, byte[] file, string printer, string group, bool overwrite = false)
+        {
+            var request = new RestRequest($"/printer/model/{printer}", Method.Post)
+                .AddFile("gcode", file, fileName)
+                .AddHeader("Content-Type", "multipart/form-data")
+                .AddParameter("a", "upload")
+                .AddParameter("group", group)
+                .AddParameter("overwrite", overwrite)
+                .AddParameter("name", fileName);
+
+            if (!string.IsNullOrEmpty(Session.SessionId))
+            {
+                request = request.AddParameter("sess", Session.SessionId);
+            }
+            return WithApiKeyHeader(request);
+        }
+
 
         /// <summary>
         /// Upload a gcode file via REST API
@@ -298,12 +350,8 @@ namespace RepetierSharp
         /// <param name="printer"> Printer slug to upload to </param>
         /// <param name="group"> Group to add gcode to </param>
         /// <param name="overwrite"> Flag to overwrite existing file with the same name </param>
-        public void UploadGCode(string gcodeFilePath, string group, string printer, bool overwrite = false)
+        public void UploadGCode(string gcodeFilePath, string printer, string group = "Default", bool overwrite = false)
         {
-            // TODO: Event
-            /*
-             * [gcodeInfoUpdated@Delta]: {"data":{"list":"models","modelId":18,"modelPath":"/home/demorepetier/storage/7/printer/Delta/models/00000018_Fuss_0.2mm_ABS_EL-11_2h24m.gin","slug":"Delta"},"event":"gcodeInfoUpdated","printer":"Delta"}
-             */
             try
             {
                 var request = UploadModel(gcodeFilePath, printer, group, overwrite);
@@ -319,11 +367,29 @@ namespace RepetierSharp
             }
         }
 
+        public void UploadGCode(string fileName, byte[] file, string printer, string group = "Default", bool overwrite = false)
+        {
+            try
+            {
+                var request = UploadModel(fileName, file, printer, group, overwrite);
+                Task.Run(async () =>
+                {
+                    var Response = await RestClient.ExecuteAsync(request);
+                    HandleRestResponse(Response, printer);
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"{ex}");
+            }
+        }
+
+
         private void HandleRestResponse(RestResponse response, string printer)
         {
             if (response.StatusCode != HttpStatusCode.OK)
             {
-                OnRESTCallFailed?.Invoke(printer, response);
+                OnRestRequestFailed?.Invoke(printer, response);
                 return;
             }
             if (response.ErrorException != null)
@@ -343,8 +409,25 @@ namespace RepetierSharp
                 var request = StartPrintRequest(GCODEFilePath, printer);
                 Task.Run(async () =>
                 {
-                    var Response = await RestClient.ExecuteAsync(request);
-                    HandleRestResponse(Response, printer);
+                    var response = await RestClient.ExecuteAsync(request);
+                    HandleRestResponse(response, printer);
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"{ex}");
+            }
+        }
+
+        public void UploadAndStartPrint(string fileName, byte[] file, string printer)
+        {
+            try
+            {
+                var request = StartPrintRequest(fileName, file, printer);
+                Task.Run(async () =>
+                {
+                    var response = await RestClient.ExecuteAsync(request);
+                    HandleRestResponse(response, printer);
                 });
             }
             catch (Exception ex)
@@ -354,18 +437,47 @@ namespace RepetierSharp
         }
 
         /// <summary>
+        /// Activate printer with given printerSlug.
+        /// </summary>
+        /// <param name="printerSlug"> Printer to activate. </param>
+        public void ActivatePrinter(string printerSlug)
+        {
+            ActivePrinter = printerSlug;
+            SendCommand(new ActivateCommand(printerSlug));
+        }
+
+        /// <summary>
+        /// Deactivate printer with given printerSlug.
+        /// </summary>
+        /// <param name="printerSlug"> Printer to deactivate. </param>
+        public void DeactivatePrinter(string printerSlug)
+        {
+            ActivePrinter = "";
+            SendCommand(new DeactivateCommand(printerSlug));
+        }
+
+        /// <summary>
         /// 
         /// </summary>
         /// <param name="message"></param>
         /// <param name="commandDataObject"></param>
         private void HandleMessage(RepetierBaseMessage message, JsonElement commandDataObject)
         {
+            // TODO: what if this fails? because of restart or something?
             var commandStr = CommandManager.CommandIdentifierFor(message.CallBackId);
             var cmdData = commandDataObject.GetRawText();
             message.Data = Encoding.UTF8.GetBytes(commandDataObject.GetRawText());
 
             switch (commandStr)
             {
+                case CommandConstants.PING:
+                    // TODO: Extend Ping and property for ping delay
+                    Task.Delay(TimeSpan.FromSeconds(5))
+                    .ContinueWith(t =>
+                    {
+                        SendPing();
+                    });
+                    break;
                 case CommandConstants.LOGIN:
                     var loginMessage = JsonSerializer.Deserialize<LoginMessage>(cmdData);
                     if (string.IsNullOrEmpty(loginMessage.Error))
@@ -670,7 +782,7 @@ namespace RepetierSharp
             {
                 case EventConstants.JOBS_CHANGED:
                     OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, null);
-                    this.ActivePrinter = repetierEvent.Printer;
+                    ActivePrinter = repetierEvent.Printer;
                     break;
                 case EventConstants.TIMER_30:
                 case EventConstants.TIMER_60:
@@ -688,11 +800,11 @@ namespace RepetierSharp
                     OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, null);
                     break;
                 case EventConstants.LOGIN_REQUIRED:
-                    if (AuthType == AuthenticationType.Credentials)
+                    if (Session.AuthType == AuthenticationType.Credentials)
                     {
                         var loginRequiredEvent = JsonSerializer.Deserialize<LoginRequired>(eventData);
                         OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, loginRequiredEvent);
-                        SessionId = loginRequiredEvent.SessionId;
+                        Session.SessionId = loginRequiredEvent.SessionId;
                         Login();
                     }
                     else
@@ -829,9 +941,9 @@ namespace RepetierSharp
         /// </summary>
         public void Login()
         {
-            if (!string.IsNullOrEmpty(LoginName) && !string.IsNullOrEmpty(Password))
+            if (!string.IsNullOrEmpty(Session.LoginName) && !string.IsNullOrEmpty(Session.Password))
             {
-                Login(LoginName, Password);
+                Login(Session.LoginName, Session.Password);
             }
         }
 
@@ -842,10 +954,10 @@ namespace RepetierSharp
         /// <param name="password"></param>
         public void Login(string user, string password)
         {
-            if (!string.IsNullOrEmpty(SessionId))
+            if (!string.IsNullOrEmpty(Session.SessionId))
             {
-                var pw = CommandHelper.HashPassword(SessionId, user, password);
-                this.SendCommand(new LoginCommand(user, pw, LongLivedSession), typeof(LoginCommand));
+                var pw = CommandHelper.HashPassword(Session.SessionId, user, password);
+                SendCommand(new LoginCommand(user, pw, Session.LongLivedSession), typeof(LoginCommand));
             }
         }
     }
