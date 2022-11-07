@@ -42,6 +42,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="C:\Users\Marcel Bartholet\Source\Repos\Z0rdak\RepetierSharp\.editorconfig" />
     <None Include="LICENSE.txt">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
@@ -56,5 +57,9 @@
   </ItemGroup>
 
   <ProjectExtensions><VisualStudio><UserProperties /></VisualStudio></ProjectExtensions>
+
+  <ItemGroup>
+    <EditorConfigFiles Remove="C:\Users\Marcel Bartholet\Source\Repos\Z0rdak\RepetierSharp\.editorconfig" />
+  </ItemGroup>
 
 </Project>
