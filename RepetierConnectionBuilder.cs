@@ -51,13 +51,6 @@ namespace RepetierSharp
                 return this;
             }
 
-            // TODO: seems to not be supported
-            private RepetierConnectionBuilder WithTls(bool useTls = true)
-            {
-                _repetierConnection.Session.UseTls = useTls;
-                return this;
-            }
-
             public RepetierConnectionBuilder WithHost(string baseUrl)
             {
                 _repetierConnection.BaseURL = baseUrl;
@@ -90,11 +83,6 @@ namespace RepetierSharp
                 _repetierConnection.Session.Password = password;
                 _repetierConnection.Session.AuthType = AuthenticationType.Credentials;
                 return this;
-            }
-
-            private RepetierConnectionBuilder WithPrehasedCredentials(string login, string passwordMD5)
-            {
-                throw new NotImplementedException();
             }
 
             public RepetierConnectionBuilder QueryPrinterInterval(RepetierTimer timer = RepetierTimer.Timer30)
