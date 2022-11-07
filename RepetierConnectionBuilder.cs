@@ -11,12 +11,15 @@ namespace RepetierSharp
     {
         public class RepetierConnectionBuilder
         {
-            readonly RepetierConnection _repetierConnection = new RepetierConnection();
+            readonly RepetierConnection _repetierConnection = new RepetierConnection()
+            {
+                Session = new RepetierSession()
+            };
 
             public RepetierConnection Build()
             {
                 List<string> urlParams = new List<string>();
-                switch (_repetierConnection.AuthType)
+                switch (_repetierConnection.Session.AuthType)
                 {
                     case AuthenticationType.None:
                     // nothing here
@@ -25,17 +28,17 @@ namespace RepetierSharp
                         // loginRequired event is fired after connecting and attempts to login with given credentials
                         break;
                     case AuthenticationType.ApiKey:
-                        urlParams.Add($"apikey={_repetierConnection.ApiKey}");
+                        urlParams.Add($"apikey={_repetierConnection.Session.ApiKey}");
                         break;
                 }
 
-                if (!string.IsNullOrEmpty(_repetierConnection.LangKey))
+                if (!string.IsNullOrEmpty(_repetierConnection.Session.LangKey))
                 {
-                    urlParams.Add($"lang={_repetierConnection.LangKey}");
+                    urlParams.Add($"lang={_repetierConnection.Session.LangKey}");
                 }
 
-                var httpProtocol = _repetierConnection.UseTls ? "https" : "http";
-                var wsProtocol = _repetierConnection.UseTls ? "wss" : "ws";
+                var httpProtocol = _repetierConnection.Session.UseTls ? "https" : "http";
+                var wsProtocol = _repetierConnection.Session.UseTls ? "wss" : "ws";
                 var socketParams = urlParams.Count > 0 ? $"?{string.Join('&', urlParams)}" : "";
                 _repetierConnection.RestClient = new RestClient($"{httpProtocol}://{_repetierConnection.BaseURL}");
                 _repetierConnection.WebSocketClient = new WebsocketClient(new Uri($"{wsProtocol}://{_repetierConnection.BaseURL}/socket/{socketParams}"));
@@ -49,14 +52,14 @@ namespace RepetierSharp
 
             public RepetierConnectionBuilder UseLang(string lang = "en")
             {
-                _repetierConnection.LangKey = lang;
+                _repetierConnection.Session.LangKey = lang;
                 return this;
             }
 
             // TODO: seems to not be supported
             private RepetierConnectionBuilder WithTls(bool useTls = true)
             {
-                _repetierConnection.UseTls = useTls;
+                _repetierConnection.Session.UseTls = useTls;
                 return this;
             }
 
@@ -85,17 +88,17 @@ namespace RepetierSharp
 
             public RepetierConnectionBuilder WithApiKey(string apiKey)
             {
-                _repetierConnection.ApiKey = apiKey;
-                _repetierConnection.AuthType = AuthenticationType.ApiKey;
+                _repetierConnection.Session.ApiKey = apiKey;
+                _repetierConnection.Session.AuthType = AuthenticationType.ApiKey;
                 return this;
             }
 
             public RepetierConnectionBuilder WithCredentials(string login, string password, bool rememberSession = false)
             {
-                _repetierConnection.LongLivedSession = rememberSession;
-                _repetierConnection.LoginName = login;
-                _repetierConnection.Password = password;
-                _repetierConnection.AuthType = AuthenticationType.Credentials;
+                _repetierConnection.Session.LongLivedSession = rememberSession;
+                _repetierConnection.Session.LoginName = login;
+                _repetierConnection.Session.Password = password;
+                _repetierConnection.Session.AuthType = AuthenticationType.Credentials;
                 return this;
             }
 
