@@ -107,9 +107,20 @@ namespace RepetierSharp
         public event RepetierServerConnected OnRepetierConnected;
 
         #region Properties
-        // TODO: ensure proper values, send ExtendPing on change?
-        public uint PingInterval { get; set; } = 10000;
+        public uint PingInterval
+        {
+            get
+            {
+                return pingInterval;
+            }
+            set
+            {
+                pingInterval = value;
+                SendExtendPing(pingInterval);
+            }
+        }
         private long lastPingTimestamp = 0;
+        private uint pingInterval = 10000;
 
         private Dictionary<RepetierTimer, List<ICommandData>> QueryIntervals { get; set; } = new Dictionary<RepetierTimer, List<ICommandData>>();
         private CommandManager CommandManager { get; set; } = new CommandManager();
@@ -238,6 +249,12 @@ namespace RepetierSharp
         {
             SendCommand(PingCommand.Instance, typeof(PingCommand));
         }
+
+        public void SendExtendPing(uint timeout)
+        {
+            SendCommand(new ExtendPingCommand(timeout), typeof(ExtendPingCommand));
+        }
+
 
         /// <summary>
         /// Closes the WebSocket connection
