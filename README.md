@@ -1,5 +1,8 @@
 # RepetierSharp - A simple, event driven [Repetier Server](https://www.repetier-server.com/ "Repetier Server") client
 
+![NuGet downloads](https://img.shields.io/nuget/dt/RepetierSharp?label=Nuget%3A%20RepetierSharp)
+![Nuget version](https://img.shields.io/nuget/v/RepetierSharp)
+
 ## Introduction
 
 RepetierSharp is a simple, event-driven client which encapsulates the WebSocket API (as well as the REST API where needed) to control the Repetier Server.
