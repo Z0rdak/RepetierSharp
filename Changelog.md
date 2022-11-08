@@ -1,4 +1,7 @@
-﻿# 0.1.6 - QoL features and API changes
+﻿# 0.1.7 
+## Changes
+  * Internal changes as attempt to make websocket calls async
+# 0.1.6 - QoL features and API changes
 ## Additions
   * Add overloads for start print and upload print, which offers the possibility to provide the gcode as bytes instead of the whole file path
   * Add ExtendPing command for big file uploads
