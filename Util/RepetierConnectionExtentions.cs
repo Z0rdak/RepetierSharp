@@ -8,50 +8,50 @@ namespace RepetierSharp.Extentions
         /// Send a single "listPrinters" message to the repetier rerver.
         /// The response to a "listPrinters" command contains the current print progress.
         /// </summary>
-        public static void QueryPrinterList(this RepetierConnection rc)
+        public static async void QueryPrinterList(this RepetierConnection rc)
         {
-            rc.SendCommand(ListPrinterCommand.Instance);
+            await rc.SendCommand(ListPrinterCommand.Instance);
         }
 
         /// <summary>
         /// Send a single "stateList" message to the repetier server.
         /// The response to a "stateList" command contains information regarding the printer state.
         /// </summary>
-        public static void QueryPrinterStateList(this RepetierConnection rc, bool includeHistory = false)
+        public static async void QueryPrinterStateList(this RepetierConnection rc, bool includeHistory = false)
         {
-            rc.SendCommand(new StateListCommand(includeHistory));
+            await rc.SendCommand(new StateListCommand(includeHistory));
         }
 
-        public static void PauseJob(this RepetierConnection rc)
+        public static async void PauseJob(this RepetierConnection rc)
         {
-            rc.SendCommand(new SendCommand("@pause RepetierSharp requested pause."));
+            await rc.SendCommand(new SendCommand("@pause RepetierSharp requested pause."));
         }
 
         /// <summary>
         /// Stop the current print and trigger a "jobKilled" event.
         /// </summary>
         /// <param name="rc"></param>
-        public static void StopJob(this RepetierConnection rc)
+        public static async void StopJob(this RepetierConnection rc)
         {
-            rc.SendCommand(StopJobCommand.Instance);
+            await rc.SendCommand(StopJobCommand.Instance);
         }
 
         /// <summary>
         /// Initiate an emergency stop.
         /// </summary>
         /// <param name="rc"></param>
-        public static void EmergencyStop(this RepetierConnection rc)
+        public static async void EmergencyStop(this RepetierConnection rc)
         {
-            rc.SendCommand(EmergencyStopCommand.Instance);
+            await rc.SendCommand(EmergencyStopCommand.Instance);
         }
 
         /// <summary>
         /// Logout current active session.
         /// </summary>
         /// <param name="rc"></param>
-        public static void Logout(this RepetierConnection rc)
+        public static async void Logout(this RepetierConnection rc)
         {
-            rc.SendCommand(LogoutCommand.Instance);
+            await rc.SendCommand(LogoutCommand.Instance);
         }
 
         /// <summary>
@@ -60,9 +60,9 @@ namespace RepetierSharp.Extentions
         /// <param name="rc"></param>
         /// <param name="modelId"> Gcode id to enqueue into print queue </param>
         /// <param name="autostart"> True to automatically start print job, false for queueing only</param>
-        public static void EnqueueJob(this RepetierConnection rc, int modelId, bool autostart = true)
+        public static async void EnqueueJob(this RepetierConnection rc, int modelId, bool autostart = true)
         {
-            rc.SendCommand(new CopyModelCommand(modelId, autostart));
+            await rc.SendCommand(new CopyModelCommand(modelId, autostart));
         }
 
         /// <summary>
@@ -70,9 +70,9 @@ namespace RepetierSharp.Extentions
         /// </summary>
         /// <param name="rc"></param>
         /// <param name="modelId"></param>
-        public static void GetModelInfo(this RepetierConnection rc, int modelId)
+        public static async void GetModelInfo(this RepetierConnection rc, int modelId)
         {
-            rc.SendCommand(new ModelInfoCommand(modelId));
+            await rc.SendCommand(new ModelInfoCommand(modelId));
         }
 
         /// <summary>
@@ -80,9 +80,9 @@ namespace RepetierSharp.Extentions
         /// </summary>
         /// <param name="rc"></param>
         /// <param name="jobId"></param>
-        public static void GetJobInfo(this RepetierConnection rc, int jobId)
+        public static async void GetJobInfo(this RepetierConnection rc, int jobId)
         {
-            rc.SendCommand(new JobInfoCommand(jobId));
+            await rc.SendCommand(new JobInfoCommand(jobId));
         }
 
         /// <summary>
@@ -90,18 +90,18 @@ namespace RepetierSharp.Extentions
         /// </summary>
         /// <param name="rc"></param>
         /// <param name="jobId"> Id of job in queue to start</param>
-        public static void StartJob(this RepetierConnection rc, int jobId)
+        public static async void StartJob(this RepetierConnection rc, int jobId)
         {
-            rc.SendCommand(new StartJobCommand(jobId));
+            await rc.SendCommand(new StartJobCommand(jobId));
         }
 
         /// <summary>
         /// Continue active job.
         /// </summary>
         /// <param name="rc"></param>
-        public static void ContinueJob(this RepetierConnection rc)
+        public static async void ContinueJob(this RepetierConnection rc)
         {
-            rc.SendCommand(ContinueJobCommand.Instance);
+            await rc.SendCommand(ContinueJobCommand.Instance);
         }
 
         /// <summary>
@@ -109,44 +109,44 @@ namespace RepetierSharp.Extentions
         /// </summary>
         /// <param name="rc"></param>
         /// <param name="jobId"> Id of job to remove from print queue. </param>
-        public static void RemoveJob(this RepetierConnection rc, int jobId)
+        public static async void RemoveJob(this RepetierConnection rc, int jobId)
         {
-            rc.SendCommand(new RemoveJobCommand(jobId));
+            await rc.SendCommand(new RemoveJobCommand(jobId));
         }
 
-        public static void CreateUser(this RepetierConnection rc, string user, string password, int permission)
+        public static async void CreateUser(this RepetierConnection rc, string user, string password, int permission)
         {
-            rc.SendCommand(new CreateUserCommand(user, password, permission));
+            await rc.SendCommand(new CreateUserCommand(user, password, permission));
         }
 
-        public static void UpdateUser(this RepetierConnection rc, string user, int permission, string password = "")
+        public static async void UpdateUser(this RepetierConnection rc, string user, int permission, string password = "")
         {
-            rc.SendCommand(new UpdateUserCommand(user, permission, password));
+            await rc.SendCommand(new UpdateUserCommand(user, permission, password));
         }
 
-        public static void DeleteUser(this RepetierConnection rc, string user)
+        public static async void DeleteUser(this RepetierConnection rc, string user)
         {
-            rc.SendCommand(new DeleteUserCommand(user));
+            await rc.SendCommand(new DeleteUserCommand(user));
         }
 
-        public static void Preheat(this RepetierConnection rc, int extruderNo, int heatedBedNo, int heatedChamberNo)
+        public static async void Preheat(this RepetierConnection rc, int extruderNo, int heatedBedNo, int heatedChamberNo)
         {
-            rc.SendCommand(new PreheatCommand(extruderNo, heatedBedNo, heatedChamberNo));
+            await rc.SendCommand(new PreheatCommand(extruderNo, heatedBedNo, heatedChamberNo));
         }
 
-        public static void PreheatAll(this RepetierConnection rc)
+        public static async void PreheatAll(this RepetierConnection rc)
         {
-            rc.SendCommand(new PreheatCommand((int)ExtruderConstants.All, 0, 0));
+            await rc.SendCommand(new PreheatCommand((int)ExtruderConstants.All, 0, 0));
         }
 
-        public static void PreheatActive(this RepetierConnection rc)
+        public static async void PreheatActive(this RepetierConnection rc)
         {
-            rc.SendCommand(new PreheatCommand((int)ExtruderConstants.Active, 0, 0));
+            await rc.SendCommand(new PreheatCommand((int)ExtruderConstants.Active, 0, 0));
         }
 
-        public static void Cooldown(this RepetierConnection rc)
+        public static async void Cooldown(this RepetierConnection rc)
         {
-            rc.SendCommand(new CooldownCommand((int)ExtruderConstants.All, 0, 0));
+            await rc.SendCommand(new CooldownCommand((int)ExtruderConstants.All, 0, 0));
         }
 
         public static void SetTemperature(this RepetierConnection rc, TemperatureTarget targetType, int temperature, int targetId = 0)
@@ -167,19 +167,19 @@ namespace RepetierSharp.Extentions
             }
         }
 
-        public static void SetExtruderTemp(this RepetierConnection rc, int temperature, int extruderNo = 0)
+        public static async void SetExtruderTemp(this RepetierConnection rc, int temperature, int extruderNo = 0)
         {
-            rc.SendCommand(new SetExtruderTempCommand(temperature, extruderNo));
+            await rc.SendCommand(new SetExtruderTempCommand(temperature, extruderNo));
         }
 
-        public static void SetHeatedBedTemp(this RepetierConnection rc, int temperature, int heatedBedId = 0)
+        public static async void SetHeatedBedTemp(this RepetierConnection rc, int temperature, int heatedBedId = 0)
         {
-            rc.SendCommand(new SetHeatedBedTempCommand(temperature, heatedBedId));
+            await rc.SendCommand(new SetHeatedBedTempCommand(temperature, heatedBedId));
         }
 
-        public static void SetHeatedChamberTemp(this RepetierConnection rc, int temperature, int heatedChamberId = 0)
+        public static async void SetHeatedChamberTemp(this RepetierConnection rc, int temperature, int heatedChamberId = 0)
         {
-            rc.SendCommand(new SetHeatedChamberTempCommand(temperature, heatedChamberId));
+            await rc.SendCommand(new SetHeatedChamberTempCommand(temperature, heatedChamberId));
         }
 
         /// <summary>
@@ -188,9 +188,9 @@ namespace RepetierSharp.Extentions
         /// <param name="rc"></param>
         /// <param name="fanSpeed"> Fan speed in percent (Repetier Server usually uses values from 0-255 for voltage)</param>
         /// <param name="fanId"> Id of the fan (default = 0 for the first fan)</param>
-        public static void SetFanSpeed(this RepetierConnection rc, double fanSpeed, int fanId = 0)
+        public static async void SetFanSpeed(this RepetierConnection rc, double fanSpeed, int fanId = 0)
         {
-            rc.SendCommand(new SetFanSpeedCommand((int)(fanSpeed * 255 / 100), fanId));
+            await rc.SendCommand(new SetFanSpeedCommand((int)(fanSpeed * 255 / 100), fanId));
         }
 
         public static void TurnOffFan(this RepetierConnection rc, int fanId = 0)
@@ -203,19 +203,19 @@ namespace RepetierSharp.Extentions
             SetFanSpeed(rc, SetFanSpeedCommand.MAX_THROTTLE, fanId);
         }
 
-        public static void SetFlowMultiplier(this RepetierConnection rc, int flowMultiplier)
+        public static async void SetFlowMultiplier(this RepetierConnection rc, int flowMultiplier)
         {
-            rc.SendCommand(new SetFlowMultiplyCommand(flowMultiplier));
+            await rc.SendCommand(new SetFlowMultiplyCommand(flowMultiplier));
         }
 
-        public static void SetSpeedMultiplier(this RepetierConnection rc, int speedMultiplier)
+        public static async void SetSpeedMultiplier(this RepetierConnection rc, int speedMultiplier)
         {
-            rc.SendCommand(new SetSpeedMultiplyCommand(speedMultiplier));
+            await rc.SendCommand(new SetSpeedMultiplyCommand(speedMultiplier));
         }
 
-        public static void QueryOpenMessages(this RepetierConnection rc)
+        public static async void QueryOpenMessages(this RepetierConnection rc)
         {
-            rc.SendCommand(MessagesCommand.Instance);
+            await rc.SendCommand(MessagesCommand.Instance);
         }
     }
 }

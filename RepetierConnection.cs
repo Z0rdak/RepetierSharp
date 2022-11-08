@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -170,7 +171,7 @@ namespace RepetierSharp
                         this.QueryOpenMessages();
                     }
                 }
-                SendPing();
+                Task.Run(async () => await SendPing());
             });
 
             WebSocketClient.DisconnectionHappened.Subscribe(info =>
@@ -187,12 +188,12 @@ namespace RepetierSharp
                 }
                 try
                 {
-                    // Send ping if neccessary
+                    // Send ping interval is elapsed
                     var timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
                     if (lastPingTimestamp + PingInterval < DateTimeOffset.Now.ToUnixTimeSeconds())
                     {
                         lastPingTimestamp = timestamp;
-                        SendPing();
+                        Task.Run(async () => await SendPing());
                     }
 
                     // handle command response or event
@@ -213,10 +214,10 @@ namespace RepetierSharp
                         foreach (var eventData in data.EnumerateArray())
                         {
                             var repEvent = JsonSerializer.Deserialize<RepetierBaseEvent>(eventData.GetRawText());
-                            Task.Run(() =>
+                            Task.Run(async () =>
                             {
                                 OnRawEvent?.Invoke(repEvent.Event, repEvent.Printer, Encoding.UTF8.GetBytes(eventData.GetRawText()));
-                                HandleEvent(repEvent, eventData.GetRawText());
+                                await HandleEvent(repEvent, eventData.GetRawText());
                             });
                         }
                     }
@@ -228,16 +229,17 @@ namespace RepetierSharp
                         }
                         else
                         {
-                            Task.Run(() =>
+                            Task.Run(async () =>
                             {
                                 OnRawResponse?.Invoke(message.CallBackId, CommandManager.CommandIdentifierFor(message.CallBackId), Encoding.UTF8.GetBytes(data.GetRawText()));
-                                HandleMessage(message, data);
+                                await HandleMessage(message, data);
                             });
                         }
                     }
                 }
                 catch (Exception ex)
                 {
+                    // TODO: Implement proper logger support instead
                     Console.Error.WriteLine("[WebSocket] Error processing message from repetier server:");
                     Console.Error.WriteLine($"[WebSocket] {msg.Text}");
                     Console.Error.WriteLine($"{ex.Message}");
@@ -245,14 +247,14 @@ namespace RepetierSharp
             });
         }
 
-        private void SendPing()
+        private async Task SendPing()
         {
-            SendCommand(PingCommand.Instance, typeof(PingCommand));
+            await SendCommand(PingCommand.Instance, typeof(PingCommand));
         }
 
-        public void SendExtendPing(uint timeout)
+        public async void SendExtendPing(uint timeout)
         {
-            SendCommand(new ExtendPingCommand(timeout), typeof(ExtendPingCommand));
+            await SendCommand(new ExtendPingCommand(timeout), typeof(ExtendPingCommand));
         }
 
 
@@ -267,13 +269,13 @@ namespace RepetierSharp
 
         private RestRequest StartPrintRequest(string gcodeFilePath, string printerName, bool autostart = true)
         {
-            var GCODEFileName = Path.GetFileNameWithoutExtension(gcodeFilePath);
+            var gcodeFileName = Path.GetFileNameWithoutExtension(gcodeFilePath);
             var request = new RestRequest($"/printer/job/{printerName}", Method.Post)
                 .AddFile("gcode", gcodeFilePath)
                 .AddHeader("Content-Type", "multipart/form-data")
                 .AddParameter("a", "upload")
                 .AddParameter("autostart", autostart ? 1 : 0)
-                .AddParameter("name", GCODEFileName);
+                .AddParameter("name", gcodeFileName);
 
             if (!string.IsNullOrEmpty(Session.SessionId))
             {
@@ -317,14 +319,14 @@ namespace RepetierSharp
         /// <returns></returns>
         private RestRequest UploadModel(string gcodeFilePath, string printer, string group, bool overwrite = false)
         {
-            var GCODEFileName = Path.GetFileNameWithoutExtension(gcodeFilePath);
+            var gcodeFileName = Path.GetFileNameWithoutExtension(gcodeFilePath);
             var request = new RestRequest($"/printer/model/{printer}", Method.Post)
                 .AddFile("gcode", gcodeFilePath)
                 .AddHeader("Content-Type", "multipart/form-data")
                 .AddParameter("a", "upload")
                 .AddParameter("group", group)
                 .AddParameter("overwrite", overwrite)
-                .AddParameter("name", GCODEFileName);
+                .AddParameter("name", gcodeFileName);
 
             if (!string.IsNullOrEmpty(Session.SessionId))
             {
@@ -457,20 +459,20 @@ namespace RepetierSharp
         /// Activate printer with given printerSlug.
         /// </summary>
         /// <param name="printerSlug"> Printer to activate. </param>
-        public void ActivatePrinter(string printerSlug)
+        public async void ActivatePrinter(string printerSlug)
         {
             ActivePrinter = printerSlug;
-            SendCommand(new ActivateCommand(printerSlug));
+            await SendCommand(new ActivateCommand(printerSlug));
         }
 
         /// <summary>
         /// Deactivate printer with given printerSlug.
         /// </summary>
         /// <param name="printerSlug"> Printer to deactivate. </param>
-        public void DeactivatePrinter(string printerSlug)
+        public async void DeactivatePrinter(string printerSlug)
         {
             ActivePrinter = "";
-            SendCommand(new DeactivateCommand(printerSlug));
+            await SendCommand(new DeactivateCommand(printerSlug));
         }
 
         /// <summary>
@@ -478,7 +480,7 @@ namespace RepetierSharp
         /// </summary>
         /// <param name="message"></param>
         /// <param name="commandDataObject"></param>
-        private void HandleMessage(RepetierBaseMessage message, JsonElement commandDataObject)
+        private async Task HandleMessage(RepetierBaseMessage message, JsonElement commandDataObject)
         {
             // TODO: what if this fails? because of restart or something?
             var commandStr = CommandManager.CommandIdentifierFor(message.CallBackId);
@@ -488,11 +490,10 @@ namespace RepetierSharp
             switch (commandStr)
             {
                 case CommandConstants.PING:
-                    // TODO: Extend Ping and property for ping delay
-                    Task.Delay(TimeSpan.FromSeconds(5))
-                    .ContinueWith(t =>
+                    await Task.Delay(TimeSpan.FromSeconds(Math.Min(5, PingInterval / 2)))
+                    .ContinueWith(async t =>
                     {
-                        SendPing();
+                        await SendPing();
                     });
                     break;
                 case CommandConstants.LOGIN:
@@ -598,202 +599,12 @@ namespace RepetierSharp
         /// Handles an incoming repetier event.
         /// The event data is then forwarded by calling their corresponding event handlers.
         /// </summary>
-        private void HandleEvent(RepetierBaseEvent repetierEvent, string eventAsJson)
+        private async Task HandleEvent(RepetierBaseEvent repetierEvent, string eventAsJson)
         {
             var json = JsonSerializer.Deserialize<JsonDocument>(eventAsJson);
             var dataJsonObject = json.RootElement.GetProperty("data");
             var eventData = dataJsonObject.GetRawText();
             repetierEvent.Data = Encoding.UTF8.GetBytes(dataJsonObject.GetRawText());
-
-
-            // TODO: event updatePrinterState
-            #region event comment updatePrinterState
-            /* 
-             * {
-    "callback_id": -1,
-    "data": [
-        {
-            "data": {
-                "activeExtruder": 0,
-                "autostartNextPrint": false,
-                "debugLevel": 6,
-                "doorOpen": false,
-                "extruder": [
-                    {
-                        "error": 0,
-                        "output": 39.2156867980957,
-                        "tempRead": 200.0,
-                        "tempSet": 200.0
-                    },
-                    {
-                        "error": 0,
-                        "output": 0.0,
-                        "tempRead": 20.0,
-                        "tempSet": 0.0
-                    }
-                ],
-                "fans": [
-                    {
-                        "on": false,
-                        "voltage": 0
-                    }
-                ],
-                "filterFan": false,
-                "firmware": "Repetier_0.92.6",
-                "firmwareURL": "https://github.com/repetier/Repetier-Firmware/",
-                "flowMultiply": 100,
-                "hasXHome": true,
-                "hasYHome": true,
-                "hasZHome": true,
-                "heatedBeds": [
-                    {
-                        "error": 0,
-                        "output": 0.0,
-                        "tempRead": 20.0,
-                        "tempSet": 0.0
-                    }
-                ],
-                "heatedChambers": [],
-                "layer": 0,
-                "lights": 0,
-                "notification": "",
-                "numExtruder": 2,
-                "powerOn": true,
-                "rec": false,
-                "sdcardMounted": true,
-                "shutdownAfterPrint": false,
-                "speedMultiply": 100,
-                "volumetric": false,
-                "x": 126.20200347900391,
-                "y": 106.04100036621089,
-                "z": 5.1999998092651367
-            },
-            "event": "updatePrinterState",
-            "printer": "Cartesian"
-        },
-        {
-            "data": {
-                "activeExtruder": 0,
-                "autostartNextPrint": false,
-                "debugLevel": 6,
-                "doorOpen": false,
-                "extruder": [
-                    {
-                        "error": 0,
-                        "output": 39.2156867980957,
-                        "tempRead": 200.0,
-                        "tempSet": 200.0
-                    },
-                    {
-                        "error": 0,
-                        "output": 0.0,
-                        "tempRead": 20.0,
-                        "tempSet": 0.0
-                    }
-                ],
-                "fans": [
-                    {
-                        "on": false,
-                        "voltage": 0
-                    }
-                ],
-                "filterFan": false,
-                "firmware": "Repetier_0.92.6",
-                "firmwareURL": "https://github.com/repetier/Repetier-Firmware/",
-                "flowMultiply": 100,
-                "hasXHome": true,
-                "hasYHome": true,
-                "hasZHome": true,
-                "heatedBeds": [
-                    {
-                        "error": 0,
-                        "output": 0.0,
-                        "tempRead": 20.0,
-                        "tempSet": 0.0
-                    }
-                ],
-                "heatedChambers": [],
-                "layer": 0,
-                "lights": 0,
-                "notification": "",
-                "numExtruder": 2,
-                "powerOn": true,
-                "rec": false,
-                "sdcardMounted": true,
-                "shutdownAfterPrint": false,
-                "speedMultiply": 100,
-                "volumetric": false,
-                "x": 126.20200347900391,
-                "y": 106.04100036621089,
-                "z": 5.1999998092651367
-            },
-            "event": "updatePrinterState",
-            "printer": "Cartesian"
-        },
-        {
-            "data": {
-                "activeExtruder": 0,
-                "autostartNextPrint": false,
-                "debugLevel": 6,
-                "doorOpen": false,
-                "extruder": [
-                    {
-                        "error": 0,
-                        "output": 39.2156867980957,
-                        "tempRead": 200.0,
-                        "tempSet": 200.0
-                    },
-                    {
-                        "error": 0,
-                        "output": 0.0,
-                        "tempRead": 20.0,
-                        "tempSet": 0.0
-                    }
-                ],
-                "fans": [
-                    {
-                        "on": false,
-                        "voltage": 0
-                    }
-                ],
-                "filterFan": false,
-                "firmware": "Repetier_0.92.6",
-                "firmwareURL": "https://github.com/repetier/Repetier-Firmware/",
-                "flowMultiply": 100,
-                "hasXHome": true,
-                "hasYHome": true,
-                "hasZHome": true,
-                "heatedBeds": [
-                    {
-                        "error": 0,
-                        "output": 0.0,
-                        "tempRead": 20.0,
-                        "tempSet": 0.0
-                    }
-                ],
-                "heatedChambers": [],
-                "layer": 0,
-                "lights": 0,
-                "notification": "",
-                "numExtruder": 2,
-                "powerOn": true,
-                "rec": false,
-                "sdcardMounted": true,
-                "shutdownAfterPrint": false,
-                "speedMultiply": 100,
-                "volumetric": false,
-                "x": 0.0,
-                "y": 0.0,
-                "z": 20.0
-            },
-            "event": "updatePrinterState",
-            "printer": "Cartesian"
-        }
-    ],
-    "eventList": true
-}
-             */
-            #endregion
 
             switch (repetierEvent.Event)
             {
@@ -811,7 +622,7 @@ namespace RepetierSharp
                     {
                         QueryIntervals[timer].ForEach(command =>
                         {
-                            SendCommand(command, command.GetType());
+                            Task.Run(async () => await SendCommand(command, command.GetType()));
                         });
                     }
                     OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, null);
@@ -849,7 +660,7 @@ namespace RepetierSharp
                     break;
                 case EventConstants.MESSAGES_CHANGED:
                     OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, null);
-                    SendCommand(MessagesCommand.Instance, repetierEvent.Printer);
+                    await SendCommand(MessagesCommand.Instance, repetierEvent.Printer);
                     break;
                 case EventConstants.MOVE:
                     var moveEvent = JsonSerializer.Deserialize<Move>(eventData);
@@ -924,25 +735,25 @@ namespace RepetierSharp
             }
         }
 
-        public void SendCommand(ICommandData command)
+        public async Task SendCommand(ICommandData command)
         {
-            SendCommand(command, command.GetType(), ActivePrinter);
+            await SendCommand(command, command.GetType(), ActivePrinter);
         }
 
-        public void SendCommand(ICommandData command, string printer)
+        public async Task SendCommand(ICommandData command, string printer)
         {
-            SendCommand(command, command.GetType(), printer);
+            await SendCommand(command, command.GetType(), printer);
         }
 
-        protected void SendCommand(ICommandData command, Type commandType)
+        protected async Task SendCommand(ICommandData command, Type commandType)
         {
-            SendCommand(command, commandType, ActivePrinter);
+            await SendCommand(command, commandType, ActivePrinter);
         }
 
-        protected void SendCommand(ICommandData command, Type commandType, string printer)
+        protected async Task SendCommand(ICommandData command, Type commandType, string printer)
         {
             var baseCommand = CommandManager.CommandWithId(command, commandType, printer);
-            Task.Run(() => WebSocketClient.Send(baseCommand.ToBytes()));
+            await Task.Run(() => WebSocketClient.Send(baseCommand.ToBytes()));
         }
 
         public void SendCommand(string command, string printer, Dictionary<string, object> data)
@@ -969,12 +780,12 @@ namespace RepetierSharp
         /// </summary>
         /// <param name="user"></param>
         /// <param name="password"></param>
-        public void Login(string user, string password)
+        public async void Login(string user, string password)
         {
             if (!string.IsNullOrEmpty(Session.SessionId))
             {
                 var pw = CommandHelper.HashPassword(Session.SessionId, user, password);
-                SendCommand(new LoginCommand(user, pw, Session.LongLivedSession), typeof(LoginCommand));
+                await SendCommand(new LoginCommand(user, pw, Session.LongLivedSession), typeof(LoginCommand));
             }
         }
     }
