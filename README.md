@@ -2,6 +2,7 @@
 
 ![NuGet downloads](https://img.shields.io/nuget/dt/RepetierSharp)
 ![Nuget version](https://img.shields.io/nuget/v/RepetierSharp)
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate/?hosted_button_id=9DEWUBKE4YT3S)
 
 ## Introduction
 
