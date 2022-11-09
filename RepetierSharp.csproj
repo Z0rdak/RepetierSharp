@@ -22,7 +22,7 @@
     <FileVersion>1.0.0.0</FileVersion>
     <NeutralLanguage>en</NeutralLanguage>
     <PackageTags>Repetier-Server, 3D-Printing, Websocket, API-Client</PackageTags>
-    <Version>0.1.7</Version>
+    <Version>0.1.7.1</Version>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <SignAssembly>false</SignAssembly>
     <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -36,8 +36,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="RestSharp" Version="107.2.1" />
-    <PackageReference Include="System.Text.Json" Version="6.0.2" />
+    <PackageReference Include="RestSharp" Version="108.0.2" />
+    <PackageReference Include="System.Text.Json" Version="6.0.7" />
     <PackageReference Include="Websocket.Client" Version="4.4.43" />
   </ItemGroup>
 

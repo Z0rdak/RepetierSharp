@@ -112,16 +112,16 @@ namespace RepetierSharp
         {
             get
             {
-                return pingInterval;
+                return _pingInterval;
             }
             set
             {
-                pingInterval = value;
-                SendExtendPing(pingInterval);
+                _pingInterval = value;
+                SendExtendPing(_pingInterval);
             }
         }
-        private long lastPingTimestamp = 0;
-        private uint pingInterval = 10000;
+        private long _lastPingTimestamp = 0;
+        private uint _pingInterval = 10000;
 
         private Dictionary<RepetierTimer, List<ICommandData>> QueryIntervals { get; set; } = new Dictionary<RepetierTimer, List<ICommandData>>();
         private CommandManager CommandManager { get; set; } = new CommandManager();
@@ -190,14 +190,14 @@ namespace RepetierSharp
                 {
                     // Send ping interval is elapsed
                     var timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-                    if (lastPingTimestamp + PingInterval < DateTimeOffset.Now.ToUnixTimeSeconds())
+                    if (_lastPingTimestamp + PingInterval < DateTimeOffset.Now.ToUnixTimeSeconds())
                     {
-                        lastPingTimestamp = timestamp;
+                        _lastPingTimestamp = timestamp;
                         Task.Run(async () => await SendPing());
                     }
 
                     // handle command response or event
-                    byte[] msgBytes = Encoding.UTF8.GetBytes(msg.Text);
+                    var msgBytes = Encoding.UTF8.GetBytes(msg.Text);
                     var message = JsonSerializer.Deserialize<RepetierBaseMessage>(msgBytes);
                     var containsEvents = message.HasEvents != null && message.HasEvents == true;
 
@@ -267,14 +267,14 @@ namespace RepetierSharp
             WebSocketClient = null;
         }
 
-        private RestRequest StartPrintRequest(string gcodeFilePath, string printerName, bool autostart = true)
+        private RestRequest StartPrintRequest(string gcodeFilePath, string printerName, StartBehavior autostart = StartBehavior.Autostart)
         {
             var gcodeFileName = Path.GetFileNameWithoutExtension(gcodeFilePath);
             var request = new RestRequest($"/printer/job/{printerName}", Method.Post)
                 .AddFile("gcode", gcodeFilePath)
                 .AddHeader("Content-Type", "multipart/form-data")
                 .AddParameter("a", "upload")
-                .AddParameter("autostart", autostart ? 1 : 0)
+                .AddParameter("autostart", (int)autostart)
                 .AddParameter("name", gcodeFileName);
 
             if (!string.IsNullOrEmpty(Session.SessionId))
@@ -284,13 +284,13 @@ namespace RepetierSharp
             return WithApiKeyHeader(request);
         }
 
-        private RestRequest StartPrintRequest(string fileName, byte[] data, string printerName, bool autostart = true)
+        private RestRequest StartPrintRequest(string fileName, byte[] data, string printerName, StartBehavior autostart = StartBehavior.Autostart)
         {
             var request = new RestRequest($"/printer/job/{printerName}", Method.Post)
                 .AddFile("gcode", data, fileName)
                 .AddHeader("Content-Type", "multipart/form-data")
                 .AddParameter("a", "upload")
-                .AddParameter("autostart", autostart ? 1 : 0)
+                .AddParameter("autostart", (int)autostart)
                 .AddParameter("name", fileName);
 
             if (!string.IsNullOrEmpty(Session.SessionId))
@@ -367,17 +367,17 @@ namespace RepetierSharp
         /// </summary>
         /// <param name="gcodeFilePath"> The path of the file to upload (/path/file.gcode) </param>
         /// <param name="printer"> Printer slug to upload to </param>
-        /// <param name="group"> Group to add gcode to </param>
-        /// <param name="overwrite"> Flag to overwrite existing file with the same name </param>
-        public void UploadGCode(string gcodeFilePath, string printer, string group = "Default", bool overwrite = false)
+        /// <param name="group"> Group to upload gcode to </param>
+        /// <param name="overwrite"> Flag to overwrite existing file with the same name. Defaults to false </param>
+        public void UploadGCode(string gcodeFilePath, string printer, string group, bool overwrite = false)
         {
             try
             {
                 var request = UploadModel(gcodeFilePath, printer, group, overwrite);
                 Task.Run(async () =>
                 {
-                    var Response = await RestClient.ExecuteAsync(request);
-                    HandleRestResponse(Response, printer);
+                    var response = await RestClient.ExecuteAsync(request);
+                    HandleRestResponse(response, printer);
                 });
             }
             catch (Exception ex)
@@ -386,15 +386,23 @@ namespace RepetierSharp
             }
         }
 
-        public void UploadGCode(string fileName, byte[] file, string printer, string group = "Default", bool overwrite = false)
+        /// <summary>
+        /// Upload a gcode file via REST API
+        /// </summary>
+        /// <param name="fileName"> The name of the file to upload (file.gcode) </param>
+        /// <param name="file"> The content of the actual gcode file </param>
+        /// <param name="printer"> Printer slug to upload to </param>
+        /// <param name="group"> Group to upload gcode to </param>
+        /// <param name="overwrite"> Flag to overwrite existing file with the same name. Defaults to false </param>
+        public void UploadGCode(string fileName, byte[] file, string printer, string group, bool overwrite = false)
         {
             try
             {
                 var request = UploadModel(fileName, file, printer, group, overwrite);
                 Task.Run(async () =>
                 {
-                    var Response = await RestClient.ExecuteAsync(request);
-                    HandleRestResponse(Response, printer);
+                    var response = await RestClient.ExecuteAsync(request);
+                    HandleRestResponse(response, printer);
                 });
             }
             catch (Exception ex)
@@ -418,31 +426,16 @@ namespace RepetierSharp
         }
 
         /// <summary>
-        /// Upload given G-Code and start the printing process via REST-API.
+        /// Upload given gcode and start the printing process via REST-API.
         /// </summary>
-        /// <param name="GCODEFilePath"></param>
-        public void UploadAndStartPrint(string GCODEFilePath, string printer)
+        /// <param name="gcodeFilePath"> The path of the file to upload (/path/file.gcode) </param>
+        /// <param name="printer"> Printer slug to upload to </param>
+        /// <param name="autostart"> Flag to indicate the start behavior when uploading gcode. Defaults to autostart </param>
+        public void UploadAndStartPrint(string gcodeFilePath, string printer, StartBehavior autostart = StartBehavior.Autostart)
         {
             try
             {
-                var request = StartPrintRequest(GCODEFilePath, printer);
-                Task.Run(async () =>
-                {
-                    var response = await RestClient.ExecuteAsync(request);
-                    HandleRestResponse(response, printer);
-                });
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"{ex}");
-            }
-        }
-
-        public void UploadAndStartPrint(string fileName, byte[] file, string printer)
-        {
-            try
-            {
-                var request = StartPrintRequest(fileName, file, printer);
+                var request = StartPrintRequest(gcodeFilePath, printer, autostart);
                 Task.Run(async () =>
                 {
                     var response = await RestClient.ExecuteAsync(request);
@@ -456,9 +449,33 @@ namespace RepetierSharp
         }
 
         /// <summary>
-        /// Activate printer with given printerSlug.
+        /// Upload given gcode and start the printing process via REST-API.
         /// </summary>
-        /// <param name="printerSlug"> Printer to activate. </param>
+        /// <param name="fileName"> The name of the file to upload (file.gcode) </param>
+        /// <param name="file"> The content of the actual gcode file </param>
+        /// <param name="printer"> Printer slug to upload to </param>
+        /// <param name="autostart"> Flag to indicate the start behavior when uploading gcode. Defaults to autostart </param>
+        public void UploadAndStartPrint(string fileName, byte[] file, string printer, StartBehavior autostart = StartBehavior.Autostart)
+        {
+            try
+            {
+                var request = StartPrintRequest(fileName, file, printer, autostart);
+                Task.Run(async () =>
+                {
+                    var response = await RestClient.ExecuteAsync(request);
+                    HandleRestResponse(response, printer);
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"{ex}");
+            }
+        }
+
+        /// <summary>
+        /// Activate printer with given printerSlug by sending the corresponding command to the server.
+        /// </summary>
+        /// <param name="printerSlug"> Printer to activate </param>
         public async void ActivatePrinter(string printerSlug)
         {
             ActivePrinter = printerSlug;
@@ -466,9 +483,9 @@ namespace RepetierSharp
         }
 
         /// <summary>
-        /// Deactivate printer with given printerSlug.
+        /// Deactivate printer with given printerSlug by sending the corresponding command to the server.
         /// </summary>
-        /// <param name="printerSlug"> Printer to deactivate. </param>
+        /// <param name="printerSlug"> Printer to deactivate </param>
         public async void DeactivatePrinter(string printerSlug)
         {
             ActivePrinter = "";
@@ -509,10 +526,10 @@ namespace RepetierSharp
                     OnResponse?.Invoke(message.CallBackId, commandStr, null);
                     break;
                 case CommandConstants.LIST_PRINTER:
-                    var ListprintersMessage = JsonSerializer.Deserialize<List<Printer>>(cmdData);
-                    var printerMsg = new ListPrinterMessage() { Printers = ListprintersMessage };
+                    var listprintersMessage = JsonSerializer.Deserialize<List<Printer>>(cmdData);
+                    var printerMsg = new ListPrinterMessage() { Printers = listprintersMessage };
                     OnResponse?.Invoke(message.CallBackId, commandStr, printerMsg);
-                    OnPrinterListChanged?.Invoke(ListprintersMessage);
+                    OnPrinterListChanged?.Invoke(listprintersMessage);
                     break;
                 case CommandConstants.STATE_LIST:
                     var stateListMessage = JsonSerializer.Deserialize<Dictionary<string, PrinterState>>(cmdData);
@@ -617,7 +634,7 @@ namespace RepetierSharp
                 case EventConstants.TIMER_300:
                 case EventConstants.TIMER_1800:
                 case EventConstants.TIMER_3600:
-                    RepetierTimer timer = (RepetierTimer)int.Parse(repetierEvent.Event[5..]);
+                    var timer = (RepetierTimer)int.Parse(repetierEvent.Event[5..]);
                     if (QueryIntervals.ContainsKey(timer))
                     {
                         QueryIntervals[timer].ForEach(command =>
@@ -735,12 +752,17 @@ namespace RepetierSharp
             }
         }
 
+        /// <summary>
+        /// Send the given command to the server with the current active printer as argument.
+        /// </summary>
+        /// <param name="command"> The command to send to the server </param>
+        /// <returns></returns>
         public async Task SendCommand(ICommandData command)
         {
             await SendCommand(command, command.GetType(), ActivePrinter);
         }
 
-        public async Task SendCommand(ICommandData command, string printer)
+        private async Task SendCommand(ICommandData command, string printer)
         {
             await SendCommand(command, command.GetType(), printer);
         }
@@ -756,16 +778,21 @@ namespace RepetierSharp
             await Task.Run(() => WebSocketClient.Send(baseCommand.ToBytes()));
         }
 
+        /// <summary>
+        /// Send a raw command to the server/given printer.
+        /// </summary>
+        /// <param name="command"> The identifier of the command </param>
+        /// <param name="printer"> The printer the command is issued to </param>
+        /// <param name="data"> The raw data as key-value pairs </param>
         public void SendCommand(string command, string printer, Dictionary<string, object> data)
         {
             var baseCommand = CommandManager.CommandWithId(command, printer, data);
             Task.Run(() => WebSocketClient.Send(baseCommand.ToBytes()));
         }
 
-
-
         /// <summary>
-        /// Attempt login with the previously set credentials
+        /// Attempt login with the user and password already provided when building the RepetierConnection.
+        /// The password will be hashed. See: https://prgdoc.repetier-server.com/v1/docs/index.html#/en/web-api/websocket/basicCommands?id=login
         /// </summary>
         public void Login()
         {
@@ -776,10 +803,11 @@ namespace RepetierSharp
         }
 
         /// <summary>
-        /// Attempt login with the given user and password
+        /// Attempt login with the given user and password.
+        /// The password will be hashed. See: https://prgdoc.repetier-server.com/v1/docs/index.html#/en/web-api/websocket/basicCommands?id=login
         /// </summary>
-        /// <param name="user"></param>
-        /// <param name="password"></param>
+        /// <param name="user"> The user name for login </param>
+        /// <param name="password"> The password in plaintext </param>
         public async void Login(string user, string password)
         {
             if (!string.IsNullOrEmpty(Session.SessionId))
