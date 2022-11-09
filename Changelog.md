@@ -1,4 +1,7 @@
-﻿# 0.1.7.1 - New versioning schema and breaking changes
+﻿# 0.1.7.2 - Bug fixes
+## Fixes
+  * Fix type `StartJobCommand` not being public
+# 0.1.7.1 - New versioning schema and breaking changes
 ## Breaking changes: 
   * Change autostart argument type for `UploadAndStartPrint` from bool to `StartBehavior` to represent the possibilites of the API correctly. See: https://prgdoc.repetier-server.com/v1/docs/index.html#/en/web-api/direct?id=upload
   * Remove the default value for the group for both `UploadGCode` methods again. Sorry.
@@ -6,7 +9,7 @@
   * Change to more granular versioning schema.
   * Made some `SendCommand(...)` overloads private/protected to reduce confusion on which method to use and added method documentation.
   * Update System.Text.Json dependency from 6.0.2 to 6.0.7
-## Fix
+## Fixes 
   * Fix small typos
   * Fix missing/misleading method documentation
 # 0.1.7

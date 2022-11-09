@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace RepetierSharp.Models.Events
 {
-    internal class EventIdAttribute : Attribute
+    public class EventIdAttribute : Attribute
     {
         public List<string> EventNames { get; } = new List<string>();
 

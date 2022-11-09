@@ -2,7 +2,7 @@
 
 namespace RepetierSharp.Models.Commands
 {
-    class StartJobCommand : ICommandData
+    public class StartJobCommand : ICommandData
     {
         [JsonPropertyName("id")]
         public int JobId { get; }
