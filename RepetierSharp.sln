@@ -10,8 +10,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RepetierClient", "..\RepetierClient\RepetierClient.csproj", "{D16944AA-6D9E-4B3D-BA46-6FBF53F6CC45}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -22,10 +20,6 @@ Global
 		{B862E4CF-7B20-4EAC-9AD9-7E781BB5BC17}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B862E4CF-7B20-4EAC-9AD9-7E781BB5BC17}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B862E4CF-7B20-4EAC-9AD9-7E781BB5BC17}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D16944AA-6D9E-4B3D-BA46-6FBF53F6CC45}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D16944AA-6D9E-4B3D-BA46-6FBF53F6CC45}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D16944AA-6D9E-4B3D-BA46-6FBF53F6CC45}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D16944AA-6D9E-4B3D-BA46-6FBF53F6CC45}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
