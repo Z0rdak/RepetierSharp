@@ -16,9 +16,9 @@ https://www.repetier-server.com/
 
 ### Versioning
 
-This library is up to date with RepetierServer version 1.2.0. The serialization for most commands and events should be working with earlier versions, but there is the possibilty of crashes when using RepetierSharp with earlier versions due to undocumented changes.
+This library is up to date with RepetierServer version 1.3.x. The serialization for most commands and events should be working with earlier versions, but there is the possibilty of incompatability when using RepetierSharp with earlier versions due to undocumented changes in the Repetier Server API.
 
-Note that you are still able to use RepetierSharp by just using the version independent event handlers for events and command responses: `OnRawEvent(string eventName, string printer, byte[] payload)` and `OnRawResponse(int callbackID, string command, byte[] response)` respectively.
+You are still able to use RepetierSharp with older versions of Repetier Sever by just using the version independent event handlers for events and command responses: `OnRawEvent(string eventName, string printer, byte[] payload)` and `OnRawResponse(int callbackID, string command, byte[] response)` respectively.
 
 See the Changelog.md for an more detailed overview off added/changed features.
 
