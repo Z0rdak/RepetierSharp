@@ -6,7 +6,7 @@
 
 ## Introduction
 
-RepetierSharp is a simple, event-driven client which encapsulates the WebSocket API (as well as the REST API where needed) to control the Repetier Server.
+RepetierSharp is a simple, event-driven client which encapsulates the WebSocket and REST API of the Repetier Server to manage your printers.
 
 ### What is Repetier Server?
 
