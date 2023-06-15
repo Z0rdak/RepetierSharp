@@ -18,12 +18,15 @@ namespace RepetierSharp
 
             public RepetierConnection Build()
             {
-                List<string> urlParams = new List<string>();
+                var urlParams = new List<string>();
+     
                 switch (_repetierConnection.Session.AuthType)
                 {
                     case AuthenticationType.None:
-                    // nothing here
-                    // using global as login with permission 65535
+                        // Without an explicit authentication type, an anonymous authentication with the 'global' user profile is attempted
+                        // Using WithCredentials("global", "") should result in the same outcome
+                        // If at least one user is defined beside the global user, this will result in a permission denied message
+                        break;
                     case AuthenticationType.Credentials:
                         // loginRequired event is fired after connecting and attempts to login with given credentials
                         break;
