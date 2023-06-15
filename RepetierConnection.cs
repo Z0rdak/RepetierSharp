@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
-using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -197,10 +196,12 @@ namespace RepetierSharp
                     }
 
                     // handle command response or event
-                    var msgBytes = Encoding.UTF8.GetBytes(msg.Text);
+                    var msgBytes = Encoding.UTF8.GetBytes(msg.Text);                
                     var message = JsonSerializer.Deserialize<RepetierBaseMessage>(msgBytes);
                     var containsEvents = message.HasEvents != null && message.HasEvents == true;
 
+                    // ensures setting session ID after first ping reply back from the server
+                    // when no login is required this is the first instance to require a session ID
                     if (string.IsNullOrEmpty(Session.SessionId) && !string.IsNullOrEmpty(message.SessionId))
                     {
                         Session.SessionId = message.SessionId;
@@ -213,11 +214,12 @@ namespace RepetierSharp
                         // TODO: Custom JsonConverter
                         foreach (var eventData in data.EnumerateArray())
                         {
-                            var repEvent = JsonSerializer.Deserialize<RepetierBaseEvent>(eventData.GetRawText());
+                            var rawText = eventData.GetRawText();
+                            var repEvent = JsonSerializer.Deserialize<RepetierBaseEvent>(rawText);
                             Task.Run(async () =>
                             {
                                 OnRawEvent?.Invoke(repEvent.Event, repEvent.Printer, Encoding.UTF8.GetBytes(eventData.GetRawText()));
-                                await HandleEvent(repEvent, eventData.GetRawText());
+                                await HandleEvent(repEvent, rawText);
                             });
                         }
                     }
