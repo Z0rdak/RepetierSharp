@@ -58,25 +58,40 @@ namespace RepetierSharp
         public event UserCredentialsReceivedHandler OnUserCredentialsReceived;
         public delegate void UserCredentialsReceivedHandler(UserCredentials userCredentials);
 
+        /// <summary>
+        /// Event which is fired when the server requires an authentication with user credentials.
+        /// </summary>
         public event LoginRequiredReceivedHandler OnLoginRequired;
         public delegate void LoginRequiredReceivedHandler();
 
         public event MessagesReceivedHandler OnMessagesReceived;
         public delegate void MessagesReceivedHandler(List<Message> messages);
 
+        /// <summary>
+        /// Event which is fired after a login attempt. The LoginMessage holds information about the result.
+        /// </summary>
         public event LoginResultReceivedHandler OnLoginResult;
         public delegate void LoginResultReceivedHandler(LoginMessage loginResult);
 
+        /// <summary>
+        /// Event which is fired when a command is not permitted for the current sessionId.
+        /// </summary>
         public event PermissionDeniedEvent OnPermissionDenied;
-        public delegate void PermissionDeniedEvent(int command);
+        public delegate void PermissionDeniedEvent(int commandId);
 
         public event PrinterStatesReceivedHandler OnPrinterStates;
         public delegate void PrinterStatesReceivedHandler(StateListMessage printerStates);
         #endregion
 
+        /// <summary>
+        /// Event for received events from the repetier server.
+        /// </summary>
         public event RepetierEventReceived OnEvent;
         public delegate void RepetierEventReceived(string eventName, string printer, IRepetierEvent repetierEvent);
 
+        /// <summary>
+        /// Event for received responses from the repetier server.
+        /// </summary>
         public event CommandResponseReceived OnResponse;
         public delegate void CommandResponseReceived(int callbackID, string command, IRepetierMessage message);
 
@@ -102,9 +117,13 @@ namespace RepetierSharp
 
         /// <summary>
         /// Gets called when the connection with the server is established successfully for the first time.
+        /// At this point, the sessionId should already be assigned to this RepetierConnection. 
         /// </summary>
         public delegate void RepetierServerConnected();
         public event RepetierServerConnected OnRepetierConnected;
+
+        private event SessionIdReceivedHandler OnSessionEstablished;
+        private delegate void SessionIdReceivedHandler(string sessionId);
 
         #region Properties
         public uint PingInterval
