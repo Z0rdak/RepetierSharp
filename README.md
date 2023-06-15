@@ -73,6 +73,18 @@ rc.Connect();
 ```
 When both, API-Key and user credentials are supplied, the last option will be used.
 
+
+You can also use HTTPS/WSS for the connection:
+```csharp
+RepetierConnection rc = new RepetierConnectionBuilder()
+	.WithHost("demo4000.repetier-server.com", 443)
+	.WithApiKey("6ed22859-9e72-4f24-928f-0430ef08e3b9")
+    .WithTls()
+	.Build();
+
+rc.Connect();
+```
+
 ### More examples
 
 Create a connection, register an event handler for successfull connection, which activates the printer with the slug "Delta" and enqueues and starts the job with the id 6.
@@ -83,9 +95,9 @@ RepetierConnection rc = new RepetierConnectionBuilder()
 	.WithApiKey("6ed22859-9e72-4f24-928f-0430ef08e3b9")
 	.Build();
 
-rc.OnRepetierConnected += () =>
+rc.OnRepetierConnected += (sessionId) =>
 {
-	Console.WriteLine("Connected!");
+	Console.WriteLine($"Connected! Your sessionId is: '{sessionId}'");
 	rc.ActivatePrinter("Delta");
 	rc.EnqueueJob(6);
 };
