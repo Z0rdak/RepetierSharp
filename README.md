@@ -42,7 +42,7 @@ The most basic configuration to setup a working `RepetierConnection` looks like 
 
 ```csharp
 RepetierConnection rc = new RepetierConnectionBuilder()
-	.WithHost("demo.repetier-server.com", 4000)
+	.WithHost("demo4000.repetier-server.com", 80)
 	.Build();
 
 rc.Connect();
@@ -55,7 +55,7 @@ In most cases you would want to create a connection by suppling a API-Key or use
 Example using user credentials:
 ```csharp
 RepetierConnection rc = new RepetierConnectionBuilder()
-	.WithHost("demo.repetier-server.com:4000")
+	.WithHost("demo4000.repetier-server.com", 80)
 	.WithCredentials("user", "password", rememberSession: true)
 	.Build();
 
@@ -65,7 +65,7 @@ rc.Connect();
 Example using a Repetier Server API-Key:
 ```csharp
 RepetierConnection rc = new RepetierConnectionBuilder()
-	.WithHost("demo.repetier-server.com", 4000)
+	.WithHost("demo4000.repetier-server.com", 80)
 	.WithApiKey("6ed22859-9e72-4f24-928f-0430ef08e3b9")
 	.Build();
 
@@ -79,7 +79,7 @@ Create a connection, register an event handler for successfull connection, which
 
 ```csharp
 RepetierConnection rc = new RepetierConnectionBuilder()
-	.WithHost("demo.repetier-server.com", 4000)
+	.WithHost("demo4000.repetier-server.com", 80)
 	.WithApiKey("6ed22859-9e72-4f24-928f-0430ef08e3b9")
 	.Build();
 
@@ -261,7 +261,7 @@ The Repetier Server web interface uses some commands to cyclic query information
 
 ```csharp
 RepetierConnection rc = new RepetierConnectionBuilder()
-	.WithHost("demo.repetier-server.com", 4000)
+	.WithHost("demo4000.repetier-server.com", 80)
 	.WithApiKey("6ed22859-9e72-4f24-928f-0430ef08e3b9")
 	.QueryPrinterInterval(RepetierTimer.Timer60)
 	.QueryStateInterval(RepetierTimer.Timer30)
@@ -275,7 +275,7 @@ Additionaly there is also a method to add any other commands to these command qu
 
 ```csharp
 RepetierConnection rc = new RepetierConnectionBuilder()
-	.WithHost("demo.repetier-server.com", 4000)
+	.WithHost("demo4000.repetier-server.com", 80)
 	.WithApiKey("6ed22859-9e72-4f24-928f-0430ef08e3b9")
 	.WithCyclicCommand(RepetierTimer.Timer3600, UpdateAvailableCommand.Instance)
 	.Build();
