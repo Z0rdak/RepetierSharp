@@ -188,7 +188,6 @@ namespace RepetierSharp
             {
                 if (info.Type == ReconnectionType.Initial)
                 {
-                    OnRepetierConnected?.Invoke();
                     // Only query messages at this point when using a api-key or no auth
                     if (Session.AuthType != AuthenticationType.Credentials)
                     {
@@ -299,10 +298,10 @@ namespace RepetierSharp
         {
             var gcodeFileName = Path.GetFileNameWithoutExtension(gcodeFilePath);
             var request = new RestRequest($"/printer/job/{printerName}", Method.Post)
-                .AddFile("gcode", gcodeFilePath)
+                .AddFile("filename", gcodeFilePath)
                 .AddHeader("Content-Type", "multipart/form-data")
                 .AddParameter("a", "upload")
-                .AddParameter("autostart", (int)autostart)
+                .AddParameter("autostart", $"{(int)autostart}")
                 .AddParameter("name", gcodeFileName);
 
             if (!string.IsNullOrEmpty(Session.SessionId))
@@ -315,10 +314,10 @@ namespace RepetierSharp
         private RestRequest StartPrintRequest(string fileName, byte[] data, string printerName, StartBehavior autostart = StartBehavior.Autostart)
         {
             var request = new RestRequest($"/printer/job/{printerName}", Method.Post)
-                .AddFile("gcode", data, fileName)
+                .AddFile("filename", data, fileName)
                 .AddHeader("Content-Type", "multipart/form-data")
                 .AddParameter("a", "upload")
-                .AddParameter("autostart", (int)autostart)
+                .AddParameter("autostart", $"{(int)autostart}")
                 .AddParameter("name", fileName);
 
             if (!string.IsNullOrEmpty(Session.SessionId))
@@ -349,11 +348,11 @@ namespace RepetierSharp
         {
             var gcodeFileName = Path.GetFileNameWithoutExtension(gcodeFilePath);
             var request = new RestRequest($"/printer/model/{printer}", Method.Post)
-                .AddFile("gcode", gcodeFilePath)
+                .AddFile("filename", gcodeFilePath)
                 .AddHeader("Content-Type", "multipart/form-data")
                 .AddParameter("a", "upload")
                 .AddParameter("group", group)
-                .AddParameter("overwrite", overwrite)
+                .AddParameter("overwrite", $"{overwrite}")
                 .AddParameter("name", gcodeFileName);
 
             if (!string.IsNullOrEmpty(Session.SessionId))
@@ -375,11 +374,11 @@ namespace RepetierSharp
         private RestRequest UploadModel(string fileName, byte[] file, string printer, string group, bool overwrite = false)
         {
             var request = new RestRequest($"/printer/model/{printer}", Method.Post)
-                .AddFile("gcode", file, fileName)
+                .AddFile("filename", file, fileName)
                 .AddHeader("Content-Type", "multipart/form-data")
                 .AddParameter("a", "upload")
                 .AddParameter("group", group)
-                .AddParameter("overwrite", overwrite)
+.AddParameter("overwrite", $"{overwrite}")
                 .AddParameter("name", fileName);
 
             if (!string.IsNullOrEmpty(Session.SessionId))
