@@ -52,6 +52,9 @@ namespace RepetierSharp
         public event PrinterListChangedReceivedHandler OnPrinterListChanged;
         public delegate void PrinterListChangedReceivedHandler(List<Printer> printerList);
 
+        public event PrinterConditionChangedHandler OnPrinterConditionChanged;
+        public delegate void PrinterConditionChangedHandler(PrinterConditionChanged printerConditionChange, string printer);
+        
         public event PrinterSettingChangedReceivedHandler OnPrinterSettingChanged;
         public delegate void PrinterSettingChangedReceivedHandler(SettingChanged printerSetting, string printer);
 
@@ -764,6 +767,11 @@ namespace RepetierSharp
                     var printerSetting = JsonSerializer.Deserialize<SettingChanged>(eventData);
                     OnPrinterSettingChanged?.Invoke(printerSetting, repetierEvent.Printer);
                     OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, printerSetting);
+                    break;
+                case EventConstants.PRINTER_CONDITION_CHANGED:
+                    var conditionChange = JsonSerializer.Deserialize<PrinterConditionChanged>(eventData);
+                    OnPrinterConditionChanged?.Invoke(conditionChange, repetierEvent.Printer);
+                    OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, conditionChange);
                     break;
                 //case EventConstants.JOBS_CHANGED:
                 case EventConstants.LOGOUT:
