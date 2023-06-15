@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using RepetierSharp.Models.Commands;
 using RepetierSharp.Models.Events;
 using RestSharp;
@@ -16,10 +17,17 @@ namespace RepetierSharp
                 Session = new RepetierSession()
             };
 
+            private readonly Dictionary<string, string> _urlParameter = new Dictionary<string, string>();
+
+            private string WebSocketProtocol => _repetierConnection.Session.UseTls ? "wss" : "ws";
+            private string HttpProtocol => _repetierConnection.Session.UseTls ? "https" : "http";
+            public string WebsocketUrl => $"{WebSocketProtocol}://{_repetierConnection.BaseURL}/socket/{BuildUrlParams()}";
+            public string HttpUrl => $"{HttpProtocol}://{_repetierConnection.BaseURL}";
+
             public RepetierConnection Build()
             {
                 var urlParams = new List<string>();
-     
+
                 switch (_repetierConnection.Session.AuthType)
                 {
                     case AuthenticationType.None:
@@ -31,26 +39,35 @@ namespace RepetierSharp
                         // loginRequired event is fired after connecting and attempts to login with given credentials
                         break;
                     case AuthenticationType.ApiKey:
-                        urlParams.Add($"apikey={_repetierConnection.Session.ApiKey}");
+                        if (!_urlParameter.ContainsKey("apikey"))
+                        {
+                            _urlParameter.Add($"apikey", _repetierConnection.Session.ApiKey);
+                        }
                         break;
                 }
 
-                if (!string.IsNullOrEmpty(_repetierConnection.Session.LangKey))
+                if (!string.IsNullOrEmpty(_repetierConnection.Session.LangKey) && !_urlParameter.ContainsKey("lang"))
                 {
-                    urlParams.Add($"lang={_repetierConnection.Session.LangKey}");
+                    _urlParameter.Add("lang", _repetierConnection.Session.LangKey);
                 }
-
-                var httpProtocol = _repetierConnection.Session.UseTls ? "https" : "http";
-                var wsProtocol = _repetierConnection.Session.UseTls ? "wss" : "ws";
-                var socketParams = urlParams.Count > 0 ? $"?{string.Join('&', urlParams)}" : "";
-                _repetierConnection.RestClient = new RestClient($"{httpProtocol}://{_repetierConnection.BaseURL}");
-                _repetierConnection.WebSocketClient = new WebsocketClient(new Uri($"{wsProtocol}://{_repetierConnection.BaseURL}/socket/{socketParams}"));
+                var socketParams = BuildUrlParams();
+                _repetierConnection.RestClient = new RestClient($"{HttpProtocol}://{_repetierConnection.BaseURL}");
+                _repetierConnection.WebSocketClient = new WebsocketClient(new Uri($"{WebSocketProtocol}://{_repetierConnection.BaseURL}/socket/{socketParams}"));
                 return _repetierConnection;
+            }
+
+            private string BuildUrlParams()
+            {
+                var parameterList = _urlParameter
+                    .Select((pair) => $"{pair.Key}={pair.Value}")
+                    .ToList(); ;
+                return _urlParameter.Count > 0 ? $"?{string.Join('&', parameterList)}" : "";
             }
 
             public RepetierConnectionBuilder UseLang(string lang = "en")
             {
                 _repetierConnection.Session.LangKey = lang;
+                _urlParameter.Add("lang", lang);
                 return this;
             }
 
@@ -66,9 +83,15 @@ namespace RepetierSharp
                 return this;
             }
 
+            public RepetierConnectionBuilder WithTls(bool useTls = true)
+            {
+                _repetierConnection.Session.UseTls = useTls;
+                return this;
+            }
+
             public RepetierConnectionBuilder PingInterval(uint interval = 3000)
             {
-                this._repetierConnection.PingInterval = interval;
+                _repetierConnection.PingInterval = interval;
                 return this;
             }
 
@@ -76,6 +99,7 @@ namespace RepetierSharp
             {
                 _repetierConnection.Session.ApiKey = apiKey;
                 _repetierConnection.Session.AuthType = AuthenticationType.ApiKey;
+                _urlParameter.Add("apikey", apiKey);
                 return this;
             }
 
