@@ -196,7 +196,7 @@ namespace RepetierSharp
                     }
 
                     // handle command response or event
-                    var msgBytes = Encoding.UTF8.GetBytes(msg.Text);                
+                    var msgBytes = Encoding.UTF8.GetBytes(msg.Text);
                     var message = JsonSerializer.Deserialize<RepetierBaseMessage>(msgBytes);
                     var containsEvents = message.HasEvents != null && message.HasEvents == true;
 
