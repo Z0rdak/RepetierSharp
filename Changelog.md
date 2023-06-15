@@ -1,3 +1,8 @@
+# [0.1.8.1] - 2023-06-15
+## Changed
+* `OnRepetierConnected` event now supplies the associated sessionId and is now fired later to ensure the sessionId is always set.
+## Fixed
+* Fix broken paramter keys in http requests for `UploadAndStartPrint` and `UploadGCode`
 # [0.1.8.0] - 2023-06-15
 ## Added
 * Add option for `RepetierConnectionBuilder` to use TLS for both, `https` and `wss` when connecting to a Repetier Server # 0.1.7.2 - Bug fixes
