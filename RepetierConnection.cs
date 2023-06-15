@@ -119,7 +119,7 @@ namespace RepetierSharp
         /// Gets called when the connection with the server is established successfully for the first time.
         /// At this point, the sessionId should already be assigned to this RepetierConnection. 
         /// </summary>
-        public delegate void RepetierServerConnected();
+        public delegate void RepetierServerConnected(string sessionId);
         public event RepetierServerConnected OnRepetierConnected;
 
         private event SessionIdReceivedHandler OnSessionEstablished;
@@ -150,7 +150,13 @@ namespace RepetierSharp
         public string ActivePrinter { get; private set; } = "";
         #endregion
 
-        private RepetierConnection() { }
+        private RepetierConnection()
+        {
+            this.OnSessionEstablished += (sessionId) =>
+            {
+                this.OnRepetierConnected?.Invoke(sessionId);
+            };
+        }
 
         /// <summary>
         /// Retrieve printer name or API-key (or both) via REST-API
@@ -224,6 +230,7 @@ namespace RepetierSharp
                     if (string.IsNullOrEmpty(Session.SessionId) && !string.IsNullOrEmpty(message.SessionId))
                     {
                         Session.SessionId = message.SessionId;
+                        OnSessionEstablished?.Invoke(Session.SessionId);
                     }
 
                     var json = JsonSerializer.Deserialize<JsonDocument>(msgBytes);
@@ -541,6 +548,10 @@ namespace RepetierSharp
                         this.QueryOpenMessages();
                     }
                     OnLoginResult?.Invoke(loginMessage);
+                    if (loginMessage.Authenticated)
+                    {
+                        OnSessionEstablished?.Invoke(Session.SessionId);
+                    }
                     OnResponse?.Invoke(message.CallBackId, commandStr, loginMessage);
                     break;
                 case CommandConstants.LOGOUT:
