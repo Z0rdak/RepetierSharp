@@ -1,4 +1,9 @@
-﻿# 0.1.7.2 - Bug fixes
+# [0.1.8.0] - 2023-06-15
+## Added
+* Add option for `RepetierConnectionBuilder` to use TLS for both, `https` and `wss` when connecting to a Repetier Server # 0.1.7.2 - Bug fixes
+## Misc
+* Using https://keepachangelog.com/en/1.0.0/ as changelog format from now on
+ # 0.1.7.2 - Bug fixes
 ## Fixes
   * Fix type `StartJobCommand` not being public
 # 0.1.7.1 - New versioning schema and breaking changes
