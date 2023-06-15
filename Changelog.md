@@ -1,3 +1,7 @@
+# [0.1.9.0] - 2023-06-16
+## Added
+* Add types for new 1.4 events: `printerConditionChanged` and `globalErrorsChanged`
+* Add event handler for event `printerConditionChanged`: `OnPrinterConditionChanged`
 # [0.1.8.1] - 2023-06-15
 ## Changed
 * `OnRepetierConnected` event now supplies the associated sessionId and is now fired later to ensure the sessionId is always set.
