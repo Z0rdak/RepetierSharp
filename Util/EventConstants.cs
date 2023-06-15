@@ -35,6 +35,7 @@ namespace RepetierSharp.Models.Events
         public const string FIRMWARE_CHANGED = "firmwareChanged";
         public const string TEMP = "temp";
         public const string SETTING_CHANGED = "settingChanged";
+        public const string PRINTER_CONDITION_CHANGED = "printerConditionChanged";
         public const string PRINTER_SETTING_CHANGED = "printerSettingChanged";
         public const string MODEL_GROUPLIST_CHANGED = "modelGroupListChanged";
         public const string PREPARE_JOB = "prepareJob";
@@ -43,6 +44,7 @@ namespace RepetierSharp.Models.Events
         public const string REMOTE_SERVERS_CHANGED = "remoteServersChanged";
         public const string GET_EXTERNAL_LINKS = "getExternalLinks";
         public const string UPDATE_PRINTER_STATE = "updatePrinterState";
+        public const string GLOBAL_ERRORS_CHANGED = "globalErrorsChanged";
 
         public const string TIMER_30 = "timer30";
         public const string TIMER_60 = "timer60";
