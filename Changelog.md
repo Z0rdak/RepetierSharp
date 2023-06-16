@@ -2,6 +2,8 @@
 ## Added
 * Add types for new 1.4 events: `printerConditionChanged` and `globalErrorsChanged`
 * Add event handler for event `printerConditionChanged`: `OnPrinterConditionChanged`
+## Changes
+* Fan speed is now supplied as int to be more consistent with other methods.
 # [0.1.8.1] - 2023-06-15
 ## Changed
 * `OnRepetierConnected` event now supplies the associated sessionId and is now fired later to ensure the sessionId is always set.

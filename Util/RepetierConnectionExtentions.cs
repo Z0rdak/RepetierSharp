@@ -1,4 +1,5 @@
-﻿using RepetierSharp.Models.Commands;
+﻿using System;
+using RepetierSharp.Models.Commands;
 
 namespace RepetierSharp.Extentions
 {
@@ -167,30 +168,49 @@ namespace RepetierSharp.Extentions
             }
         }
 
+        /// <summary>
+        /// Set extruder temperature in degree celcius.
+        /// </summary>
+        /// <param name="rc"></param>
+        /// <param name="temperature">Extruder temperature in degree celcius</param>
+        /// <param name="extruderNo">Id of the extruder (default = 0)</param>
         public static async void SetExtruderTemp(this RepetierConnection rc, int temperature, int extruderNo = 0)
         {
             await rc.SendCommand(new SetExtruderTempCommand(temperature, extruderNo));
         }
 
+        /// <summary>
+        /// Set heated bed temperature in degree celcius.
+        /// </summary>
+        /// <param name="rc"></param>
+        /// <param name="temperature">Heated bed temperature in degree celcius</param>
+        /// <param name="heatedBedId">Id of the heated bed (default = 0)</param>
         public static async void SetHeatedBedTemp(this RepetierConnection rc, int temperature, int heatedBedId = 0)
         {
             await rc.SendCommand(new SetHeatedBedTempCommand(temperature, heatedBedId));
         }
 
+        /// <summary>
+        /// Set heated chamber temperature in degree celcius.
+        /// </summary>
+        /// <param name="rc"></param>
+        /// <param name="temperature">Heated chamber temperature in degree celcius</param>
+        /// <param name="heatedChamberId">Id of the heated chamber (default = 0)</param>
         public static async void SetHeatedChamberTemp(this RepetierConnection rc, int temperature, int heatedChamberId = 0)
         {
             await rc.SendCommand(new SetHeatedChamberTempCommand(temperature, heatedChamberId));
         }
 
         /// <summary>
-        /// 
+        /// Set speed of the given fan. 
+        /// <br> The speed is supplied in percent. E.g. 75 will result in 75% total fan speed.</br>
         /// </summary>
         /// <param name="rc"></param>
         /// <param name="fanSpeed"> Fan speed in percent (Repetier Server usually uses values from 0-255 for voltage)</param>
         /// <param name="fanId"> Id of the fan (default = 0 for the first fan)</param>
-        public static async void SetFanSpeed(this RepetierConnection rc, double fanSpeed, int fanId = 0)
+        public static async void SetFanSpeed(this RepetierConnection rc, int fanSpeed, int fanId = 0)
         {
-            await rc.SendCommand(new SetFanSpeedCommand((int)(fanSpeed * 255 / 100), fanId));
+            await rc.SendCommand(new SetFanSpeedCommand(Math.Clamp(fanSpeed, 0, 100) * 255 / 100, fanId));
         }
 
         public static void TurnOffFan(this RepetierConnection rc, int fanId = 0)
@@ -203,11 +223,23 @@ namespace RepetierSharp.Extentions
             SetFanSpeed(rc, SetFanSpeedCommand.MAX_THROTTLE, fanId);
         }
 
+        /// <summary>
+        /// Sets the flow multiplier for extrusion. 
+        /// <br> The flow multiplier is supplied in percent. E.g. 150 will result in 150% total flow rate. </br>
+        /// </summary>
+        /// <param name="rc"></param>
+        /// <param name="flowMultiplier">The flow multiplier in percent.</param>
         public static async void SetFlowMultiplier(this RepetierConnection rc, int flowMultiplier)
         {
             await rc.SendCommand(new SetFlowMultiplyCommand(flowMultiplier));
         }
 
+        /// <summary>
+        /// Sets the speed mupltiplier for movements. 
+        /// <br> The speed multiplier is supplied in percent. E.g. 150 will result in 150% total speed rate. </br>
+        /// </summary>
+        /// <param name="rc"></param>
+        /// <param name="speedMultiplier">The speed multiplier in percent</param>
         public static async void SetSpeedMultiplier(this RepetierConnection rc, int speedMultiplier)
         {
             await rc.SendCommand(new SetSpeedMultiplyCommand(speedMultiplier));
