@@ -1,3 +1,8 @@
+# [0.1.9.1] - 2024-06-27
+## Added
+* Add support for .net8.0
+## Removed
+* Support for .net5.0 and .netcore3.1
 # [0.1.9.0] - 2023-06-16
 ## Added
 * Add types for new 1.4 events: `printerConditionChanged` and `globalErrorsChanged`
