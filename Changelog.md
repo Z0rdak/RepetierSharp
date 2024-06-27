@@ -1,6 +1,10 @@
 # [0.1.9.1] - 2024-06-27
 ## Added
 * Add support for .net8.0
+## Changed
+* Updated RestSharp to 111.3.0
+* Updated System.Text.Json 8.0.3
+* Updated Websocket.Client 5.1.2
 ## Removed
 * Support for .net5.0 and .netcore3.1
 # [0.1.9.0] - 2023-06-16

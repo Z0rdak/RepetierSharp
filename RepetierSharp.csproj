@@ -27,6 +27,7 @@
     <SignAssembly>false</SignAssembly>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <RepositoryType>git</RepositoryType>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
@@ -36,9 +37,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="RestSharp" Version="108.0.2" />
-    <PackageReference Include="System.Text.Json" Version="6.0.7" />
-    <PackageReference Include="Websocket.Client" Version="4.4.43" />
+    <PackageReference Include="RestSharp" Version="111.3.0" />
+    <PackageReference Include="System.Text.Json" Version="8.0.3" />
+    <PackageReference Include="Websocket.Client" Version="5.1.2" />
   </ItemGroup>
 
   <ItemGroup>
