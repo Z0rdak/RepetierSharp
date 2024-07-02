@@ -23,6 +23,14 @@ namespace RepetierSharp
 
     public partial class RepetierConnection
     {
+        private const string FilenameParam = "filename";
+        private const string NameParam = "name";
+        private const string SessionParam = "sess";
+        private const string ActionParam = "a";
+        private const string AutostartParam = "autostart";
+        private const string UploadAction = "upload";
+        public static readonly ContentType MultiPartFormData = "multipart/form-data";
+
         #region Common EventHandler
         public event LogEventReceived OnLogReceived;
         public delegate void LogEventReceived(Log logEvent);
@@ -114,7 +122,7 @@ namespace RepetierSharp
         /// Fired whenever a command response from the repetier server is received. 
         /// The payload is the raw response itself (content of the data field of the json from the documentation).
         /// </summary>
-        /// <param name="callbackID"> CallBackId to identify the received command response </param>
+        /// <param name="callbackId"> CallBackId to identify the received command response </param>
         /// <param name="command"> Name of the command associated with the received response </param>
         /// <param name="response"> Command response payload </param>
         public delegate void RawCommandResponseReceived(int callbackID, string command, byte[] response);
