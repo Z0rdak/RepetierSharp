@@ -1,17 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using RepetierSharp.Models.Events;
 
-namespace RepetierSharp.Models.Events
+namespace RepetierSharp.Util
 {
     public static class EventConstants
     {
-
-        public static readonly Dictionary<string, Type> EventMap = new Dictionary<string, Type>()
-        {
-            ["log"] = typeof(Log),
-            ["move"] = typeof(Move),
-            ["layerChanged"] = typeof(LayerChanged)
-        };
+        public static readonly ImmutableDictionary<string, Type> EventMap = ImmutableDictionary.CreateRange
+        (new[]
+            {
+                KeyValuePair.Create("log", typeof(Log)), 
+                KeyValuePair.Create("move", typeof(Move)),
+                KeyValuePair.Create("layerChanged", typeof(LayerChanged))
+            }
+        );
 
 
         public const string LAYER_CHANGED = "layerChanged";
