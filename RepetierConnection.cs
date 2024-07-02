@@ -578,11 +578,14 @@ namespace RepetierSharp
         /// <param name="commandDataObject"></param>
         private async Task HandleMessage(RepetierBaseMessage message, JsonElement commandDataObject)
         {
-            // TODO: what if this fails? because of restart or something?
             var commandStr = CommandManager.CommandIdentifierFor(message.CallBackId);
             var cmdData = commandDataObject.GetRawText();
-            message.Data = Encoding.UTF8.GetBytes(commandDataObject.GetRawText());
-
+            message.Data = Encoding.UTF8.GetBytes(cmdData);
+            if (commandStr == string.Empty)
+            { 
+                _logger.LogWarning("Received message callbackId '{CallbackId}' could not be found in cache. Not serializing message: '{Json}'", message.CallBackId, cmdData);
+                return;
+            }
             switch (commandStr)
             {
                 case CommandConstants.PING:
@@ -702,6 +705,11 @@ namespace RepetierSharp
         private async Task HandleEvent(RepetierBaseEvent repetierEvent, string eventAsJson)
         {
             var json = JsonSerializer.Deserialize<JsonDocument>(eventAsJson);
+            if (json == null)
+            {
+                _logger.LogWarning("Received event '{Event}' could not be deserialized. Not processing event: '{Json}'", eventAsJson, eventAsJson);
+                return;
+            }
             var dataJsonObject = json.RootElement.GetProperty("data");
             var eventData = dataJsonObject.GetRawText();
             repetierEvent.Data = Encoding.UTF8.GetBytes(dataJsonObject.GetRawText());
