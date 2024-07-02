@@ -159,7 +159,7 @@ namespace RepetierSharp
             set
             {
                 _pingInterval = value;
-                SendExtendPing(_pingInterval);
+                Task.Run(async () => await SendExtendPing(_pingInterval));
             }
         }
         private long _lastPingTimestamp = 0;
