@@ -5,15 +5,17 @@ using RepetierSharp.Models.Commands;
 namespace RepetierSharp.Util
 {
     /// <summary>
-    /// 
+    ///  CommandManager manages the commands that are sent to the Repetier-Server.
+    ///  It is used to generate unique callback ids for each command.
+    ///  The callback id is used to identify the command that is being sent to the server.
     /// </summary>
     internal class CommandManager
     {
-        public int CallbackId { get => Next(); private set { _callBackId = value; } }
+        public int CallbackId => Next();
         private int _callBackId;
 
         // CallbackId -> Command
-        private readonly Dictionary<int, string> CallbackMap = new Dictionary<int, string>();
+        private readonly Dictionary<int, string> _callbackMap = new();
 
         public int Next()
         {
@@ -28,27 +30,22 @@ namespace RepetierSharp.Util
         public RepetierBaseCommand CommandWithId(ICommandData command, Type commandType, string printer = "")
         {
             var callbackId = Next();
-            CallbackMap.Add(callbackId, command.CommandIdentifier);
+            _callbackMap.Add(callbackId, command.CommandIdentifier);
             return new RepetierBaseCommand(command, printer, callbackId, commandType);
         }
 
         public RepetierBaseCommand CommandWithId(string command, string printer, Dictionary<string, object> data)
         {
             var callbackId = Next();
-            CallbackMap.Add(callbackId, command);
+            _callbackMap.Add(callbackId, command);
             return new RepetierBaseCommand(data, command, printer, callbackId);
         }
 
         public string CommandIdentifierFor(int callbackId)
         {
-            if (CallbackMap.TryGetValue(callbackId, out var commandIdentifier))
-            {
-                return commandIdentifier;
-            }
-            else
-            {
-                return string.Empty;
-            }
+            return _callbackMap.TryGetValue(callbackId, out var commandIdentifier) 
+                ? commandIdentifier 
+                : string.Empty;
         }
 
     }
