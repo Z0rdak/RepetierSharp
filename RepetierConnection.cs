@@ -508,23 +508,23 @@ namespace RepetierSharp
         }
 
         /// <summary>
-        /// Activate printer with given printerSlug by sending the corresponding command to the server.
+        ///     Activate printer with given printerSlug by sending the corresponding command to the server.
         /// </summary>
         /// <param name="printerSlug"> Printer to activate </param>
-        public async void ActivatePrinter(string printerSlug)
+        public async Task<bool> ActivatePrinter(string printerSlug)
         {
             ActivePrinter = printerSlug;
-            await SendCommand(new ActivateCommand(printerSlug));
+            return await SendCommand(new ActivateCommand(printerSlug));
         }
 
         /// <summary>
-        /// Deactivate printer with given printerSlug by sending the corresponding command to the server.
+        ///     Deactivate printer with given printerSlug by sending the corresponding command to the server.
         /// </summary>
         /// <param name="printerSlug"> Printer to deactivate </param>
-        public async void DeactivatePrinter(string printerSlug)
+        public async Task<bool> DeactivatePrinter(string printerSlug)
         {
             ActivePrinter = "";
-            await SendCommand(new DeactivateCommand(printerSlug));
+            return await SendCommand(new DeactivateCommand(printerSlug));
         }
 
         /// <summary>
@@ -797,33 +797,33 @@ namespace RepetierSharp
         }
 
         /// <summary>
-        /// Send the given command to the server with the current active printer as argument.
+        ///     Send the given command to the server with the current active printer as argument.
         /// </summary>
         /// <param name="command"> The command to send to the server </param>
         /// <returns></returns>
         public async Task SendCommand(ICommandData command)
         {
-            await SendCommand(command, command.GetType(), ActivePrinter);
+            return await SendCommand(command, command.GetType(), ActivePrinter);
         }
 
-        private async Task SendCommand(ICommandData command, string printer)
+        private async Task<bool> SendCommand(ICommandData command, string printer)
         {
-            await SendCommand(command, command.GetType(), printer);
+            return await SendCommand(command, command.GetType(), printer);
         }
 
-        protected async Task SendCommand(ICommandData command, Type commandType)
+        protected async Task<bool> SendCommand(ICommandData command, Type commandType)
         {
-            await SendCommand(command, commandType, ActivePrinter);
+            return await SendCommand(command, commandType, ActivePrinter);
         }
 
-        protected async Task SendCommand(ICommandData command, Type commandType, string printer)
+        protected async Task<bool> SendCommand(ICommandData command, Type commandType, string printer)
         {
             var baseCommand = CommandManager.CommandWithId(command, commandType, printer);
-            await Task.Run(() => WebSocketClient.Send(baseCommand.ToBytes()));
+            return await Task.Run(() => WebSocketClient.Send(baseCommand.ToBytes()));
         }
 
         /// <summary>
-        /// Send a raw command to the server/given printer.
+        ///     Send a raw command to the server/given printer.
         /// </summary>
         /// <param name="command"> The identifier of the command </param>
         /// <param name="printer"> The printer the command is issued to </param>
@@ -831,28 +831,29 @@ namespace RepetierSharp
         public void SendCommand(string command, string printer, Dictionary<string, object> data)
         {
             var baseCommand = CommandManager.CommandWithId(command, printer, data);
-            Task.Run(() => WebSocketClient.Send(baseCommand.ToBytes()));
+            return await Task.Run(() => WebSocketClient.Send(baseCommand.ToBytes()));
         }
 
         /// <summary>
         /// Attempt login with the user and password already provided when building the RepetierConnection.
         /// The password will be hashed. See: https://prgdoc.repetier-server.com/v1/docs/index.html#/en/web-api/websocket/basicCommands?id=login
         /// </summary>
-        public void Login()
+        public async Task Login()
         {
             if (!string.IsNullOrEmpty(Session.LoginName) && !string.IsNullOrEmpty(Session.Password))
             {
-                Login(Session.LoginName, Session.Password);
+                await Login(Session.LoginName, Session.Password);
             }
         }
 
         /// <summary>
-        /// Attempt login with the given user and password.
-        /// The password will be hashed. See: https://prgdoc.repetier-server.com/v1/docs/index.html#/en/web-api/websocket/basicCommands?id=login
+        ///     Attempt login with the given user and password.
+        ///     The password will be hashed. See:
+        ///     https://prgdoc.repetier-server.com/v1/docs/index.html#/en/web-api/websocket/basicCommands?id=login
         /// </summary>
         /// <param name="user"> The user name for login </param>
         /// <param name="password"> The password in plaintext </param>
-        public async void Login(string user, string password)
+        public async Task Login(string user, string password)
         {
             if (!string.IsNullOrEmpty(Session.SessionId))
             {
