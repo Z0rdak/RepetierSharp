@@ -102,13 +102,22 @@ namespace RepetierSharp
         /// Event for received events from the repetier server.
         /// </summary>
         public event RepetierEventReceived OnEvent;
-        public delegate void RepetierEventReceived(string eventName, string printer, IRepetierEvent repetierEvent);
+        public delegate void RepetierEventReceived(string eventName, string printer, IRepetierEvent? repetierEvent);
 
+        public event PrinterEmergencyStopHandler OnEmergencyStop;
+        public delegate void PrinterEmergencyStopHandler();
+        
+        public event PrinterActivatedHandler OnPrinterActivated;
+        public delegate void PrinterActivatedHandler();
+        
+        public event PrinterDeactivatedHandler OnPrinterDeactivated;
+        public delegate void PrinterDeactivatedHandler();
+        
         /// <summary>
         /// Event for received responses from the repetier server.
         /// </summary>
         public event CommandResponseReceived OnResponse;
-        public delegate void CommandResponseReceived(int callbackID, string command, IRepetierMessage message);
+        public delegate void CommandResponseReceived(int callbackID, string command, IRepetierMessage? message);
 
         /// <summary>
         /// Fired whenever a event from the repetier server is received. 
