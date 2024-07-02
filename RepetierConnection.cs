@@ -172,119 +172,124 @@ namespace RepetierSharp
         }
 
         /// <summary>
-        /// Open WebSocket connection to repetier server and start communication.
+        ///     Open WebSocket connection to repetier server and start communication.
         /// </summary>
-        public async void Connect()
-        {
-            InitWebSocket();
-            await WebSocketClient.StartOrFail()
-                .ContinueWith(t => SendPing());
-        }
-
-        /// <summary>
-        /// Set up event handlers for WebSocket events and responses.
-        /// </summary>
-        private void InitWebSocket()
+        public async Task Connect()
         {
             WebSocketClient.ReconnectTimeout = TimeSpan.FromSeconds(15);
-            WebSocketClient.ReconnectionHappened.Subscribe(info =>
+            WebSocketClient.ReconnectionHappened.Subscribe(OnReconnect);
+            WebSocketClient.DisconnectionHappened.Subscribe(OnDisconnect);
+            WebSocketClient.MessageReceived.Subscribe(OnMsgReceived);
+            try
             {
-                if (info.Type == ReconnectionType.Initial)
+                await WebSocketClient.StartOrFail()
+                    .ContinueWith(t => SendPing());
+            }
+            catch (Exception e)
+            {
+                _logger?.LogError(e, "Error while starting websocket connection: {Error}", e.Message);
+            }
+        }
+
+        private void OnMsgReceived(ResponseMessage msg)
+        {
+            // each message send to and from the Repetier Server is a valid JSON message
+            if (msg.MessageType != WebSocketMessageType.Text || string.IsNullOrEmpty(msg.Text))
+            {
+                return;
+            }
+
+            try
+            {
+                // Send ping interval is elapsed
+                var timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+                if (_lastPingTimestamp + PingInterval < DateTimeOffset.Now.ToUnixTimeSeconds())
                 {
-                    // Only query messages at this point when using a api-key or no auth
-                    if (Session.AuthType != AuthenticationType.Credentials)
-                    {
-                        this.QueryOpenMessages();
-                    }
+                    _lastPingTimestamp = timestamp;
+                    Task.Run(async () => await SendPing());
                 }
-                Task.Run(async () => await SendPing());
-            });
 
-            WebSocketClient.DisconnectionHappened.Subscribe(info =>
-            {
-                Console.WriteLine($"[WebSocket] Connection closed: {info.Type} | {info.CloseStatus} | {info.CloseStatusDescription}");
-            });
+                // handle command response or event
+                var msgBytes = Encoding.UTF8.GetBytes(msg.Text);
+                var message = JsonSerializer.Deserialize<RepetierBaseMessage>(msgBytes);
+                var containsEvents = message.HasEvents != null && message.HasEvents == true;
 
-            WebSocketClient.MessageReceived.Subscribe(msg =>
-            {
-                // each message send to and from the Repetier Server is a valid JSON message
-                if (msg.MessageType != System.Net.WebSockets.WebSocketMessageType.Text || string.IsNullOrEmpty(msg.Text))
+                // ensures setting session ID after first ping reply back from the server
+                // when no login is required this is the first instance to require a session ID
+                if (string.IsNullOrEmpty(Session.SessionId) && !string.IsNullOrEmpty(message.SessionId))
                 {
-                    return;
+                    Session.SessionId = message.SessionId;
+                    OnSessionEstablished?.Invoke(Session.SessionId);
                 }
-                try
+
+                var json = JsonSerializer.Deserialize<JsonDocument>(msgBytes);
+                var data = json.RootElement.GetProperty("data");
+                if (message.CallBackId == -1 || containsEvents)
                 {
-                    // Send ping interval is elapsed
-                    var timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-                    if (_lastPingTimestamp + PingInterval < DateTimeOffset.Now.ToUnixTimeSeconds())
+                    // TODO: Custom JsonConverter
+                    foreach (var eventData in data.EnumerateArray())
                     {
-                        _lastPingTimestamp = timestamp;
-                        Task.Run(async () => await SendPing());
-                    }
-
-                    // handle command response or event
-                    var msgBytes = Encoding.UTF8.GetBytes(msg.Text);
-                    var message = JsonSerializer.Deserialize<RepetierBaseMessage>(msgBytes);
-                    var containsEvents = message.HasEvents != null && message.HasEvents == true;
-
-                    // ensures setting session ID after first ping reply back from the server
-                    // when no login is required this is the first instance to require a session ID
-                    if (string.IsNullOrEmpty(Session.SessionId) && !string.IsNullOrEmpty(message.SessionId))
-                    {
-                        Session.SessionId = message.SessionId;
-                        OnSessionEstablished?.Invoke(Session.SessionId);
-                    }
-
-                    var json = JsonSerializer.Deserialize<JsonDocument>(msgBytes);
-                    var data = json.RootElement.GetProperty("data");
-                    if (message.CallBackId == -1 || containsEvents)
-                    {
-                        // TODO: Custom JsonConverter
-                        foreach (var eventData in data.EnumerateArray())
+                        var rawText = eventData.GetRawText();
+                        var repEvent = JsonSerializer.Deserialize<RepetierBaseEvent>(rawText);
+                        Task.Run(async () =>
                         {
-                            var rawText = eventData.GetRawText();
-                            var repEvent = JsonSerializer.Deserialize<RepetierBaseEvent>(rawText);
-                            Task.Run(async () =>
-                            {
-                                OnRawEvent?.Invoke(repEvent.Event, repEvent.Printer, Encoding.UTF8.GetBytes(eventData.GetRawText()));
-                                await HandleEvent(repEvent, rawText);
-                            });
-                        }
+                            OnRawEvent?.Invoke(repEvent.Event, repEvent.Printer,
+                                Encoding.UTF8.GetBytes(eventData.GetRawText()));
+                            await HandleEvent(repEvent, rawText);
+                        });
+                    }
+                }
+                else
+                {
+                    if (msg.Text.Contains("permissionDenied"))
+                    {
+                        OnPermissionDenied?.Invoke(message.CallBackId);
                     }
                     else
                     {
-                        if (msg.Text.Contains("permissionDenied"))
+                        Task.Run(async () =>
                         {
-                            OnPermissionDenied?.Invoke(message.CallBackId);
-                        }
-                        else
-                        {
-                            Task.Run(async () =>
-                            {
-                                OnRawResponse?.Invoke(message.CallBackId, CommandManager.CommandIdentifierFor(message.CallBackId), Encoding.UTF8.GetBytes(data.GetRawText()));
-                                await HandleMessage(message, data);
-                            });
-                        }
+                            OnRawResponse?.Invoke(message.CallBackId,
+                                CommandManager.CommandIdentifierFor(message.CallBackId),
+                                Encoding.UTF8.GetBytes(data.GetRawText()));
+                            await HandleMessage(message, data);
+                        });
                     }
                 }
-                catch (Exception ex)
-                {
-                    // TODO: Implement proper logger support instead
-                    Console.Error.WriteLine("[WebSocket] Error processing message from repetier server:");
-                    Console.Error.WriteLine($"[WebSocket] {msg.Text}");
-                    Console.Error.WriteLine($"{ex.Message}");
-                }
-            });
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex,
+                    "[WebSocket] Error processing message from repetier server: '{Msg}'. Error: {Error}", msg.Text,
+                    ex.Message);
+            }
         }
 
-        private async Task SendPing()
+        private void OnDisconnect(DisconnectionInfo info)
         {
-            await SendCommand(PingCommand.Instance, typeof(PingCommand));
+            _logger?.LogInformation("[WebSocket] Connection closed: Reason={Reason}, Status={Status}, Desc={Desc}",
+                info.Type, info.CloseStatus, info.CloseStatusDescription);
         }
 
-        public async void SendExtendPing(uint timeout)
+        private void OnReconnect(ReconnectionInfo info)
         {
-            await SendCommand(new ExtendPingCommand(timeout), typeof(ExtendPingCommand));
+            if (info.Type == ReconnectionType.Initial && Session.AuthType != AuthenticationType.Credentials)
+            {
+                // Only query messages at this point when using an api-key or no auth
+                this.QueryOpenMessages();
+            }
+
+            Task.Run(async () => await SendPing());
+        }
+
+        private async Task<bool> SendPing()
+        {
+            return await SendCommand(PingCommand.Instance, typeof(PingCommand));
+        }
+
+        public async Task<bool> SendExtendPing(uint timeout)
+        {
+            return await SendCommand(new ExtendPingCommand(timeout), typeof(ExtendPingCommand));
         }
 
 
