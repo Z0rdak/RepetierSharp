@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -17,6 +18,7 @@ using RepetierSharp.Models.Messages;
 using RepetierSharp.Util;
 using RestSharp;
 using Websocket.Client;
+using ResponseMessage = Websocket.Client.ResponseMessage;
 
 namespace RepetierSharp
 {
@@ -175,12 +177,12 @@ namespace RepetierSharp
         }
 
         /// <summary>
-        /// Retrieve printer name or API-key (or both) via REST-API
-        /// If ApiKey or PrinterSlug are not empty, they will not be overwritten by the retrieved information. 
+        ///     Retrieve printer name or API-key (or both) via REST-API
+        ///     If ApiKey or PrinterSlug are not empty, they will not be overwritten by the retrieved information.
         /// </summary>
         public async Task<RepetierServerInformation> GetRepetierServerInfoAsync()
         {
-            var response = await RestClient.ExecuteAsync(ApiConstants.PRINTER_INFO_REQUEST);
+            var response = await RestClient.ExecuteAsync(new RestRequest("/printer/info"));
             return JsonSerializer.Deserialize<RepetierServerInformation>(response.Content);
         }
 
@@ -307,12 +309,12 @@ namespace RepetierSharp
 
 
         /// <summary>
-        /// Closes the WebSocket connection
+        ///     Closes the WebSocket connection
         /// </summary>
         public void Close()
         {
+            WebSocketClient.Stop(WebSocketCloseStatus.Empty, "Closing initiated by user");
             WebSocketClient.Dispose();
-            WebSocketClient = null;
         }
 
         private RestRequest StartPrintRequest(string gcodeFilePath, string printerName,
@@ -562,7 +564,6 @@ namespace RepetierSharp
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="message"></param>
         /// <param name="commandDataObject"></param>
@@ -577,10 +578,10 @@ namespace RepetierSharp
             {
                 case CommandConstants.PING:
                     await Task.Delay(TimeSpan.FromSeconds(Math.Min(5, PingInterval / 2)))
-                    .ContinueWith(async t =>
-                    {
-                        await SendPing();
-                    });
+                        .ContinueWith(async t =>
+                        {
+                            await SendPing();
+                        });
                     break;
                 case CommandConstants.LOGIN:
                     var loginMessage = JsonSerializer.Deserialize<LoginMessage>(cmdData);
@@ -588,11 +589,13 @@ namespace RepetierSharp
                     {
                         this.QueryOpenMessages();
                     }
+
                     OnLoginResult?.Invoke(loginMessage);
                     if (loginMessage.Authenticated)
                     {
                         OnSessionEstablished?.Invoke(Session.SessionId);
                     }
+
                     OnResponse?.Invoke(message.CallBackId, commandStr, loginMessage);
                     break;
                 case CommandConstants.LOGOUT:
@@ -600,13 +603,13 @@ namespace RepetierSharp
                     break;
                 case CommandConstants.LIST_PRINTER:
                     var listprintersMessage = JsonSerializer.Deserialize<List<Printer>>(cmdData);
-                    var printerMsg = new ListPrinterMessage() { Printers = listprintersMessage };
+                    var printerMsg = new ListPrinterMessage { Printers = listprintersMessage };
                     OnResponse?.Invoke(message.CallBackId, commandStr, printerMsg);
                     OnPrinterListChanged?.Invoke(listprintersMessage);
                     break;
                 case CommandConstants.STATE_LIST:
                     var stateListMessage = JsonSerializer.Deserialize<Dictionary<string, PrinterState>>(cmdData);
-                    var stateMsg = new StateListMessage() { PrinterStates = stateListMessage };
+                    var stateMsg = new StateListMessage { PrinterStates = stateListMessage };
                     OnResponse?.Invoke(message.CallBackId, commandStr, stateMsg);
                     OnPrinterStates?.Invoke(stateMsg);
                     break;
@@ -680,14 +683,12 @@ namespace RepetierSharp
                 case CommandConstants.CONTINUE_JOB:
                     /* no payload */
                     break;
-                default:
-                    break;
             }
         }
 
         /// <summary>
-        /// Handles an incoming repetier event.
-        /// The event data is then forwarded by calling their corresponding event handlers.
+        ///     Handles an incoming repetier event.
+        ///     The event data is then forwarded by calling their corresponding event handlers.
         /// </summary>
         private async Task HandleEvent(RepetierBaseEvent repetierEvent, string eventAsJson)
         {
@@ -708,13 +709,14 @@ namespace RepetierSharp
                 case EventConstants.TIMER_1800:
                 case EventConstants.TIMER_3600:
                     var timer = (RepetierTimer)int.Parse(repetierEvent.Event[5..]);
-                    if (QueryIntervals.ContainsKey(timer))
+                    if (QueryIntervals.TryGetValue(timer, out var commandDataForInterval))
                     {
-                        QueryIntervals[timer].ForEach(command =>
+                        commandDataForInterval.ForEach(command =>
                         {
                             Task.Run(async () => await SendCommand(command, command.GetType()));
                         });
                     }
+
                     OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, null);
                     break;
                 case EventConstants.LOGIN_REQUIRED:
@@ -729,6 +731,7 @@ namespace RepetierSharp
                     {
                         throw new InvalidOperationException("Credentials not supplied.");
                     }
+
                     OnLoginRequired?.Invoke();
 
                     break;
@@ -741,7 +744,7 @@ namespace RepetierSharp
                     var printerListChangedEvent = JsonSerializer.Deserialize<PrinterListChanged>(eventAsJson);
                     OnPrinterListChanged?.Invoke(printerListChangedEvent.Printers);
                     OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, printerListChangedEvent);
-                    /* 
+                    /*
                     var printerList = JsonSerializer.Deserialize<Printer[]>(eventAsJson);
                     var printerListChangedEvent = new PrinterListChanged() { Printers = new List<Printer>(printerList) };
                     OnPrinterListChanged?.Invoke(new List<Printer>(printerList));
@@ -778,7 +781,8 @@ namespace RepetierSharp
                     break;
                 case EventConstants.EEPROM_DATA:
                     var eepromDataEvents = JsonSerializer.Deserialize<List<EepromData>>(eventData);
-                    eepromDataEvents.ForEach(eepromData => OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, eepromData));
+                    eepromDataEvents.ForEach(eepromData =>
+                        OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, eepromData));
                     break;
                 case EventConstants.STATE:
                     var printerStateChangedEvent = JsonSerializer.Deserialize<PrinterStateChange>(eventData);
@@ -825,8 +829,6 @@ namespace RepetierSharp
                 case EventConstants.GET_EXTERNAL_LINKS:
                     OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, null);
                     break;
-                default:
-                    break;
             }
         }
 
@@ -835,7 +837,7 @@ namespace RepetierSharp
         /// </summary>
         /// <param name="command"> The command to send to the server </param>
         /// <returns></returns>
-        public async Task SendCommand(ICommandData command)
+        public async Task<bool> SendCommand(ICommandData command)
         {
             return await SendCommand(command, command.GetType(), ActivePrinter);
         }
@@ -862,15 +864,16 @@ namespace RepetierSharp
         /// <param name="command"> The identifier of the command </param>
         /// <param name="printer"> The printer the command is issued to </param>
         /// <param name="data"> The raw data as key-value pairs </param>
-        public void SendCommand(string command, string printer, Dictionary<string, object> data)
+        public async Task<bool> SendCommand(string command, string printer, Dictionary<string, object> data)
         {
             var baseCommand = CommandManager.CommandWithId(command, printer, data);
             return await Task.Run(() => WebSocketClient.Send(baseCommand.ToBytes()));
         }
 
         /// <summary>
-        /// Attempt login with the user and password already provided when building the RepetierConnection.
-        /// The password will be hashed. See: https://prgdoc.repetier-server.com/v1/docs/index.html#/en/web-api/websocket/basicCommands?id=login
+        ///     Attempt login with the user and password already provided when building the RepetierConnection.
+        ///     The password will be hashed. See:
+        ///     https://prgdoc.repetier-server.com/v1/docs/index.html#/en/web-api/websocket/basicCommands?id=login
         /// </summary>
         public async Task Login()
         {
