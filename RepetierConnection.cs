@@ -597,27 +597,31 @@ namespace RepetierSharp
                     break;
                 case CommandConstants.LOGIN:
                     var loginMessage = JsonSerializer.Deserialize<LoginMessage>(cmdData);
-                    if (string.IsNullOrEmpty(loginMessage.Error))
+                    if (loginMessage != null)
                     {
-                        this.QueryOpenMessages();
+                        if (string.IsNullOrEmpty(loginMessage.Error))
+                        {
+                            await this.QueryOpenMessages();
+                        }
+                        OnLoginResult?.Invoke(loginMessage);
+                        if (loginMessage.Authenticated)
+                        {
+                            OnSessionEstablished?.Invoke(Session.SessionId);
+                        }
                     }
-
-                    OnLoginResult?.Invoke(loginMessage);
-                    if (loginMessage.Authenticated)
-                    {
-                        OnSessionEstablished?.Invoke(Session.SessionId);
-                    }
-
                     OnResponse?.Invoke(message.CallBackId, commandStr, loginMessage);
                     break;
                 case CommandConstants.LOGOUT:
                     OnResponse?.Invoke(message.CallBackId, commandStr, null);
                     break;
                 case CommandConstants.LIST_PRINTER:
-                    var listprintersMessage = JsonSerializer.Deserialize<List<Printer>>(cmdData);
-                    var printerMsg = new ListPrinterMessage { Printers = listprintersMessage };
+                    var listPrintersMessage = JsonSerializer.Deserialize<List<Printer>>(cmdData);
+                    if (listPrintersMessage != null)
+                    {
+                        OnPrinterListChanged?.Invoke(listPrintersMessage);
+                    }
+                    var printerMsg = new ListPrinterMessage { Printers = listPrintersMessage ?? new List<Printer>() };
                     OnResponse?.Invoke(message.CallBackId, commandStr, printerMsg);
-                    OnPrinterListChanged?.Invoke(listprintersMessage);
                     break;
                 case CommandConstants.STATE_LIST:
                     var stateListMessage = JsonSerializer.Deserialize<Dictionary<string, PrinterState>>(cmdData);
@@ -631,22 +635,30 @@ namespace RepetierSharp
                     break;
                 case CommandConstants.MESSAGES:
                     var messagesMessage = JsonSerializer.Deserialize<List<Message>>(cmdData);
-                    OnMessagesReceived?.Invoke(messagesMessage);
+                    if (messagesMessage != null)
+                    {
+                        OnMessagesReceived?.Invoke(messagesMessage);
+                    }
+                    // TODO: Define IRepetierMessage type for response
+                    OnResponse?.Invoke(message.CallBackId, commandStr, null);
                     break;
                 case CommandConstants.LIST_MODELS:
+                    // TODO:
                     var modelList = JsonSerializer.Deserialize<List<Model>>(cmdData);
                     // OnModelListReceived?.Invoke(this, modelList);
                     break;
                 case CommandConstants.LIST_JOBS:
-                    // fixme
+                    // TODO:
                     var jobList = JsonSerializer.Deserialize<List<Model>>(cmdData);
                     // OnJobListReceived?.Invoke(this, jobList);
                     break;
                 case CommandConstants.MODEL_INFO:
+                    // TODO:
                     var modelInfo = JsonSerializer.Deserialize<Model>(cmdData);
                     // OnModelInfoReceived?.Invoke(this, modelInfo);
                     break;
                 case CommandConstants.JOB_INFO:
+                    // TODO:
                     var jobInfo = JsonSerializer.Deserialize<Model>(cmdData);
                     // OnJobInfoReceived?.Invoke(this, jobInfo);
                     break;
@@ -656,25 +668,24 @@ namespace RepetierSharp
                     OnResponse?.Invoke(message.CallBackId, commandStr, null);
                     break;
                 case CommandConstants.EMERGENCY_STOP:
-                    // TODO: event
-                    // no payload
+                    /* no payload */
                     OnResponse?.Invoke(message.CallBackId, commandStr, null);
                     break;
                 case CommandConstants.ACTIVATE:
-                    // TODO: event
-                    // no payload
+                    /* no payload */
+                    OnResponse?.Invoke(message.CallBackId, commandStr, null);
                     break;
                 case CommandConstants.DEACTIVATE:
-                    // TODO: event
-                    // no payload
+                    /* no payload */
+                    OnResponse?.Invoke(message.CallBackId, commandStr, null);
                     break;
                 case CommandConstants.CREATE_USER:
                     var createStatusMessage = JsonSerializer.Deserialize<StatusMessage>(cmdData);
                     OnResponse?.Invoke(message.CallBackId, commandStr, createStatusMessage);
                     break;
-                case CommandConstants.UPDATE_USER:
-                    // TODO: event
-                    // no payload 
+                case CommandConstants.UPDATE_USER: 
+                    /* no payload */
+                    OnResponse?.Invoke(message.CallBackId, commandStr, null);
                     break;
                 case CommandConstants.DELETE_USER:
                     var deleteStatusMessage = JsonSerializer.Deserialize<StatusMessage>(cmdData);
@@ -688,12 +699,15 @@ namespace RepetierSharp
                     break;
                 case CommandConstants.START_JOB:
                     /* no payload */
+                    OnResponse?.Invoke(message.CallBackId, commandStr, null);
                     break;
                 case CommandConstants.STOP_JOB:
                     /* no payload */
+                    OnResponse?.Invoke(message.CallBackId, commandStr, null);
                     break;
                 case CommandConstants.CONTINUE_JOB:
                     /* no payload */
+                    OnResponse?.Invoke(message.CallBackId, commandStr, null);
                     break;
             }
         }
@@ -740,26 +754,34 @@ namespace RepetierSharp
                     if (Session.AuthType == AuthenticationType.Credentials)
                     {
                         var loginRequiredEvent = JsonSerializer.Deserialize<LoginRequired>(eventData);
+
+                        if (loginRequiredEvent != null)
+                        {
+                            Session.SessionId = loginRequiredEvent.SessionId;
+                            await Login();
+                        }
                         OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, loginRequiredEvent);
-                        Session.SessionId = loginRequiredEvent.SessionId;
-                        Login();
                     }
                     else
                     {
                         throw new InvalidOperationException("Credentials not supplied.");
                     }
-
                     OnLoginRequired?.Invoke();
-
                     break;
                 case EventConstants.USER_CREDENTIALS:
                     var userCredentialsEvent = JsonSerializer.Deserialize<UserCredentials>(eventData);
-                    OnUserCredentialsReceived?.Invoke(userCredentialsEvent);
+                    if (userCredentialsEvent != null)
+                    {
+                        OnUserCredentialsReceived?.Invoke(userCredentialsEvent);
+                    }
                     OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, userCredentialsEvent);
                     break;
                 case EventConstants.PRINTER_LIST_CHANGED:
                     var printerListChangedEvent = JsonSerializer.Deserialize<PrinterListChanged>(eventAsJson);
-                    OnPrinterListChanged?.Invoke(printerListChangedEvent.Printers);
+                    if (printerListChangedEvent != null)
+                    {
+                        OnPrinterListChanged?.Invoke(printerListChangedEvent.Printers);
+                    }
                     OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, printerListChangedEvent);
                     /*
                     var printerList = JsonSerializer.Deserialize<Printer[]>(eventAsJson);
@@ -778,32 +800,47 @@ namespace RepetierSharp
                     break;
                 case EventConstants.LOG:
                     var logEvent = JsonSerializer.Deserialize<Log>(eventData);
-                    OnLogReceived?.Invoke(logEvent);
+                    if (logEvent != null)
+                    {
+                        OnLogReceived?.Invoke(logEvent);
+                    }
                     OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, logEvent);
                     break;
                 case EventConstants.JOB_FINISHED:
                     var jobFinishedEvent = JsonSerializer.Deserialize<JobState>(eventData);
-                    OnJobFinished?.Invoke(repetierEvent.Printer, jobFinishedEvent);
+                    if (jobFinishedEvent != null)
+                    {
+                        OnJobFinished?.Invoke(repetierEvent.Printer, jobFinishedEvent);
+                    }
                     OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, jobFinishedEvent);
                     break;
                 case EventConstants.JOB_KILLED:
                     var jobKilledEvent = JsonSerializer.Deserialize<JobState>(eventData);
-                    OnJobKilled?.Invoke(repetierEvent.Printer, jobKilledEvent);
+                    if (jobKilledEvent != null)
+                    {
+                        OnJobKilled?.Invoke(repetierEvent.Printer, jobKilledEvent);
+                    }
                     OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, jobKilledEvent);
                     break;
                 case EventConstants.JOB_STARTED:
                     var jobStartedEvent = JsonSerializer.Deserialize<JobStarted>(eventData);
-                    OnJobStarted?.Invoke(repetierEvent.Printer, jobStartedEvent);
+                    if (jobStartedEvent != null)
+                    {
+                        OnJobStarted?.Invoke(repetierEvent.Printer, jobStartedEvent);
+                    }
                     OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, jobStartedEvent);
                     break;
                 case EventConstants.EEPROM_DATA:
                     var eepromDataEvents = JsonSerializer.Deserialize<List<EepromData>>(eventData);
-                    eepromDataEvents.ForEach(eepromData =>
+                    eepromDataEvents?.ForEach(eepromData =>
                         OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, eepromData));
                     break;
                 case EventConstants.STATE:
                     var printerStateChangedEvent = JsonSerializer.Deserialize<PrinterStateChange>(eventData);
-                    OnPrinterState?.Invoke(repetierEvent.Printer, printerStateChangedEvent.PrinterState);
+                    if (printerStateChangedEvent != null)
+                    {
+                        OnPrinterState?.Invoke(repetierEvent.Printer, printerStateChangedEvent.PrinterState);
+                    }
                     OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, printerStateChangedEvent);
                     break;
                 case EventConstants.CONFIG:
@@ -817,7 +854,10 @@ namespace RepetierSharp
                 case EventConstants.TEMP:
                     var tempChangeEvent = JsonSerializer.Deserialize<Temp>(eventData);
                     OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, tempChangeEvent);
-                    OnTempChange?.Invoke(repetierEvent.Printer, tempChangeEvent);
+                    if (tempChangeEvent != null)
+                    {
+                        OnTempChange?.Invoke(repetierEvent.Printer, tempChangeEvent);    
+                    }
                     break;
                 case EventConstants.SETTING_CHANGED:
                     //var settings = JsonSerializer.Deserialize<List<SettingChangedEvent>>(eventData);
@@ -825,12 +865,18 @@ namespace RepetierSharp
                     break;
                 case EventConstants.PRINTER_SETTING_CHANGED:
                     var printerSetting = JsonSerializer.Deserialize<SettingChanged>(eventData);
-                    OnPrinterSettingChanged?.Invoke(printerSetting, repetierEvent.Printer);
+                    if (printerSetting != null)
+                    {
+                        OnPrinterSettingChanged?.Invoke(printerSetting, repetierEvent.Printer);
+                    }
                     OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, printerSetting);
                     break;
                 case EventConstants.PRINTER_CONDITION_CHANGED:
                     var conditionChange = JsonSerializer.Deserialize<PrinterConditionChanged>(eventData);
-                    OnPrinterConditionChanged?.Invoke(conditionChange, repetierEvent.Printer);
+                    if (conditionChange != null)
+                    {
+                        OnPrinterConditionChanged?.Invoke(conditionChange, repetierEvent.Printer);
+                    }
                     OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, conditionChange);
                     break;
                 //case EventConstants.JOBS_CHANGED:
