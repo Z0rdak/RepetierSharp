@@ -12,7 +12,7 @@ namespace RepetierSharp.Models.Events
         public string Printer { get; set; }
 
         [JsonPropertyName("data")]
-        public IRepetierEvent Data { get; set; }
+        public IRepetierEvent RepetierEvent { get; set; }
 
         public RepetierBaseEvent() { }
     }
