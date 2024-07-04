@@ -5,7 +5,7 @@ namespace RepetierSharp.Models.Messages
 {
     /* Message sent by the server as a response 
      * to a command or containing a event message */
-    public class RepetierBaseResponse
+    public class RepetierBaseMessage
     {
         /// <summary>
         /// A callback_id of -1 indicates that the message contains events and is not a response to a command.
@@ -25,7 +25,7 @@ namespace RepetierSharp.Models.Messages
         [JsonPropertyName("eventList")]
         public bool? HasEvents { get; set; }
 
-        public RepetierBaseResponse() { }
+        public RepetierBaseMessage() { }
 
     }
 }
