@@ -1,10 +1,11 @@
 ﻿using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
+using RepetierSharp.Models.Events;
 
 namespace RepetierSharp.Models.Messages
 {
-    public class LoginMessage : IRepetierMessage
+    public class LoginResponse : IRepetierResponse
     {
         [JsonPropertyName("ok")]
         public bool Authenticated { get; set; }
@@ -21,7 +22,7 @@ namespace RepetierSharp.Models.Messages
         [JsonPropertyName("error")]
         public string Error { get; set; } = "";
 
-        public LoginMessage() { }
+        public LoginResponse() { }
 
         public override string ToString()
         {

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using RepetierSharp.Models.Events;
 using RepetierSharp.Models.Messages;
 
 namespace RepetierSharp.Models
@@ -7,7 +8,7 @@ namespace RepetierSharp.Models
     /// <summary>
     /// Represents a g-code file stored in the printer. It also contains some statistical data.
     /// </summary>
-    public class Model : IRepetierMessage
+    public class ModelResponse : IRepetierResponse
     {
         [JsonPropertyName("analysed")]
         public int Analysed { get; set; }
@@ -125,7 +126,14 @@ namespace RepetierSharp.Models
         [JsonPropertyName("zMin")]
         public double ZMin { get; set; }
 
-        public Model() { }
+        public ModelResponse() { }
+    }
+    
+    public class ModelResponseList : IRepetierResponse
+    {
+        public List<ModelResponse> Models { get; set; } = new List<ModelResponse>();
+
+        public ModelResponseList() { }
     }
 
 }
