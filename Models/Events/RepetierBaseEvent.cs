@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using System;
+using System.Text.Json.Serialization;
 
 namespace RepetierSharp.Models.Events
 {
@@ -10,10 +11,20 @@ namespace RepetierSharp.Models.Events
         [JsonPropertyName("printer")]
         public string Printer { get; set; }
 
-        // [JsonPropertyName("data")]
-        [JsonIgnore]
-        public byte[] Data { get; set; } // IRepetierEvent
+        [JsonPropertyName("data")]
+        public IRepetierEvent Data { get; set; }
 
         public RepetierBaseEvent() { }
+    }
+    
+    public class RepetierBaseEventInfo
+    {
+        [JsonPropertyName("event")]
+        public string Event { get; set; }
+
+        [JsonPropertyName("printer")]
+        public string Printer { get; set; }
+        
+        public RepetierBaseEventInfo() { }
     }
 }
