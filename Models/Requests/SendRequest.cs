@@ -1,15 +1,15 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace RepetierSharp.Models.Commands
+namespace RepetierSharp.Models.Requests
 {
-    public class SendCommand : ICommandData
+    public class SendRequest : IRepetierRequest
     {
         [JsonPropertyName("cmd")]
         public string GCode { get; }
         [JsonIgnore]
         public string CommandIdentifier => CommandConstants.SEND;
 
-        public SendCommand(string gcode)
+        public SendRequest(string gcode)
         {
             GCode = gcode;
         }

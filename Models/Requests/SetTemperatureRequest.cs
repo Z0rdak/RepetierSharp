@@ -1,53 +1,53 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace RepetierSharp.Models.Commands
+namespace RepetierSharp.Models.Requests
 {
 
-    public abstract class SetTemperatureCommand
+    public abstract class SetTemperatureRequest
     {
         [JsonPropertyName("temperature")]
         public int Temperature { get; set; }
 
-        public SetTemperatureCommand(int temperature)
+        public SetTemperatureRequest(int temperature)
         {
             Temperature = temperature < 0 ? 0 : temperature;
         }
     }
 
-    public class SetExtruderTempCommand : SetTemperatureCommand, ICommandData
+    public class SetExtruderTempRequest : SetTemperatureRequest, IRepetierRequest
     {
         [JsonPropertyName("extruder")]
         public int ExtruderId { get; set; }
         [JsonIgnore]
         public string CommandIdentifier => CommandConstants.SET_EXTRUDER_TEMPERATURE;
 
-        public SetExtruderTempCommand(int temperature, int extruderNo) : base(temperature)
+        public SetExtruderTempRequest(int temperature, int extruderNo) : base(temperature)
         {
             ExtruderId = extruderNo;
         }
     }
 
-    public class SetHeatedBedTempCommand : SetTemperatureCommand, ICommandData
+    public class SetHeatedBedTempRequest : SetTemperatureRequest, IRepetierRequest
     {
         [JsonPropertyName("bedId")]
         public int HeatedBedId { get; set; }
         [JsonIgnore]
         public string CommandIdentifier => CommandConstants.SET_BED_TEMPERATURE;
 
-        public SetHeatedBedTempCommand(int temperature, int heatedBedId) : base(temperature)
+        public SetHeatedBedTempRequest(int temperature, int heatedBedId) : base(temperature)
         {
             HeatedBedId = heatedBedId;
         }
     }
 
-    public class SetHeatedChamberTempCommand : SetTemperatureCommand, ICommandData
+    public class SetHeatedChamberTempRequest : SetTemperatureRequest, IRepetierRequest
     {
         [JsonPropertyName("chamberId")]
         public int HeatedChamberId { get; set; }
         [JsonIgnore]
         public string CommandIdentifier => CommandConstants.SET_CHAMBER_TEMPERATURE;
 
-        public SetHeatedChamberTempCommand(int temperature, int heatedChamberId) : base(temperature)
+        public SetHeatedChamberTempRequest(int temperature, int heatedChamberId) : base(temperature)
         {
             HeatedChamberId = heatedChamberId;
         }

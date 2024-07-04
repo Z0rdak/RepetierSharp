@@ -1,15 +1,15 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace RepetierSharp.Models.Commands
+namespace RepetierSharp.Models.Requests
 {
-    public class DeactivateCommand : ICommandData
+    public class ActivateRequest : IRepetierRequest
     {
         [JsonPropertyName("printer")]
         public string PrinterSlug { get; }
         [JsonIgnore]
-        public string CommandIdentifier => CommandConstants.DEACTIVATE;
+        public string CommandIdentifier => CommandConstants.ACTIVATE;
 
-        public DeactivateCommand(string printer)
+        public ActivateRequest(string printer)
         {
             PrinterSlug = printer;
         }

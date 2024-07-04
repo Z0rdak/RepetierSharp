@@ -1,15 +1,15 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace RepetierSharp.Models.Commands
+namespace RepetierSharp.Models.Requests
 {
-    public class ModelInfoCommand : ICommandData
+    public class ModelInfoRequest : IRepetierRequest
     {
         [JsonPropertyName("id")]
         public int Id { get; }
         [JsonIgnore]
         public string CommandIdentifier => CommandConstants.MODEL_INFO;
 
-        public ModelInfoCommand(int modelId)
+        public ModelInfoRequest(int modelId)
         {
             this.Id = modelId;
         }

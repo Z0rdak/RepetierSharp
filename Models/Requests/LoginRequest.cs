@@ -1,8 +1,8 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace RepetierSharp.Models.Commands
+namespace RepetierSharp.Models.Requests
 {
-    public class LoginCommand : ICommandData
+    public class LoginRequest : IRepetierRequest
     {
         [JsonPropertyName("login")]
         public string LoginName { get; private set; }
@@ -15,7 +15,7 @@ namespace RepetierSharp.Models.Commands
         [JsonIgnore]
         public string CommandIdentifier => CommandConstants.LOGIN;
 
-        public LoginCommand(string name, string password, bool longLived = false)
+        public LoginRequest(string name, string password, bool longLived = false)
         {
             LoginName = name;
             Password = password;

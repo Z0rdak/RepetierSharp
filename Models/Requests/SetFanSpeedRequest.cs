@@ -1,8 +1,8 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace RepetierSharp.Models.Commands
+namespace RepetierSharp.Models.Requests
 {
-    public class SetFanSpeedCommand : ICommandData
+    public class SetFanSpeedRequest : IRepetierRequest
     {
         [JsonPropertyName("speed")]
         public int FanSpeed { get; set; }
@@ -14,7 +14,7 @@ namespace RepetierSharp.Models.Commands
         [JsonIgnore]
         public string CommandIdentifier => CommandConstants.SET_FAN_SPEED;
 
-        public SetFanSpeedCommand(int fanSpeed, int fanId = 0)
+        public SetFanSpeedRequest(int fanSpeed, int fanId = 0)
         {
             FanSpeed = fanSpeed < FAN_OFF ? FAN_OFF : fanSpeed;
             FanSpeed = fanSpeed > MAX_THROTTLE ? MAX_THROTTLE : fanSpeed;

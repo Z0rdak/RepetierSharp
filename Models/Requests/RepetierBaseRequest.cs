@@ -4,7 +4,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace RepetierSharp.Models.Commands
+namespace RepetierSharp.Models.Requests
 {
     /// <summary>
     /// Represents a WebSocket command for requesting data from the Repetier Server.
@@ -12,7 +12,7 @@ namespace RepetierSharp.Models.Commands
     /// {"action":"ping","data":{},"printer":"MyPrinter","callback_id":545}
     /// source: https://www.repetier-server.com/manuals/programming/API/index.html
     /// </summary>
-    public class RepetierBaseCommand
+    public class RepetierBaseRequest
     {
 
         [JsonPropertyName("action")]
@@ -22,7 +22,7 @@ namespace RepetierSharp.Models.Commands
         public Type CommandType { get; set; }
 
         [JsonIgnore]
-        public ICommandData Command { get; set; }
+        public IRepetierRequest Command { get; set; }
 
         [JsonPropertyName("data")]
         public Dictionary<string, object> Data { get; set; }
@@ -33,7 +33,7 @@ namespace RepetierSharp.Models.Commands
         [JsonPropertyName("callback_id")]
         public int CallbackId { get; set; }
 
-        public RepetierBaseCommand(ICommandData command, string printer, int callbackId, Type type)
+        public RepetierBaseRequest(IRepetierRequest command, string printer, int callbackId, Type type)
         {
             this.Action = command.CommandIdentifier;
             this.Command = command;
@@ -43,7 +43,7 @@ namespace RepetierSharp.Models.Commands
             this.Printer = printer;
         }
 
-        public RepetierBaseCommand(Dictionary<string, object> data, string command, string printer, int callbackId)
+        public RepetierBaseRequest(Dictionary<string, object> data, string command, string printer, int callbackId)
         {
             this.Action = command;
             this.Command = null;

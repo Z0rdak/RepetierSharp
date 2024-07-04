@@ -1,8 +1,8 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace RepetierSharp.Models.Commands
+namespace RepetierSharp.Models.Requests
 {
-    public class RemoveMessageCommand : ICommandData
+    public class RemoveMessageRequest : IRepetierRequest
     {
         [JsonPropertyName("id")]
         public int Id { get; }
@@ -12,7 +12,7 @@ namespace RepetierSharp.Models.Commands
         [JsonIgnore]
         public string CommandIdentifier => CommandConstants.REMOVE_MESSAGE;
 
-        public RemoveMessageCommand(int messageId, string a = "")
+        public RemoveMessageRequest(int messageId, string a = "")
         {
             Id = messageId;
             A = a;

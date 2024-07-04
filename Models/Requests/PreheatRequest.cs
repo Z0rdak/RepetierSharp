@@ -1,21 +1,28 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace RepetierSharp.Models.Commands
+namespace RepetierSharp.Models.Requests
 {
-    public class CooldownCommand : ICommandData
+    public class PreheatRequest : IRepetierRequest
     {
-
+        // TODO:
         public int ExtruderNo { get; set; }
         public int HeatedBedNo { get; set; }
         public int HeatedChamberNo { get; set; }
         [JsonIgnore]
-        public string CommandIdentifier => CommandConstants.COOLDOWN;
+        public string CommandIdentifier => CommandConstants.PREHEAT;
 
-        public CooldownCommand(int extruderNo, int heatedBedNo, int heatedChamberNo)
+        public PreheatRequest(int extruderNo, int heatedBedNo, int heatedChamberNo)
         {
             ExtruderNo = extruderNo;
             HeatedBedNo = heatedBedNo;
             HeatedChamberNo = heatedChamberNo;
         }
+    }
+
+    public enum ExtruderConstants
+    {
+        No = 0,
+        All = 1,
+        Active = 2,
     }
 }

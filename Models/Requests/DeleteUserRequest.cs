@@ -1,15 +1,15 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace RepetierSharp.Models.Commands
+namespace RepetierSharp.Models.Requests
 {
-    public class DeleteUserCommand : ICommandData
+    public class DeleteUserRequest : IRepetierRequest
     {
         [JsonPropertyName("login")]
         public string User { get; }
         [JsonIgnore]
         public string CommandIdentifier => CommandConstants.DELETE_USER;
 
-        public DeleteUserCommand(string user)
+        public DeleteUserRequest(string user)
         {
             this.User = user;
         }

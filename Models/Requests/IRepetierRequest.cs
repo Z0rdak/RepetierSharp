@@ -1,8 +1,8 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace RepetierSharp.Models.Commands
+namespace RepetierSharp.Models.Requests
 {
-    public interface ICommandData
+    public interface IRepetierRequest
     {
         [JsonIgnore]
         public string CommandIdentifier { get; }

@@ -1,15 +1,15 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace RepetierSharp.Models.Commands
+namespace RepetierSharp.Models.Requests
 {
-    public class SetSpeedMultiplyCommand : ICommandData
+    public class SetSpeedMultiplyRequest : IRepetierRequest
     {
         [JsonPropertyName("speed")]
         public int SpeedMultiplierInPercent { get; set; }
         [JsonIgnore]
         public string CommandIdentifier => CommandConstants.SET_SPEED_MULTIPLY;
 
-        public SetSpeedMultiplyCommand(int speedMultiplier)
+        public SetSpeedMultiplyRequest(int speedMultiplier)
         {
             SpeedMultiplierInPercent = speedMultiplier;
         }

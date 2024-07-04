@@ -1,8 +1,8 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace RepetierSharp.Models.Commands
+namespace RepetierSharp.Models.Requests
 {
-    public class CopyModelCommand : ICommandData
+    public class CopyModelRequest : IRepetierRequest
     {
         [JsonIgnore]
         public string CommandIdentifier => CommandConstants.COPY_MODEL;
@@ -13,7 +13,7 @@ namespace RepetierSharp.Models.Commands
         [JsonPropertyName("autostart")]
         public bool Autostart { get; }
 
-        public CopyModelCommand(int modelId, bool autostart = true)
+        public CopyModelRequest(int modelId, bool autostart = true)
         {
             this.Id = modelId;
             this.Autostart = autostart;

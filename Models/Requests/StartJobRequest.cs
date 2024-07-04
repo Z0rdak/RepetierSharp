@@ -1,15 +1,15 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace RepetierSharp.Models.Commands
+namespace RepetierSharp.Models.Requests
 {
-    public class StartJobCommand : ICommandData
+    public class StartJobRequest : IRepetierRequest
     {
         [JsonPropertyName("id")]
         public int JobId { get; }
         [JsonIgnore]
         public string CommandIdentifier => CommandConstants.START_JOB;
 
-        public StartJobCommand(int jobId)
+        public StartJobRequest(int jobId)
         {
             JobId = jobId;
         }
