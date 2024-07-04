@@ -17,15 +17,12 @@ namespace RepetierSharp.Models.Messages
         public string SessionId { get; set; }
 
         [JsonPropertyName("data")]
-        public IRepetierMessage Data { get; set; }
+        public IRepetierMessage RepetierMessage { get; set; }
 
         /// <summary>
         /// Indicates if the message contains events
         /// </summary>
         [JsonPropertyName("eventList")]
         public bool? HasEvents { get; set; }
-
-        public RepetierBaseMessage() { }
-
     }
 }
