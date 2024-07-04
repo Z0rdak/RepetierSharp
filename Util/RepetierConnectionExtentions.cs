@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
-using RepetierSharp.Models.Commands;
+using RepetierSharp.Models.Requests;
 
 namespace RepetierSharp.Extentions
 {
@@ -12,7 +12,7 @@ namespace RepetierSharp.Extentions
         /// </summary>
         public static async Task QueryPrinterList(this RepetierConnection rc)
         {
-            await rc.SendCommand(ListPrinterCommand.Instance);
+            await rc.SendCommand(ListPrinterRequest.Instance);
         }
 
         /// <summary>
@@ -21,12 +21,12 @@ namespace RepetierSharp.Extentions
         /// </summary>
         public static async Task QueryPrinterStateList(this RepetierConnection rc, bool includeHistory = false)
         {
-            await rc.SendCommand(new StateListCommand(includeHistory));
+            await rc.SendCommand(new StateListRequest(includeHistory));
         }
 
         public static async Task PauseJob(this RepetierConnection rc)
         {
-            await rc.SendCommand(new SendCommand("@pause RepetierSharp requested pause."));
+            await rc.SendCommand(new SendRequest("@pause RepetierSharp requested pause."));
         }
 
         /// <summary>
@@ -35,7 +35,7 @@ namespace RepetierSharp.Extentions
         /// <param name="rc"></param>
         public static async Task StopJob(this RepetierConnection rc)
         {
-            await rc.SendCommand(StopJobCommand.Instance);
+            await rc.SendCommand(StopJobRequest.Instance);
         }
 
         /// <summary>
@@ -44,7 +44,7 @@ namespace RepetierSharp.Extentions
         /// <param name="rc"></param>
         public static async Task EmergencyStop(this RepetierConnection rc)
         {
-            await rc.SendCommand(EmergencyStopCommand.Instance);
+            await rc.SendCommand(EmergencyStopRequest.Instance);
         }
 
         /// <summary>
@@ -53,7 +53,7 @@ namespace RepetierSharp.Extentions
         /// <param name="rc"></param>
         public static async Task Logout(this RepetierConnection rc)
         {
-            await rc.SendCommand(LogoutCommand.Instance);
+            await rc.SendCommand(LogoutRequest.Instance);
         }
 
         /// <summary>
@@ -64,7 +64,7 @@ namespace RepetierSharp.Extentions
         /// <param name="autostart"> True to automatically start print job, false for queueing only</param>
         public static async Task EnqueueJob(this RepetierConnection rc, int modelId, bool autostart = true)
         {
-            await rc.SendCommand(new CopyModelCommand(modelId, autostart));
+            await rc.SendCommand(new CopyModelRequest(modelId, autostart));
         }
 
         /// <summary>
@@ -74,7 +74,7 @@ namespace RepetierSharp.Extentions
         /// <param name="modelId"></param>
         public static async Task GetModelInfo(this RepetierConnection rc, int modelId)
         {
-            await rc.SendCommand(new ModelInfoCommand(modelId));
+            await rc.SendCommand(new ModelInfoRequest(modelId));
         }
 
         /// <summary>
@@ -84,7 +84,7 @@ namespace RepetierSharp.Extentions
         /// <param name="jobId"></param>
         public static async Task GetJobInfo(this RepetierConnection rc, int jobId)
         {
-            await rc.SendCommand(new JobInfoCommand(jobId));
+            await rc.SendCommand(new JobInfoRequest(jobId));
         }
 
         /// <summary>
@@ -94,7 +94,7 @@ namespace RepetierSharp.Extentions
         /// <param name="jobId"> Id of job in queue to start</param>
         public static async Task StartJob(this RepetierConnection rc, int jobId)
         {
-            await rc.SendCommand(new StartJobCommand(jobId));
+            await rc.SendCommand(new StartJobRequest(jobId));
         }
 
         /// <summary>
@@ -103,7 +103,7 @@ namespace RepetierSharp.Extentions
         /// <param name="rc"></param>
         public static async Task ContinueJob(this RepetierConnection rc)
         {
-            await rc.SendCommand(ContinueJobCommand.Instance);
+            await rc.SendCommand(ContinueJobRequest.Instance);
         }
 
         /// <summary>
@@ -113,42 +113,42 @@ namespace RepetierSharp.Extentions
         /// <param name="jobId"> Id of job to remove from print queue. </param>
         public static async Task RemoveJob(this RepetierConnection rc, int jobId)
         {
-            await rc.SendCommand(new RemoveJobCommand(jobId));
+            await rc.SendCommand(new RemoveJobRequest(jobId));
         }
 
         public static async Task CreateUser(this RepetierConnection rc, string user, string password, int permission)
         {
-            await rc.SendCommand(new CreateUserCommand(user, password, permission));
+            await rc.SendCommand(new CreateUserRequest(user, password, permission));
         }
 
         public static async Task UpdateUser(this RepetierConnection rc, string user, int permission, string password = "")
         {
-            await rc.SendCommand(new UpdateUserCommand(user, permission, password));
+            await rc.SendCommand(new UpdateUserRequest(user, permission, password));
         }
 
         public static async Task DeleteUser(this RepetierConnection rc, string user)
         {
-            await rc.SendCommand(new DeleteUserCommand(user));
+            await rc.SendCommand(new DeleteUserRequest(user));
         }
 
         public static async Task Preheat(this RepetierConnection rc, int extruderNo, int heatedBedNo, int heatedChamberNo)
         {
-            await rc.SendCommand(new PreheatCommand(extruderNo, heatedBedNo, heatedChamberNo));
+            await rc.SendCommand(new PreheatRequest(extruderNo, heatedBedNo, heatedChamberNo));
         }
 
         public static async Task PreheatAll(this RepetierConnection rc)
         {
-            await rc.SendCommand(new PreheatCommand((int)ExtruderConstants.All, 0, 0));
+            await rc.SendCommand(new PreheatRequest((int)ExtruderConstants.All, 0, 0));
         }
 
         public static async Task PreheatActive(this RepetierConnection rc)
         {
-            await rc.SendCommand(new PreheatCommand((int)ExtruderConstants.Active, 0, 0));
+            await rc.SendCommand(new PreheatRequest((int)ExtruderConstants.Active, 0, 0));
         }
 
         public static async Task Cooldown(this RepetierConnection rc)
         {
-            await rc.SendCommand(new CooldownCommand((int)ExtruderConstants.All, 0, 0));
+            await rc.SendCommand(new CooldownRequest((int)ExtruderConstants.All, 0, 0));
         }
 
         public static async Task SetTemperature(this RepetierConnection rc, TemperatureTarget targetType, int temperature, int targetId = 0)
@@ -175,7 +175,7 @@ namespace RepetierSharp.Extentions
         /// <param name="extruderNo">Id of the extruder (default = 0)</param>
         public static async Task SetExtruderTemp(this RepetierConnection rc, int temperature, int extruderNo = 0)
         {
-            await rc.SendCommand(new SetExtruderTempCommand(temperature, extruderNo));
+            await rc.SendCommand(new SetExtruderTempRequest(temperature, extruderNo));
         }
 
         /// <summary>
@@ -186,7 +186,7 @@ namespace RepetierSharp.Extentions
         /// <param name="heatedBedId">Id of the heated bed (default = 0)</param>
         public static async Task SetHeatedBedTemp(this RepetierConnection rc, int temperature, int heatedBedId = 0)
         {
-            await rc.SendCommand(new SetHeatedBedTempCommand(temperature, heatedBedId));
+            await rc.SendCommand(new SetHeatedBedTempRequest(temperature, heatedBedId));
         }
 
         /// <summary>
@@ -197,7 +197,7 @@ namespace RepetierSharp.Extentions
         /// <param name="heatedChamberId">Id of the heated chamber (default = 0)</param>
         public static async Task SetHeatedChamberTemp(this RepetierConnection rc, int temperature, int heatedChamberId = 0)
         {
-            await rc.SendCommand(new SetHeatedChamberTempCommand(temperature, heatedChamberId));
+            await rc.SendCommand(new SetHeatedChamberTempRequest(temperature, heatedChamberId));
         }
 
         /// <summary>
@@ -209,17 +209,17 @@ namespace RepetierSharp.Extentions
         /// <param name="fanId"> Id of the fan (default = 0 for the first fan)</param>
         public static async Task SetFanSpeed(this RepetierConnection rc, int fanSpeed, int fanId = 0)
         {
-            await rc.SendCommand(new SetFanSpeedCommand(Math.Clamp(fanSpeed, 0, 100) * 255 / 100, fanId));
+            await rc.SendCommand(new SetFanSpeedRequest(Math.Clamp(fanSpeed, 0, 100) * 255 / 100, fanId));
         }
 
         public static async Task TurnOffFan(this RepetierConnection rc, int fanId = 0)
         {
-            await SetFanSpeed(rc, SetFanSpeedCommand.FAN_OFF, fanId);
+            await SetFanSpeed(rc, SetFanSpeedRequest.FAN_OFF, fanId);
         }
 
         public static async Task TurnOnFan(this RepetierConnection rc, int fanId = 0)
         {
-            await SetFanSpeed(rc, SetFanSpeedCommand.MAX_THROTTLE, fanId);
+            await SetFanSpeed(rc, SetFanSpeedRequest.MAX_THROTTLE, fanId);
         }
 
         /// <summary>
@@ -230,7 +230,7 @@ namespace RepetierSharp.Extentions
         /// <param name="flowMultiplier">The flow multiplier in percent.</param>
         public static async Task SetFlowMultiplier(this RepetierConnection rc, int flowMultiplier)
         {
-            await rc.SendCommand(new SetFlowMultiplyCommand(flowMultiplier));
+            await rc.SendCommand(new SetFlowMultiplyRequest(flowMultiplier));
         }
 
         /// <summary>
@@ -241,12 +241,12 @@ namespace RepetierSharp.Extentions
         /// <param name="speedMultiplier">The speed multiplier in percent</param>
         public static async Task SetSpeedMultiplier(this RepetierConnection rc, int speedMultiplier)
         {
-            await rc.SendCommand(new SetSpeedMultiplyCommand(speedMultiplier));
+            await rc.SendCommand(new SetSpeedMultiplyRequest(speedMultiplier));
         }
 
         public static async Task QueryOpenMessages(this RepetierConnection rc)
         {
-            await rc.SendCommand(MessagesCommand.Instance);
+            await rc.SendCommand(MessagesRequest.Instance);
         }
     }
 }
