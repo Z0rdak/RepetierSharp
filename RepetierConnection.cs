@@ -5,13 +5,15 @@ using System.Net;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using RepetierSharp.Config;
 using RepetierSharp.Extentions;
 using RepetierSharp.Models;
-using RepetierSharp.Models.Commands;
+using RepetierSharp.Models.Requests;
 using RepetierSharp.Models.Config;
 using RepetierSharp.Models.Events;
 using RepetierSharp.Models.Messages;
@@ -98,6 +100,13 @@ namespace RepetierSharp
         public delegate void PrinterStatesReceivedHandler(StateListMessage printerStates);
         #endregion
 
+        public event RepetierRequestSend? OnRequestSend;
+        public delegate void RepetierRequestSend(RepetierBaseRequest request);
+        
+        public event RepetierRequestFailed? OnFailedRequest;
+        public delegate void RepetierRequestFailed(RepetierBaseRequest request);
+        
+        
         /// <summary>
         /// Event for received events from the repetier server.
         /// </summary>
@@ -918,7 +927,19 @@ namespace RepetierSharp
         protected async Task<bool> SendCommand(ICommandData command, Type commandType, string printer)
         {
             var baseCommand = CommandManager.CommandWithId(command, commandType, printer);
-            return await Task.Run(() => WebSocketClient.Send(baseCommand.ToBytes()));
+            return await Task.Run(() =>
+            {
+                var isInQueue = WebSocketClient.Send(baseCommand.ToBytes());
+                if ( isInQueue )
+                {
+                    OnRequestSend?.Invoke(baseCommand);
+                }
+                else
+                {
+                    OnFailedRequest?.Invoke(baseCommand);
+                }
+                return isInQueue;
+            });
         }
 
         /// <summary>
