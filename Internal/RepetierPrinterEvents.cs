@@ -40,7 +40,7 @@ namespace RepetierSharp.Internal
         public string Printer { get; }
         public Temp TempChange { get; }
     }
-    
+
     public sealed class EmergencyStopTriggeredEventArgs : EventArgs
     {
         public EmergencyStopTriggeredEventArgs(string printer)

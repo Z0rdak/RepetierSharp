@@ -5,16 +5,16 @@ using RestSharp;
 namespace RepetierSharp.Internal
 {
     public sealed class RepetierPrintJobEvents
-    { 
-        public AsyncEvent<PrintJobStartedEventArgs> PrintStartedEvent { get; } = new AsyncEvent<PrintJobStartedEventArgs>();
-        public AsyncEvent<PrintJobFinishedEventArgs> PrintFinishedEvent { get; } = new AsyncEvent<PrintJobFinishedEventArgs>();
-        public AsyncEvent<PrintJobKilledEventArgs> PrintKilledEvent { get; } = new AsyncEvent<PrintJobKilledEventArgs>();
-        public AsyncEvent<PrintJobDeactivatedEventArgs> PrintDeactivatedEvent { get; } = new AsyncEvent<PrintJobDeactivatedEventArgs>();
-        public AsyncEvent<PrintJobStartFailedEventArgs> PrintStartFailedEvent { get; } = new AsyncEvent<PrintJobStartFailedEventArgs>();
-        public AsyncEvent<PrintJobAddedEventArgs> PrintJobAddedEvent { get; } = new AsyncEvent<PrintJobAddedEventArgs>();
+    {
+        public AsyncEvent<PrintJobStartedEventArgs> PrintStartedEvent { get; } = new();
+        public AsyncEvent<PrintJobFinishedEventArgs> PrintFinishedEvent { get; } = new();
+        public AsyncEvent<PrintJobKilledEventArgs> PrintKilledEvent { get; } = new();
+        public AsyncEvent<PrintJobDeactivatedEventArgs> PrintDeactivatedEvent { get; } = new();
+        public AsyncEvent<PrintJobStartFailedEventArgs> PrintStartFailedEvent { get; } = new();
+        public AsyncEvent<PrintJobAddedEventArgs> PrintJobAddedEvent { get; } = new();
     }
-    
-        
+
+
     public sealed class PrintJobAddedEventArgs : EventArgs
     {
         public PrintJobAddedEventArgs(string printer)
@@ -24,7 +24,7 @@ namespace RepetierSharp.Internal
 
         public string Printer { get; }
     }
-    
+
     public sealed class PrintJobsChangedEventArgs : EventArgs
     {
         public PrintJobsChangedEventArgs(string printer)
@@ -34,7 +34,7 @@ namespace RepetierSharp.Internal
 
         public string Printer { get; }
     }
-    
+
     public sealed class PrintJobStartFailedEventArgs : EventArgs
     {
         public PrintJobStartFailedEventArgs(string printer, RestResponse response)
@@ -46,7 +46,7 @@ namespace RepetierSharp.Internal
         public string Printer { get; }
         public RestResponse RestResponse { get; }
     }
-    
+
     public sealed class PrintJobDeactivatedEventArgs : EventArgs
     {
         public PrintJobDeactivatedEventArgs(string printer, JobState jobDeactivated)
@@ -58,7 +58,7 @@ namespace RepetierSharp.Internal
         public string Printer { get; }
         public JobState JobState { get; }
     }
-    
+
     public sealed class PrintJobKilledEventArgs : EventArgs
     {
         public PrintJobKilledEventArgs(string printer, JobState jobKilled)
@@ -70,7 +70,7 @@ namespace RepetierSharp.Internal
         public string Printer { get; }
         public JobState JobState { get; }
     }
-    
+
     public sealed class PrintJobFinishedEventArgs : EventArgs
     {
         public PrintJobFinishedEventArgs(string printer, JobState jobFinished)
