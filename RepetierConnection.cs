@@ -131,7 +131,7 @@ namespace RepetierSharp
         }
         #endregion
     
-    #region PrintJob Events
+        #region PrintJob Events
         readonly RepetierPrintJobEvents _printJobEvents = new();
         public event Func<PrintJobStartedEventArgs, Task> PrintStartedAsync
         {
@@ -143,53 +143,73 @@ namespace RepetierSharp
             add => _printJobEvents.PrintKilledEvent.AddHandler(value);
             remove => _printJobEvents.PrintKilledEvent.RemoveHandler(value);
         }
-    #endregion
+        #endregion
         
-    #region PrintJob Events
-    readonly RepetierPrinterEvents _printerEvents = new();
-    
-    public event Func<StateReceivedEventArgs, Task> PrinterStateReceivedAsync
-    {
-        add => _printerEvents.StateReceivedEvent.AddHandler(value);
-        remove => _printerEvents.StateReceivedEvent.RemoveHandler(value);
-    }
-    
-    public event Func<ConditionChangedEventArgs, Task> PrinterConditionChangedAsync
-    {
-        add => _printerEvents.ConditionChangedEvent.AddHandler(value);
-        remove => _printerEvents.ConditionChangedEvent.RemoveHandler(value);
-    }
-    
-    public event Func<SettingChangedEventArgs, Task> PrinterSettingChangedAsync
-    {
-        add => _printerEvents.SettingChangedEvent.AddHandler(value);
-        remove => _printerEvents.SettingChangedEvent.RemoveHandler(value);
-    }
-    
-    public event Func<JobsChangedEventArgs, Task> PrinterJobsChangedAsync
-    {
-        add => _printerEvents.JobsChangedEvent.AddHandler(value);
-        remove => _printerEvents.JobsChangedEvent.RemoveHandler(value);
-    }
-    
-    public event Func<ActivatedEventArgs, Task> PrinterActivatedAsync
-    {
-        add => _printerEvents.PrinterActivatedEvent.AddHandler(value);
-        remove => _printerEvents.PrinterActivatedEvent.RemoveHandler(value);
-    }
-    
-    public event Func<DeactivatedEventArgs, Task> PrinterDeactivatedAsync
-    {
-        add => _printerEvents.PrinterDeactivatedEvent.AddHandler(value);
-        remove => _printerEvents.PrinterDeactivatedEvent.RemoveHandler(value);
-    }    
-    public event Func<EmergencyStopTriggeredEventArgs, Task> PrinterEmergencyStopTriggeredAsync
-    {
-        add => _printerEvents.EmergencyStopTriggeredEvent.AddHandler(value);
-        remove => _printerEvents.EmergencyStopTriggeredEvent.RemoveHandler(value);
-    }
-    
-    #endregion
+        #region PrintJob Events
+        readonly RepetierPrinterEvents _printerEvents = new();
+
+        /// <summary>
+        /// Fired when the state of a printer changes.
+        /// </summary>
+        public event Func<StateChangedEventArgs, Task> PrinterStateReceivedAsync
+        {
+            add => _printerEvents.StateChangedEvent.AddHandler(value);
+            remove => _printerEvents.StateChangedEvent.RemoveHandler(value);
+        }
+
+        /// <summary>
+        /// Fired when the condition of a printer changes
+        /// </summary>
+        public event Func<ConditionChangedEventArgs, Task> PrinterConditionChangedAsync
+        {
+            add => _printerEvents.ConditionChangedEvent.AddHandler(value);
+            remove => _printerEvents.ConditionChangedEvent.RemoveHandler(value);
+        }
+
+        /// <summary>
+        /// Fired everytime settings of a printer change   
+        /// </summary>
+        public event Func<SettingChangedEventArgs, Task> PrinterSettingChangedAsync
+        {
+            add => _printerEvents.SettingChangedEvent.AddHandler(value);
+            remove => _printerEvents.SettingChangedEvent.RemoveHandler(value);
+        }
+
+        /// <summary>
+        ///   Fired when a printer has a change in it's stored g-file list.
+        /// </summary>
+        public event Func<JobsChangedEventArgs, Task> PrinterJobsChangedAsync
+        {
+            add => _printerEvents.JobsChangedEvent.AddHandler(value);
+            remove => _printerEvents.JobsChangedEvent.RemoveHandler(value);
+        }
+        
+        /// <summary>
+        ///     Fired after the response for the printer activation request from was received.
+        /// </summary>
+        public event Func<ActivatedEventArgs, Task> PrinterActivatedAsync
+        {
+            add => _printerEvents.PrinterActivatedEvent.AddHandler(value);
+            remove => _printerEvents.PrinterActivatedEvent.RemoveHandler(value);
+        }
+        /// <summary>
+        ///     Fired after the response for the printer deactivation request from was received.
+        /// </summary>
+        public event Func<DeactivatedEventArgs, Task> PrinterDeactivatedAsync
+        {
+            add => _printerEvents.PrinterDeactivatedEvent.AddHandler(value);
+            remove => _printerEvents.PrinterDeactivatedEvent.RemoveHandler(value);
+        }    
+        /// <summary>
+        ///    Fired after the response for the emergency stop request from the printer was received.
+        /// </summary>
+        public event Func<EmergencyStopTriggeredEventArgs, Task> PrinterEmergencyStopTriggeredAsync
+        {
+            add => _printerEvents.EmergencyStopTriggeredEvent.AddHandler(value);
+            remove => _printerEvents.EmergencyStopTriggeredEvent.RemoveHandler(value);
+        }
+
+        #endregion
     
     
         #region Common EventHandler
