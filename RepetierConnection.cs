@@ -184,7 +184,7 @@ namespace RepetierSharp
         }
         #endregion
         
-        #region PrintJob Events
+        #region Printer Events
         readonly RepetierPrinterEvents _printerEvents = new();
 
         /// <summary>
@@ -247,74 +247,44 @@ namespace RepetierSharp
             add => _printerEvents.EmergencyStopTriggeredEvent.AddHandler(value);
             remove => _printerEvents.EmergencyStopTriggeredEvent.RemoveHandler(value);
         }
+        
+        /// <summary>
+        ///   Fired after a new temperature entry for the printer is available. Depending on the printer configuration this can be a very frequently occurring event.
+        /// </summary>
+        public event Func<TemperatureChangedEventArgs, Task> PrinterTempChangedAsync
+        {
+            add => _printerEvents.TemperatureChangedEvent.AddHandler(value);
+            remove => _printerEvents.TemperatureChangedEvent.RemoveHandler(value);
+        }
+              
+        /// <summary>
+        ///  Triggered for every move the printer does. This can be used to provide a live preview of what the printer does.
+        ///  This is only fired when moves are enabled (sendMoves action).
+        /// </summary>
+        public event Func<MovedEventArgs, Task> PrinterMovedAsync
+        {
+            add => _printerEvents.MovedEvent.AddHandler(value);
+            remove => _printerEvents.MovedEvent.RemoveHandler(value);
+        }
 
         #endregion
-    
-    
-        #region Common EventHandler
-        public event LogEventReceived OnLogReceived;
+
+        #region Server Events
+              
+        public event LogEventReceived? OnLogReceived;
         public delegate void LogEventReceived(Log logEvent);
 
-        public event JobFinishedReceivedHandler OnJobFinished;
-        public delegate void JobFinishedReceivedHandler(string printer, JobState jobFinished);
-
-        public event JobStartedReceivedHandler OnJobStarted;
-        public delegate void JobStartedReceivedHandler(string printer, JobStarted jobStarted);
-
-        public event JobStartFailedHandler OnRestRequestFailed;
-        public delegate void JobStartFailedHandler(string printer, RestResponse response);
-
-        public event JobKilledReceivedHandler OnJobKilled;
-        public delegate void JobKilledReceivedHandler(string printer, JobState jobKilled);
-
-        public event JobDeactivatedReceivedHandler OnJobDeactivated;
-        public delegate void JobDeactivatedReceivedHandler(string printer, JobState jobKilled);
-
-        public event JobsChangedReceivedHandler OnJobsChanged;
-        public delegate void JobsChangedReceivedHandler(string printer);
-
-        public event PrinterStateReceivedHandler OnPrinterState;
-        public delegate void PrinterStateReceivedHandler(string printer, PrinterState printerState);
-
-        public event TemperatureChangeReceivedHandler OnTempChange;
-        public delegate void TemperatureChangeReceivedHandler(string printer, Temp tempChange);
-
-        public event PrinterListChangedReceivedHandler OnPrinterListChanged;
-        public delegate void PrinterListChangedReceivedHandler(List<Printer> printerList);
-
-        public event PrinterConditionChangedHandler OnPrinterConditionChanged;
-        public delegate void PrinterConditionChangedHandler(PrinterConditionChanged printerConditionChange, string printer);
-        
-        public event PrinterSettingChangedReceivedHandler OnPrinterSettingChanged;
-        public delegate void PrinterSettingChangedReceivedHandler(SettingChanged printerSetting, string printer);
-
-        public event UserCredentialsReceivedHandler OnUserCredentialsReceived;
+        public event PrinterListChangedReceivedHandler? OnPrinterListChanged;
+        public delegate void PrinterListChangedReceivedHandler(ListPrinterResponse printerList);
+      
+        public event UserCredentialsReceivedHandler? OnUserCredentialsReceived;
         public delegate void UserCredentialsReceivedHandler(UserCredentials userCredentials);
 
-        /// <summary>
-        /// Event which is fired when the server requires an authentication with user credentials.
-        /// </summary>
-        public event LoginRequiredReceivedHandler OnLoginRequired;
-        public delegate void LoginRequiredReceivedHandler();
+        public event MessagesReceivedHandler? OnMessagesReceived;
+        public delegate void MessagesReceivedHandler(MessageList messages);
 
-        public event MessagesReceivedHandler OnMessagesReceived;
-        public delegate void MessagesReceivedHandler(List<Message> messages);
-
-        /// <summary>
-        /// Event which is fired after a login attempt. The LoginMessage holds information about the result.
-        /// </summary>
-        public event LoginResultReceivedHandler OnLoginResult;
-        public delegate void LoginResultReceivedHandler(LoginMessage loginResult);
-
-        /// <summary>
-        /// Event which is fired when a command is not permitted for the current sessionId.
-        /// </summary>
-        public event PermissionDeniedEvent OnPermissionDenied;
-        public delegate void PermissionDeniedEvent(int commandId);
-
-        public event PrinterStatesReceivedHandler OnPrinterStates;
-        public delegate void PrinterStatesReceivedHandler(StateListMessage printerStates);
-        #endregion
+        public event PrinterStatesReceivedHandler? OnPrinterStates;
+        public delegate void PrinterStatesReceivedHandler(StateListResponse printerStates);
 
         public event RepetierRequestSend? OnRequestSend;
         public delegate void RepetierRequestSend(RepetierBaseRequest request);
