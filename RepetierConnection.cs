@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using RepetierSharp.Config;
 using RepetierSharp.Extentions;
+using RepetierSharp.Internal;
 using RepetierSharp.Models;
 using RepetierSharp.Models.Requests;
 using RepetierSharp.Models.Config;
@@ -20,6 +21,7 @@ using RepetierSharp.Models.Messages;
 using RepetierSharp.Util;
 using RestSharp;
 using Websocket.Client;
+using static RepetierSharp.Internal.RepetierClientEvents;
 using ResponseMessage = Websocket.Client.ResponseMessage;
 
 namespace RepetierSharp
@@ -35,6 +37,97 @@ namespace RepetierSharp
         private const string UploadAction = "upload";
         public static readonly ContentType MultiPartFormData = "multipart/form-data";
 
+        #region Client Events
+        
+        readonly RepetierClientEvents _clientEvents = new RepetierClientEvents();
+        /// <summary>
+        /// Fired when the connection with the server is established successfully for the first time.
+        /// At this point, the sessionId should already be assigned to this RepetierConnection. 
+        /// </summary>
+        public event Func<RepetierConnectedEventArgs, Task> ConnectedAsync
+        {
+            add => _clientEvents.ConnectedEvent.AddHandler(value);
+            remove => _clientEvents.ConnectedEvent.RemoveHandler(value);
+        }
+        
+        /// <summary>
+        /// Fired after establishment of the connection to the server if the server requires a login.
+        /// This might be the case if no API-Key is supplied in the URI and the server has at least one user account.
+        /// </summary>
+        public event Func<LoginRequiredEventArgs, Task> LoginRequiredAsync
+        {
+            add => _clientEvents.LoginRequiredEvent.AddHandler(value);
+            remove => _clientEvents.LoginRequiredEvent.RemoveHandler(value);
+        }
+
+        /// <summary>
+        /// Fired when the login result response is received from the server after sending the login request.
+        /// </summary>
+        public event Func<LoginResultEventArgs, Task> LoginResultAsync
+        {
+            add => _clientEvents.LoginResultEvent.AddHandler(value);
+            remove => _clientEvents.LoginResultEvent.RemoveHandler(value);
+        }
+        
+        /// <summary>
+        ///  Fired for received events from the repetier server. Note that temp, move and log events are not included here.
+        ///  They can be enabled by setting the appropriate properties.
+        /// </summary>
+        public event Func<RepetierEventReceivedEventArgs, Task> RepetierEventReceivedAsync
+        {
+            add => _clientEvents.RepetierEventReceivedEvent.AddHandler(value);
+            remove => _clientEvents.RepetierEventReceivedEvent.RemoveHandler(value);
+        }
+        
+        /// <summary>
+        /// Fired whenever an event from the repetier server is received. Unlike the RepetierEventReceivedAsync event,
+        /// this event includes the raw event itself (content of the data field).
+        /// This is mainly a fallback event for backwards compatibility and support events in newer repetier versions,
+        /// which are not yet implemented by RepetierSharp.
+        /// </summary>
+        public event Func<RawRepetierEventReceivedEventArgs, Task> RawRepetierEventReceivedAsync
+        {
+            add => _clientEvents.RawRepetierEventReceivedEvent.AddHandler(value);
+            remove => _clientEvents.RawRepetierEventReceivedEvent.RemoveHandler(value);
+        }
+        
+        /// <summary>
+        ///  Fired when a response from the server is received. This does not include the ping response.
+        /// </summary>
+        public event Func<RepetierResponseReceivedEventArgs, Task> RepetierResponseReceivedAsync
+        {
+            add => _clientEvents.RepetierResponseReceivedEvent.AddHandler(value);
+            remove => _clientEvents.RepetierResponseReceivedEvent.RemoveHandler(value);
+        }
+        
+        /// <summary>
+        /// Fired when a raw response from the server is received. Unlike the RepetierResponseReceivedAsync event,
+        /// this event includes the raw response itself (content of the data field).
+        /// This is mainly a fallback event for backwards compatibility and support events in newer repetier versions,
+        /// which are not yet implemented by RepetierSharp.
+        /// </summary>
+        public event Func<RawRepetierResponseReceivedEventArgs, Task> RawRepetierResponseReceivedAsync
+        {
+            add => _clientEvents.RawRepetierResponseReceivedEvent.AddHandler(value);
+            remove => _clientEvents.RawRepetierResponseReceivedEvent.RemoveHandler(value);
+        }
+        #endregion
+    
+    #region PrintJob Events
+        readonly RepetierPrintJobEvents _printJobEvents = new();
+        public event Func<PrintJobStartedEventArgs, Task> PrintStartedAsync
+        {
+            add => _printJobEvents.PrintStartedEvent.AddHandler(value);
+            remove => _printJobEvents.PrintStartedEvent.RemoveHandler(value);
+        }
+        public event Func<PrintJobKilledEventArgs, Task> PrintKilledAsync
+        {
+            add => _printJobEvents.PrintKilledEvent.AddHandler(value);
+            remove => _printJobEvents.PrintKilledEvent.RemoveHandler(value);
+        }
+    #endregion
+        
+        
         #region Common EventHandler
         public event LogEventReceived OnLogReceived;
         public delegate void LogEventReceived(Log logEvent);
