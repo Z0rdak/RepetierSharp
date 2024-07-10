@@ -130,7 +130,7 @@ namespace RepetierSharp
             remove => _clientEvents.RawRepetierResponseReceivedEvent.RemoveHandler(value);
         }
         #endregion
-    
+        
         #region PrintJob Events
         readonly RepetierPrintJobEvents _printJobEvents = new();
         public event Func<PrintJobStartedEventArgs, Task> PrintStartedAsync
@@ -138,10 +138,49 @@ namespace RepetierSharp
             add => _printJobEvents.PrintStartedEvent.AddHandler(value);
             remove => _printJobEvents.PrintStartedEvent.RemoveHandler(value);
         }
+        
+        /// <summary>
+        /// Fired after a print job has been finished.
+        /// </summary>
+        public event Func<PrintJobFinishedEventArgs, Task> PrintFinishedAsync
+        {
+            add => _printJobEvents.PrintFinishedEvent.AddHandler(value);
+            remove => _printJobEvents.PrintFinishedEvent.RemoveHandler(value);
+        }
+        
+        /// <summary>
+        /// Fired after a normal job has been finished or killed. Shortcut if you do not care why a job is not active anymore.
+        /// </summary>
+        public event Func<PrintJobDeactivatedEventArgs, Task> PrintDeactivatedAsync
+        {
+            add => _printJobEvents.PrintDeactivatedEvent.AddHandler(value);
+            remove => _printJobEvents.PrintDeactivatedEvent.RemoveHandler(value);
+        }
+        /// <summary>
+        /// Triggered after a print job has been killed.
+        /// </summary>
         public event Func<PrintJobKilledEventArgs, Task> PrintKilledAsync
         {
             add => _printJobEvents.PrintKilledEvent.AddHandler(value);
             remove => _printJobEvents.PrintKilledEvent.RemoveHandler(value);
+        }
+        
+        /// <summary>
+        /// Triggered when a failure upon starting a print job was detected. This usually happens when the printer is not ready or on connection issues.
+        /// </summary>
+        public event Func<PrintJobStartFailedEventArgs, Task> PrintStartFailedAsync
+        {
+            add => _printJobEvents.PrintStartFailedEvent.AddHandler(value);
+            remove => _printJobEvents.PrintStartFailedEvent.RemoveHandler(value);
+        }
+        
+        /// <summary>
+        /// Fired after a job got added. It might already be started for printing and info might be in state of evaluation at that point.
+        /// </summary>
+        public event Func<PrintJobAddedEventArgs, Task> PrintJobChangedAsync
+        {
+            add => _printJobEvents.PrintJobAddedEvent.AddHandler(value);
+            remove => _printJobEvents.PrintJobAddedEvent.RemoveHandler(value);
         }
         #endregion
         
