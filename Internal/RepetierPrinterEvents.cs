@@ -7,7 +7,7 @@ namespace RepetierSharp.Internal
     public sealed class RepetierPrinterEvents
     {
         public AsyncEvent<StateReceivedEventArgs> StateReceivedEvent { get; } = new();
-        public AsyncEvent<ConditionChangedEventArgs> ChangedEvent { get; } = new();
+        public AsyncEvent<ConditionChangedEventArgs> ConditionChangedEvent { get; } = new();
         public AsyncEvent<SettingChangedEventArgs> SettingChangedEvent { get; } = new();
         public AsyncEvent<JobsChangedEventArgs> JobsChangedEvent { get; } = new();
 
