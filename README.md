@@ -6,19 +6,25 @@
 
 ## Introduction
 
-RepetierSharp is a simple, event-driven client which encapsulates the WebSocket and REST API of the Repetier Server software to manage your printers.
+RepetierSharp is a simple, event-driven client which encapsulates the WebSocket and REST API of the Repetier Server
+software to manage your printers.
 
 ### What is Repetier Server?
 
-> "Repetier-Server is the professional all-in-one solution to control and manage your 3d printers and to get the most out of it."
+> "Repetier-Server is the professional all-in-one solution to control and manage your 3d printers and to get the most
+> out of it."
 
 https://www.repetier-server.com/
 
 ### Versioning
 
-This library is up to date with RepetierServer version 1.3.x. The serialization for most commands and events should be working with earlier versions, but there is the possibilty of incompatability when using RepetierSharp with earlier versions due to undocumented changes in the Repetier Server API.
+This library is up to date with RepetierServer version 1.3.x. The serialization for most commands and events should be
+working with earlier versions, but there is the possibilty of incompatability when using RepetierSharp with earlier
+versions due to undocumented changes in the Repetier Server API.
 
-You are still able to use RepetierSharp with older versions of Repetier Sever by just using the version independent event handlers for events and command responses: `OnRawEvent(string eventName, string printer, byte[] payload)` and `OnRawResponse(int callbackID, string command, byte[] response)` respectively.
+You are still able to use RepetierSharp with older versions of Repetier Sever by just using the version independent
+event handlers for events and command responses: `OnRawEvent(string eventName, string printer, byte[] payload)`
+and `OnRawResponse(int callbackID, string command, byte[] response)` respectively.
 
 See the Changelog.md for an more detailed overview off added/changed features.
 
@@ -28,15 +34,18 @@ Currently RepetierSharp supports .NET Core 3.1, .NET 5 and .NET 6.
 
 ## Getting started
 
-**DISCLAIMER:** *RepetierSharp is still in beta. Bugs are to be expected - please help improving RepetierSharp by submitting issues on [GitHub](https://github.com/Z0rdak/RepetierSharp/issues).*
+**DISCLAIMER:** *RepetierSharp is still in beta. Bugs are to be expected - please help improving RepetierSharp by
+submitting issues on [GitHub](https://github.com/Z0rdak/RepetierSharp/issues).*
 
-The following sections show some examples on how to use the RepetierSharp client. The examples are not exhaustive. I will try to write a more thourough documentation as soon as possible.
+The following sections show some examples on how to use the RepetierSharp client. The examples are not exhaustive. I
+will try to write a more thourough documentation as soon as possible.
 
 RepetierSharp uses a fluent builder api to reduce the complexity when creating a new client instance.
 
 ### Establish a connection
 
-Simply start by creating an instance of the `RepetierConnection` class. To establish a connection it is possible to provide the Repetier Server API-Key or user credentials.
+Simply start by creating an instance of the `RepetierConnection` class. To establish a connection it is possible to
+provide the Repetier Server API-Key or user credentials.
 
 The most basic configuration to setup a working `RepetierConnection` looks like this:
 
@@ -53,6 +62,7 @@ This gives you access to the repetier server with the global user profile.
 In most cases you would want to create a connection by suppling a API-Key or user credentials:
 
 Example using user credentials:
+
 ```csharp
 RepetierConnection rc = new RepetierConnectionBuilder()
 	.WithHost("demo4000.repetier-server.com", 80)
@@ -63,6 +73,7 @@ rc.Connect();
 ```
 
 Example using a Repetier Server API-Key:
+
 ```csharp
 RepetierConnection rc = new RepetierConnectionBuilder()
 	.WithHost("demo4000.repetier-server.com", 80)
@@ -71,10 +82,11 @@ RepetierConnection rc = new RepetierConnectionBuilder()
 
 rc.Connect();
 ```
+
 When both, API-Key and user credentials are supplied, the last option will be used.
 
-
 You can also use HTTPS/WSS for the connection:
+
 ```csharp
 RepetierConnection rc = new RepetierConnectionBuilder()
 	.WithHost("demo4000.repetier-server.com", 443)
@@ -87,7 +99,8 @@ rc.Connect();
 
 ### More examples
 
-Create a connection, register an event handler for successfull connection, which activates the printer with the slug "Delta" and enqueues and starts the job with the id 6.
+Create a connection, register an event handler for successfull connection, which activates the printer with the slug "
+Delta" and enqueues and starts the job with the id 6.
 
 ```csharp
 RepetierConnection rc = new RepetierConnectionBuilder()
@@ -113,6 +126,7 @@ At the moment RepetierSharp supports the following features:
 ### Events
 
 To get notified about repetier events it is possible to register and event handler like this:
+
 ```csharp
 rc.OnEvent += (eventName, printer, eventData) => 
 {
@@ -120,14 +134,15 @@ rc.OnEvent += (eventName, printer, eventData) =>
 };
 ```
 
-Where `eventData` is a `IRepetierEvent` instance. The `eventName` can be used to determine the event and cast the event data to the corresponding type provided in the RepetierSharp namespace.
+Where `eventData` is a `IRepetierEvent` instance. The `eventName` can be used to determine the event and cast the event
+data to the corresponding type provided in the RepetierSharp namespace.
 
 At the moment the following repetier events are supported:
 
 <details>
   <summary>**[Click to expand the list of supported events]**</summary>
 
-  - timerX
+- timerX
 - loginRequired
 - userCredentials
 - printerListChanged
@@ -154,7 +169,8 @@ At the moment the following repetier events are supported:
 - getExternalLinks
   </details>
 
-Since there are many events and serialization for all events is still not implemented RepetierSharp also provides an event handler for the raw event data:
+Since there are many events and serialization for all events is still not implemented RepetierSharp also provides an
+event handler for the raw event data:
 
 ```csharp
 rc.OnRawEvent += (eventName, printer, eventData) => 
@@ -163,11 +179,13 @@ rc.OnRawEvent += (eventName, printer, eventData) =>
 };
 ```
 
-Where `eventData` is of type `byte[]` and contains the data from the `data` field of the event from original json sent by the server (see [documentation](https://prgdoc.repetier-server.com/v1/docs/index.html#/en/web-api/websocket/events)). 
+Where `eventData` is of type `byte[]` and contains the data from the `data` field of the event from original json sent
+by the server (see [documentation](https://prgdoc.repetier-server.com/v1/docs/index.html#/en/web-api/websocket/events)).
 
 ### Commands
 
 To get responses for the sent commands it is possible to register event handler similar as for the events:
+
 ```csharp
 rc.OnResponse += (callbackId, command, response) =>
 {
@@ -175,9 +193,11 @@ rc.OnResponse += (callbackId, command, response) =>
 };
 ```
 
-Where `callbackId` is the id corresponding to the sent command, `command` is the name of the command and `response` of the type `IRepetierMessage` is the actual response data. This data can be cast to the corresponding type by determining the command and using the provided types within the namespace - analogous to the events.
+Where `callbackId` is the id corresponding to the sent command, `command` is the name of the command and `response` of
+the type `IRepetierMessage` is the actual response data. This data can be cast to the corresponding type by determining
+the command and using the provided types within the namespace - analogous to the events.
 
-At the moment the following commands (inclusive responses) are suppored: 
+At the moment the following commands (inclusive responses) are suppored:
 
 <details>
   <summary>**[Click to expand the list of supported commands]**</summary>
@@ -204,9 +224,11 @@ At the moment the following commands (inclusive responses) are suppored:
 - startJob
 - stopJob
 - continueJob
+
 </details>
 
-Analogous to the events there are many commands and serialization for all is not yet implemented. Therefore RepetierSharp also provides an event handler for the raw command response data:
+Analogous to the events there are many commands and serialization for all is not yet implemented. Therefore
+RepetierSharp also provides an event handler for the raw command response data:
 
 ```csharp
 rc.OnRawResponse += (callbackId, command, responseData) => 
@@ -215,7 +237,9 @@ rc.OnRawResponse += (callbackId, command, responseData) =>
 };
 ```
 
-Where `responseData` is of type `byte[]` and contains the data from the `data` field of the command from original json sent by the server (see [documentation](https://prgdoc.repetier-server.com/v1/docs/index.html#/en/web-api/websocket/index)). 
+Where `responseData` is of type `byte[]` and contains the data from the `data` field of the command from original json
+sent by the server (
+see [documentation](https://prgdoc.repetier-server.com/v1/docs/index.html#/en/web-api/websocket/index)).
 
 ### REST-API
 
@@ -243,10 +267,10 @@ byte[] file = Files.ReadAllBytes("/path/to/gcode/file.gcode"):
 rc.UploadGCode("file.gcode", fileBytes, "printerSlug", "group");
 ```
 
-
 ### Event handler
 
-Beside the already discussed event handlers for events and command responses there are some additional implemented handlers for common used events (to reduces the effort of checking for these events and casting the data):
+Beside the already discussed event handlers for events and command responses there are some additional implemented
+handlers for common used events (to reduces the effort of checking for these events and casting the data):
 
 - OnLogReceived
 - OnJobFinishedReceived
@@ -269,7 +293,8 @@ Beside the already discussed event handlers for events and command responses the
 
 ### Cyclic command execution
 
-The Repetier Server web interface uses some commands to cyclic query information from the server. The same is possible with RepetierSharp:
+The Repetier Server web interface uses some commands to cyclic query information from the server. The same is possible
+with RepetierSharp:
 
 ```csharp
 RepetierConnection rc = new RepetierConnectionBuilder()
@@ -280,10 +305,13 @@ RepetierConnection rc = new RepetierConnectionBuilder()
 	.Build();
 ```
 
-In lines 4 and 5 a cyclic call is added to query the printers and the printer status respectively. The RepetierTimer parameters correspond to the timer events of the Repetier server. The Timer30 event is triggered every 30 seconds, the Timer60 event every 60 seconds.
-This puts the queries in a queue whose contents are executed each time the corresponding event is triggered by the server.
+In lines 4 and 5 a cyclic call is added to query the printers and the printer status respectively. The RepetierTimer
+parameters correspond to the timer events of the Repetier server. The Timer30 event is triggered every 30 seconds, the
+Timer60 event every 60 seconds.
+This puts the queries in a queue whose contents are executed each time the corresponding event is triggered by the
+server.
 
-Additionaly there is also a method to add any other commands to these command queues: 
+Additionaly there is also a method to add any other commands to these command queues:
 
 ```csharp
 RepetierConnection rc = new RepetierConnectionBuilder()
@@ -292,7 +320,9 @@ RepetierConnection rc = new RepetierConnectionBuilder()
 	.WithCyclicCommand(RepetierTimer.Timer3600, UpdateAvailableCommand.Instance)
 	.Build();
 ```
-In line 4 the command `updateAvailable` is added to the 1 hour timer queue so every hour RepetierSharp queries if there is a update for the Repetier Server available.
+
+In line 4 the command `updateAvailable` is added to the 1 hour timer queue so every hour RepetierSharp queries if there
+is a update for the Repetier Server available.
 
 ## Documentation
 
@@ -300,11 +330,15 @@ The wiki is still under construction. If you have any issues feel free to open a
 
 ## Roadmap
 
-The goal for this project is to add most (or even all) used WebSocket commands and events provided by the Repetier Server API to enable a full programmatic control of the Repetier Server.
+The goal for this project is to add most (or even all) used WebSocket commands and events provided by the Repetier
+Server API to enable a full programmatic control of the Repetier Server.
 
-There are also some events and commands that are not documented in the API - with some time and effort, I will try to reconstruct these and integrate them into RepetierSharp.
+There are also some events and commands that are not documented in the API - with some time and effort, I will try to
+reconstruct these and integrate them into RepetierSharp.
 
-There is also a [MQTT client](https://github.com/Z0rdak/RepetierMqtt) using this library, to forward the events and command responses to a configurable broker. Since version 1.3 Repetier Server brings native MQTT support, which is very similar to the interface RepetierMqtt is providing.
+There is also a [MQTT client](https://github.com/Z0rdak/RepetierMqtt) using this library, to forward the events and
+command responses to a configurable broker. Since version 1.3 Repetier Server brings native MQTT support, which is very
+similar to the interface RepetierMqtt is providing.
 
 ## Contribution
 

@@ -130,7 +130,5 @@
         // {"action":"getLicenceData","data":{},"printer":"","callback_id":1461}
 
         // {"action":"canUploadGCodeWithSize","data":{"size":4681434},"printer":"Cartesian","callback_id":531}
-
     }
-
 }

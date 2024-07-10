@@ -1,66 +1,70 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Library</OutputType>
-    <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
-    <StartupObject></StartupObject>
-    <Title>RepetierSharp</Title>
-    <AssemblyName>RepetierSharp</AssemblyName>
-    <RootNamespace>RepetierSharp</RootNamespace>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Authors>Marcel Bartholet</Authors>
-    <Company />
-    <Description>
-      RepetierSharp is a client for communication with the repetier server software (https://www.repetier-server.com/).
-      It's an event-driven, easy to use client with a fluent api, which uses the http and websocket API of the repetier server to control your 3d printers and get information about them.
-    </Description>
-    <Copyright />
-    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
-    <PackageProjectUrl>https://www.nuget.org/packages/RepetierSharp/</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/Z0rdak/RepetierSharp</RepositoryUrl>
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
-    <FileVersion>1.0.0.0</FileVersion>
-    <NeutralLanguage>en</NeutralLanguage>
-    <PackageTags>Repetier-Server, 3D-Printing, Websocket, API-Client</PackageTags>
-    <Version>0.1.9.1</Version>
-    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-    <SignAssembly>false</SignAssembly>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-    <RepositoryType>git</RepositoryType>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+    <PropertyGroup>
+        <OutputType>Library</OutputType>
+        <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
+        <StartupObject></StartupObject>
+        <Title>RepetierSharp</Title>
+        <AssemblyName>RepetierSharp</AssemblyName>
+        <RootNamespace>RepetierSharp</RootNamespace>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <Authors>Marcel Bartholet</Authors>
+        <Company/>
+        <Description>
+            RepetierSharp is a client for communication with the repetier server software (https://www.repetier-server.com/).
+            It's an event-driven, easy to use client with a fluent api, which uses the http and websocket API of the repetier server to control your 3d printers and get information about them.
+        </Description>
+        <Copyright/>
+        <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+        <PackageProjectUrl>https://www.nuget.org/packages/RepetierSharp/</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/Z0rdak/RepetierSharp</RepositoryUrl>
+        <AssemblyVersion>1.0.0.0</AssemblyVersion>
+        <FileVersion>1.0.0.0</FileVersion>
+        <NeutralLanguage>en</NeutralLanguage>
+        <PackageTags>Repetier-Server, 3D-Printing, Websocket, API-Client</PackageTags>
+        <Version>0.1.9.1</Version>
+        <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+        <SignAssembly>false</SignAssembly>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <RepositoryType>git</RepositoryType>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <Compile Remove="Properties\**" />
-    <EmbeddedResource Remove="Properties\**" />
-    <None Remove="Properties\**" />
-  </ItemGroup>
+    <ItemGroup>
+        <Compile Remove="Properties\**"/>
+        <EmbeddedResource Remove="Properties\**"/>
+        <None Remove="Properties\**"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="RestSharp" Version="111.3.0" />
-    <PackageReference Include="System.Text.Json" Version="8.0.4" />
-    <PackageReference Include="Websocket.Client" Version="5.1.2" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="RestSharp" Version="111.3.0"/>
+        <PackageReference Include="System.Text.Json" Version="8.0.4"/>
+        <PackageReference Include="Websocket.Client" Version="5.1.2"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <None Include="C:\Users\Marcel Bartholet\Source\Repos\Z0rdak\RepetierSharp\.editorconfig" />
-    <None Include="LICENSE.txt">
-      <Pack>True</Pack>
-      <PackagePath></PackagePath>
-    </None>
-  </ItemGroup>
+    <ItemGroup>
+        <None Include="C:\Users\Marcel Bartholet\Source\Repos\Z0rdak\RepetierSharp\.editorconfig"/>
+        <None Include="LICENSE.txt">
+            <Pack>True</Pack>
+            <PackagePath></PackagePath>
+        </None>
+    </ItemGroup>
 
-  <ItemGroup>
-    <None Include="README.md">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-  </ItemGroup>
+    <ItemGroup>
+        <None Include="README.md">
+            <Pack>True</Pack>
+            <PackagePath>\</PackagePath>
+        </None>
+    </ItemGroup>
 
-  <ProjectExtensions><VisualStudio><UserProperties /></VisualStudio></ProjectExtensions>
+    <ProjectExtensions>
+        <VisualStudio>
+            <UserProperties/>
+        </VisualStudio>
+    </ProjectExtensions>
 
-  <ItemGroup>
-    <EditorConfigFiles Remove="C:\Users\Marcel Bartholet\Source\Repos\Z0rdak\RepetierSharp\.editorconfig" />
-  </ItemGroup>
+    <ItemGroup>
+        <EditorConfigFiles Remove="C:\Users\Marcel Bartholet\Source\Repos\Z0rdak\RepetierSharp\.editorconfig"/>
+    </ItemGroup>
 
 </Project>

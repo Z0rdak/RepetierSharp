@@ -7,8 +7,8 @@ namespace RepetierSharp.Extentions
     public static class RepetierConnectionExtentions
     {
         /// <summary>
-        /// Send a single "listPrinters" message to the repetier rerver.
-        /// The response to a "listPrinters" command contains the current print progress.
+        ///     Send a single "listPrinters" message to the repetier rerver.
+        ///     The response to a "listPrinters" command contains the current print progress.
         /// </summary>
         public static async Task QueryPrinterList(this RepetierConnection rc)
         {
@@ -16,8 +16,8 @@ namespace RepetierSharp.Extentions
         }
 
         /// <summary>
-        /// Send a single "stateList" message to the repetier server.
-        /// The response to a "stateList" command contains information regarding the printer state.
+        ///     Send a single "stateList" message to the repetier server.
+        ///     The response to a "stateList" command contains information regarding the printer state.
         /// </summary>
         public static async Task QueryPrinterStateList(this RepetierConnection rc, bool includeHistory = false)
         {
@@ -30,7 +30,7 @@ namespace RepetierSharp.Extentions
         }
 
         /// <summary>
-        /// Stop the current print and trigger a "jobKilled" event.
+        ///     Stop the current print and trigger a "jobKilled" event.
         /// </summary>
         /// <param name="rc"></param>
         public static async Task StopJob(this RepetierConnection rc)
@@ -39,7 +39,7 @@ namespace RepetierSharp.Extentions
         }
 
         /// <summary>
-        /// Initiate an emergency stop.
+        ///     Initiate an emergency stop.
         /// </summary>
         /// <param name="rc"></param>
         public static async Task EmergencyStop(this RepetierConnection rc)
@@ -48,7 +48,7 @@ namespace RepetierSharp.Extentions
         }
 
         /// <summary>
-        /// Logout current active session.
+        ///     Logout current active session.
         /// </summary>
         /// <param name="rc"></param>
         public static async Task Logout(this RepetierConnection rc)
@@ -57,7 +57,7 @@ namespace RepetierSharp.Extentions
         }
 
         /// <summary>
-        /// Enqueue gcode/model into the print queue and start print by default.
+        ///     Enqueue gcode/model into the print queue and start print by default.
         /// </summary>
         /// <param name="rc"></param>
         /// <param name="modelId"> Gcode id to enqueue into print queue </param>
@@ -68,7 +68,7 @@ namespace RepetierSharp.Extentions
         }
 
         /// <summary>
-        /// Get info about a gcode (model).
+        ///     Get info about a gcode (model).
         /// </summary>
         /// <param name="rc"></param>
         /// <param name="modelId"></param>
@@ -78,7 +78,7 @@ namespace RepetierSharp.Extentions
         }
 
         /// <summary>
-        /// Get info about a gcode in the print queue.
+        ///     Get info about a gcode in the print queue.
         /// </summary>
         /// <param name="rc"></param>
         /// <param name="jobId"></param>
@@ -88,7 +88,7 @@ namespace RepetierSharp.Extentions
         }
 
         /// <summary>
-        /// Starts job already copied to print queue.
+        ///     Starts job already copied to print queue.
         /// </summary>
         /// <param name="rc"></param>
         /// <param name="jobId"> Id of job in queue to start</param>
@@ -98,7 +98,7 @@ namespace RepetierSharp.Extentions
         }
 
         /// <summary>
-        /// Continue active job.
+        ///     Continue active job.
         /// </summary>
         /// <param name="rc"></param>
         public static async Task ContinueJob(this RepetierConnection rc)
@@ -107,7 +107,7 @@ namespace RepetierSharp.Extentions
         }
 
         /// <summary>
-        /// Remove job from print queue. Only works if job with same id is not currently running.
+        ///     Remove job from print queue. Only works if job with same id is not currently running.
         /// </summary>
         /// <param name="rc"></param>
         /// <param name="jobId"> Id of job to remove from print queue. </param>
@@ -121,7 +121,8 @@ namespace RepetierSharp.Extentions
             await rc.SendCommand(new CreateUserRequest(user, password, permission));
         }
 
-        public static async Task UpdateUser(this RepetierConnection rc, string user, int permission, string password = "")
+        public static async Task UpdateUser(this RepetierConnection rc, string user, int permission,
+            string password = "")
         {
             await rc.SendCommand(new UpdateUserRequest(user, permission, password));
         }
@@ -131,7 +132,8 @@ namespace RepetierSharp.Extentions
             await rc.SendCommand(new DeleteUserRequest(user));
         }
 
-        public static async Task Preheat(this RepetierConnection rc, int extruderNo, int heatedBedNo, int heatedChamberNo)
+        public static async Task Preheat(this RepetierConnection rc, int extruderNo, int heatedBedNo,
+            int heatedChamberNo)
         {
             await rc.SendCommand(new PreheatRequest(extruderNo, heatedBedNo, heatedChamberNo));
         }
@@ -151,9 +153,10 @@ namespace RepetierSharp.Extentions
             await rc.SendCommand(new CooldownRequest((int)ExtruderConstants.All, 0, 0));
         }
 
-        public static async Task SetTemperature(this RepetierConnection rc, TemperatureTarget targetType, int temperature, int targetId = 0)
+        public static async Task SetTemperature(this RepetierConnection rc, TemperatureTarget targetType,
+            int temperature, int targetId = 0)
         {
-            switch (targetType)
+            switch ( targetType )
             {
                 case TemperatureTarget.Extruder:
                     await SetExtruderTemp(rc, temperature, targetId);
@@ -168,7 +171,7 @@ namespace RepetierSharp.Extentions
         }
 
         /// <summary>
-        /// Set extruder temperature in degree celcius.
+        ///     Set extruder temperature in degree celcius.
         /// </summary>
         /// <param name="rc"></param>
         /// <param name="temperature">Extruder temperature in degree celcius</param>
@@ -179,7 +182,7 @@ namespace RepetierSharp.Extentions
         }
 
         /// <summary>
-        /// Set heated bed temperature in degree celcius.
+        ///     Set heated bed temperature in degree celcius.
         /// </summary>
         /// <param name="rc"></param>
         /// <param name="temperature">Heated bed temperature in degree celcius</param>
@@ -190,19 +193,20 @@ namespace RepetierSharp.Extentions
         }
 
         /// <summary>
-        /// Set heated chamber temperature in degree celcius.
+        ///     Set heated chamber temperature in degree celcius.
         /// </summary>
         /// <param name="rc"></param>
         /// <param name="temperature">Heated chamber temperature in degree celcius</param>
         /// <param name="heatedChamberId">Id of the heated chamber (default = 0)</param>
-        public static async Task SetHeatedChamberTemp(this RepetierConnection rc, int temperature, int heatedChamberId = 0)
+        public static async Task SetHeatedChamberTemp(this RepetierConnection rc, int temperature,
+            int heatedChamberId = 0)
         {
             await rc.SendCommand(new SetHeatedChamberTempRequest(temperature, heatedChamberId));
         }
 
         /// <summary>
-        /// Set speed of the given fan. 
-        /// <br> The speed is supplied in percent. E.g. 75 will result in 75% total fan speed.</br>
+        ///     Set speed of the given fan.
+        ///     <br> The speed is supplied in percent. E.g. 75 will result in 75% total fan speed.</br>
         /// </summary>
         /// <param name="rc"></param>
         /// <param name="fanSpeed"> Fan speed in percent (Repetier Server usually uses values from 0-255 for voltage)</param>
@@ -223,8 +227,8 @@ namespace RepetierSharp.Extentions
         }
 
         /// <summary>
-        /// Sets the flow multiplier for extrusion. 
-        /// <br> The flow multiplier is supplied in percent. E.g. 150 will result in 150% total flow rate. </br>
+        ///     Sets the flow multiplier for extrusion.
+        ///     <br> The flow multiplier is supplied in percent. E.g. 150 will result in 150% total flow rate. </br>
         /// </summary>
         /// <param name="rc"></param>
         /// <param name="flowMultiplier">The flow multiplier in percent.</param>
@@ -234,8 +238,8 @@ namespace RepetierSharp.Extentions
         }
 
         /// <summary>
-        /// Sets the speed mupltiplier for movements. 
-        /// <br> The speed multiplier is supplied in percent. E.g. 150 will result in 150% total speed rate. </br>
+        ///     Sets the speed mupltiplier for movements.
+        ///     <br> The speed multiplier is supplied in percent. E.g. 150 will result in 150% total speed rate. </br>
         /// </summary>
         /// <param name="rc"></param>
         /// <param name="speedMultiplier">The speed multiplier in percent</param>

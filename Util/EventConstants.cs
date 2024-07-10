@@ -7,16 +7,6 @@ namespace RepetierSharp.Util
 {
     public static class EventConstants
     {
-        public static readonly ImmutableDictionary<string, Type> EventMap = ImmutableDictionary.CreateRange
-        (new[]
-            {
-                KeyValuePair.Create("log", typeof(Log)), 
-                KeyValuePair.Create("move", typeof(Move)),
-                KeyValuePair.Create("layerChanged", typeof(LayerChanged))
-            }
-        );
-
-
         public const string LAYER_CHANGED = "layerChanged";
         public const string LOGIN_REQUIRED = "loginRequired";
         public const string LOGOUT = "logout";
@@ -54,5 +44,13 @@ namespace RepetierSharp.Util
         public const string TIMER_300 = "timer300";
         public const string TIMER_1800 = "timer1800";
         public const string TIMER_3600 = "timer3600";
+
+        public static readonly ImmutableDictionary<string, Type> EventMap = ImmutableDictionary.CreateRange
+        (new[]
+            {
+                KeyValuePair.Create("log", typeof(Log)), KeyValuePair.Create("move", typeof(Move)),
+                KeyValuePair.Create("layerChanged", typeof(LayerChanged))
+            }
+        );
     }
 }

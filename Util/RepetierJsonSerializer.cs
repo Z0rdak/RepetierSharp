@@ -7,11 +7,12 @@ using RepetierSharp.Models.Messages;
 namespace RepetierSharp.Util
 {
     /// <summary>
-    /// A custom JSON converter for repetier command responses.
-    /// This can't be covered by a custom JSON converter, inheriting <see cref="System.Text.Json.Serialization.JsonConverter"/> ,
-    /// because the response type is determined by the command identifier.
-    /// It would be possible, if the command identifier would be retrievable from a static context,
-    /// but currently it is managed by the command manager instance of each repetier connection.
+    ///     A custom JSON converter for repetier command responses.
+    ///     This can't be covered by a custom JSON converter, inheriting
+    ///     <see cref="System.Text.Json.Serialization.JsonConverter" /> ,
+    ///     because the response type is determined by the command identifier.
+    ///     It would be possible, if the command identifier would be retrievable from a static context,
+    ///     but currently it is managed by the command manager instance of each repetier connection.
     /// </summary>
     public static class RepetierJsonSerializer
     {
