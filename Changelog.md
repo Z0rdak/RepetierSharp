@@ -1,3 +1,18 @@
+# [Unversioned] - YYYY-MM-DD
+## Added
+* RestSharp Authenticator for ApiKey authentication. Please refer to the readme for code examples.
+* Add proper logging support for the RepetierConnection instead of using Console.WriteLine.
+## Changed
+* Reimplemented the event system to be async. It is still possible to register event handlers for the events of a repetier connection. 
+Credit to the authors of [MQTTnet](https://github.com/dotnet/MQTTnet) for the inspiration on how to implement this.
+* All Http requests are now async. This mainly is relevant for the methods which upload gcode files or upload and start gcode.
+* Commands are now called Requests
+* Messages are now called Responses
+* Updated System.Text.Json to 8.0.4
+## Removed
+* Various overloads and confusing methods for building a RepetierConnection instance when using the builder.
+## Fixed
+* Rework some methods to be async instead of sync.
 # [0.1.9.1] - 2024-06-27
 ## Added
 * Add support for .net8.0
@@ -20,7 +35,7 @@
 * Fix broken parameter keys in HTTP requests for `UploadAndStartPrint` and `UploadGCode`
 # [0.1.8.0] - 2023-06-15
 ## Added
-* Add option for `RepetierConnectionBuilder` to use TLS for both, `https` and `wss` when connecting to a Repetier Server # 0.1.7.2 - Bug fixes
+* Add option for `RepetierConnectionBuilder` to use TLS for both, `https` and `wss` when connecting to a Repetier Server
 ## Misc
 * Using https://keepachangelog.com/en/1.0.0/ as changelog format from now on
  # 0.1.7.2 - Bug fixes
@@ -28,7 +43,7 @@
   * Fix type `StartJobCommand` not being public
 # 0.1.7.1 - New versioning schema and breaking changes
 ## Breaking changes: 
-  * Change autostart argument type for `UploadAndStartPrint` from bool to `StartBehavior` to represent the possibilites of the API correctly. See: https://prgdoc.repetier-server.com/v1/docs/index.html#/en/web-api/direct?id=upload
+  * Change autostart argument type for `UploadAndStartPrint` from bool to `StartBehavior` to represent the possibilities of the API correctly. See: https://prgdoc.repetier-server.com/v1/docs/index.html#/en/web-api/direct?id=upload
   * Remove the default value for the group for both `UploadGCode` methods again. Sorry.
 ## Changes 
   * Change to more granular versioning schema.
