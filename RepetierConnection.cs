@@ -145,7 +145,53 @@ namespace RepetierSharp
         }
     #endregion
         
-        
+    #region PrintJob Events
+    readonly RepetierPrinterEvents _printerEvents = new();
+    
+    public event Func<StateReceivedEventArgs, Task> PrinterStateReceivedAsync
+    {
+        add => _printerEvents.StateReceivedEvent.AddHandler(value);
+        remove => _printerEvents.StateReceivedEvent.RemoveHandler(value);
+    }
+    
+    public event Func<ConditionChangedEventArgs, Task> PrinterConditionChangedAsync
+    {
+        add => _printerEvents.ConditionChangedEvent.AddHandler(value);
+        remove => _printerEvents.ConditionChangedEvent.RemoveHandler(value);
+    }
+    
+    public event Func<SettingChangedEventArgs, Task> PrinterSettingChangedAsync
+    {
+        add => _printerEvents.SettingChangedEvent.AddHandler(value);
+        remove => _printerEvents.SettingChangedEvent.RemoveHandler(value);
+    }
+    
+    public event Func<JobsChangedEventArgs, Task> PrinterJobsChangedAsync
+    {
+        add => _printerEvents.JobsChangedEvent.AddHandler(value);
+        remove => _printerEvents.JobsChangedEvent.RemoveHandler(value);
+    }
+    
+    public event Func<ActivatedEventArgs, Task> PrinterActivatedAsync
+    {
+        add => _printerEvents.PrinterActivatedEvent.AddHandler(value);
+        remove => _printerEvents.PrinterActivatedEvent.RemoveHandler(value);
+    }
+    
+    public event Func<DeactivatedEventArgs, Task> PrinterDeactivatedAsync
+    {
+        add => _printerEvents.PrinterDeactivatedEvent.AddHandler(value);
+        remove => _printerEvents.PrinterDeactivatedEvent.RemoveHandler(value);
+    }    
+    public event Func<EmergencyStopTriggeredEventArgs, Task> PrinterEmergencyStopTriggeredAsync
+    {
+        add => _printerEvents.EmergencyStopTriggeredEvent.AddHandler(value);
+        remove => _printerEvents.EmergencyStopTriggeredEvent.RemoveHandler(value);
+    }
+    
+    #endregion
+    
+    
         #region Common EventHandler
         public event LogEventReceived OnLogReceived;
         public delegate void LogEventReceived(Log logEvent);
@@ -217,57 +263,10 @@ namespace RepetierSharp
         public event RepetierRequestFailed? OnFailedRequest;
         public delegate void RepetierRequestFailed(RepetierBaseRequest request);
         
+
         
-        /// <summary>
-        /// Event for received events from the repetier server.
-        /// </summary>
-        public event RepetierEventReceived OnEvent;
-        public delegate void RepetierEventReceived(string eventName, string printer, IRepetierEvent? repetierEvent);
-
-        public event PrinterEmergencyStopHandler OnEmergencyStop;
-        public delegate void PrinterEmergencyStopHandler();
-        
-        public event PrinterActivatedHandler OnPrinterActivated;
-        public delegate void PrinterActivatedHandler();
-        
-        public event PrinterDeactivatedHandler OnPrinterDeactivated;
-        public delegate void PrinterDeactivatedHandler();
-        
-        /// <summary>
-        /// Event for received responses from the repetier server.
-        /// </summary>
-        public event CommandResponseReceived OnResponse;
-        public delegate void CommandResponseReceived(int callbackID, string command, IRepetierMessage? message);
-
-        /// <summary>
-        /// Fired whenever a event from the repetier server is received. 
-        /// The payload is the raw event itself (content of the data field of the json from the documentation).
-        /// </summary>
-        /// <param name="eventName"> Name of the received event </param>
-        /// <param name="printer"> Printer associated with the event or empty if global </param>
-        /// <param name="payload"> Event payload </param>
-        public delegate void RawRepetierEventReceived(string eventName, string printer, byte[] payload);
-        public event RawRepetierEventReceived OnRawEvent;
-
-        /// <summary>
-        /// Fired whenever a command response from the repetier server is received. 
-        /// The payload is the raw response itself (content of the data field of the json from the documentation).
-        /// </summary>
-        /// <param name="callbackId"> CallBackId to identify the received command response </param>
-        /// <param name="command"> Name of the command associated with the received response </param>
-        /// <param name="response"> Command response payload </param>
-        public delegate void RawCommandResponseReceived(int callbackID, string command, byte[] response);
-        public event RawCommandResponseReceived OnRawResponse;
-
-        /// <summary>
-        /// Gets called when the connection with the server is established successfully for the first time.
-        /// At this point, the sessionId should already be assigned to this RepetierConnection. 
-        /// </summary>
-        public delegate void RepetierServerConnected(string sessionId);
-        public event RepetierServerConnected OnRepetierConnected;
-
-        private event SessionIdReceivedHandler OnSessionEstablished;
-        private delegate void SessionIdReceivedHandler(string sessionId);
+    
+ 
 
         #region Properties
         public uint PingInterval
