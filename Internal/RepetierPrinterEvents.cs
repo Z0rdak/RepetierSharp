@@ -6,24 +6,12 @@ namespace RepetierSharp.Internal
 {
     public sealed class RepetierPrinterEvents
     {
-        public AsyncEvent<StateReceivedEventArgs> StateReceivedEvent { get; } = new();
+        public AsyncEvent<StateChangedEventArgs> StateChangedEvent { get; } = new();
         public AsyncEvent<ConditionChangedEventArgs> ConditionChangedEvent { get; } = new();
         public AsyncEvent<SettingChangedEventArgs> SettingChangedEvent { get; } = new();
         public AsyncEvent<JobsChangedEventArgs> JobsChangedEvent { get; } = new();
-
-        /// <summary>
-        ///     Event which is fired after the response for the printer activation request from was received.
-        /// </summary>
         public AsyncEvent<ActivatedEventArgs> PrinterActivatedEvent { get; } = new();
-
-        /// <summary>
-        ///     Event which is fired after the response for the printer deactivation request from was received.
-        /// </summary>
         public AsyncEvent<DeactivatedEventArgs> PrinterDeactivatedEvent { get; } = new();
-
-        /// <summary>
-        ///     Event which is fired after the response for the emergency stop request from the printer was received.
-        /// </summary>
         public AsyncEvent<EmergencyStopTriggeredEventArgs> EmergencyStopTriggeredEvent { get; } = new();
     }
 
@@ -69,9 +57,9 @@ namespace RepetierSharp.Internal
     }
 
 
-    public sealed class StateReceivedEventArgs : EventArgs
+    public sealed class StateChangedEventArgs : EventArgs
     {
-        public StateReceivedEventArgs(string printer, PrinterState printerState)
+        public StateChangedEventArgs(string printer, PrinterState printerState)
         {
             Printer = printer;
             PrinterState = printerState;
