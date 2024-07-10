@@ -9,10 +9,7 @@ namespace RepetierSharp.Internal
     {
         public AsyncEvent<LogEntryEventArgs> LogEntryEvent { get; } = new();
         public AsyncEvent<PrinterListChangedEventArgs> PrinterListChangedEvent { get; } = new();
-        public AsyncEvent<MessagesReceivedEventArgs> MessagesReceivedEvent { get; } = new();
-        public AsyncEvent<PrinterStatesReceivedEventArgs> PrinterStatesReceivedEvent { get; } = new();
-        public AsyncEvent<RepetierRequestEventArgs> RepetierRequestSendEvent { get; } = new();
-        public AsyncEvent<RepetierRequestFailedEventArgs> RepetierRequestFailedEvent { get; } = new();
+        public AsyncEvent<MessagesChangedEventArgs> MessagesChangedEvent { get; } = new();
     }
     
     public sealed class PrinterListChangedEventArgs : EventArgs
@@ -25,39 +22,19 @@ namespace RepetierSharp.Internal
         public ListPrinterResponse ListPrinterResponse { get; }
     }
 
-    public sealed class MessagesReceivedEventArgs : EventArgs
+    public sealed class MessagesChangedEventArgs : EventArgs
     {
-        public MessagesReceivedEventArgs(MessageList messages)
+        public MessagesChangedEventArgs(Message? message)
         {
-            MessageList = messages;
+            Message = message;
         }
 
-        public MessageList MessageList { get; }
-    }
-
-    public sealed class PrinterStatesReceivedEventArgs : EventArgs
-    {
-        public PrinterStatesReceivedEventArgs(StateListResponse printerStates)
-        {
-            StateListResponse = printerStates;
-        }
-
-        public StateListResponse StateListResponse { get; }
+        public Message? Message { get; }
     }
 
     public sealed class RepetierRequestEventArgs : EventArgs
     {
         public RepetierRequestEventArgs(RepetierBaseRequest request)
-        {
-            RepetierBaseRequest = request;
-        }
-
-        public RepetierBaseRequest RepetierBaseRequest { get; }
-    }
-
-    public sealed class RepetierRequestFailedEventArgs : EventArgs
-    {
-        public RepetierRequestFailedEventArgs(RepetierBaseRequest request)
         {
             RepetierBaseRequest = request;
         }

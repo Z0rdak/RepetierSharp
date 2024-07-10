@@ -7,17 +7,30 @@ namespace RepetierSharp.Internal
     public sealed class RepetierClientEvents
     {
         public AsyncEvent<RepetierConnectedEventArgs> ConnectedEvent { get; } = new();
-        public AsyncEvent<LoginRequiredEventArgs> LoginRequiredEvent = new();
-        public AsyncEvent<LoginResultEventArgs> LoginResultEvent = new();
-        public AsyncEvent<PermissionDeniedEventArgs> PermissionDeniedEvent = new();
-        public AsyncEvent<SessionIdReceivedEventArgs> SessionIdReceivedEvent = new();
-        public AsyncEvent<RepetierEventReceivedEventArgs> RepetierEventReceivedEvent = new();
-        public AsyncEvent<RepetierResponseReceivedEventArgs> RepetierResponseReceivedEvent = new();
-        public AsyncEvent<RawRepetierEventReceivedEventArgs> RawRepetierEventReceivedEvent = new();
-        public AsyncEvent<RawRepetierResponseReceivedEventArgs> RawRepetierResponseReceivedEvent = new();
+        public AsyncEvent<LoginRequiredEventArgs> LoginRequiredEvent { get; } = new();
+        public AsyncEvent<LoginResultEventArgs> LoginResultEvent { get; } = new();
+        public AsyncEvent<PermissionDeniedEventArgs> PermissionDeniedEvent { get; } = new();
+        public AsyncEvent<SessionIdReceivedEventArgs> SessionIdReceivedEvent { get; } = new();
+        public AsyncEvent<UserCredentialsReceivedEventArgs> SessionReconnectedEvent { get; } = new();
+        public AsyncEvent<RepetierEventReceivedEventArgs> RepetierEventReceivedEvent { get; } = new();
+        public AsyncEvent<RepetierResponseReceivedEventArgs> RepetierResponseReceivedEvent { get; } = new();
+        public AsyncEvent<RawRepetierEventReceivedEventArgs> RawRepetierEventReceivedEvent { get; } = new();
+        public AsyncEvent<RawRepetierResponseReceivedEventArgs> RawRepetierResponseReceivedEvent { get; } = new();
+        public AsyncEvent<RepetierRequestEventArgs> RepetierRequestSendEvent { get; } = new();
+        public AsyncEvent<RepetierRequestEventArgs> RepetierRequestFailedEvent { get; } = new();
     }
 
+    public sealed class UserCredentialsReceivedEventArgs : EventArgs
+    {
+        public UserCredentialsReceivedEventArgs(UserCredentials userCredentials)
+        {
+            UserCredentials = userCredentials;
+        }
 
+        public UserCredentials UserCredentials { get; }
+    }
+    
+    
     public sealed class SessionIdReceivedEventArgs : EventArgs
     {
         public SessionIdReceivedEventArgs(string sessionId)
