@@ -70,6 +70,24 @@ namespace RepetierSharp
         }
         
         /// <summary>
+        ///     Event which is fired when a command is not permitted for the current sessionId.
+        /// </summary>
+        public event Func<PermissionDeniedEventArgs, Task> PermissionDeniedAsync
+        {
+            add => _clientEvents.PermissionDeniedEvent.AddHandler(value);
+            remove => _clientEvents.PermissionDeniedEvent.RemoveHandler(value);
+        }
+        
+        /// <summary>
+        ///  Event which is fired when a command is not permitted for the current sessionId.
+        /// </summary>
+        public event Func<SessionIdReceivedEventArgs, Task> SessionIdReceivedAsync
+        {
+            add => _clientEvents.SessionIdReceivedEvent.AddHandler(value);
+            remove => _clientEvents.SessionIdReceivedEvent.RemoveHandler(value);
+        }
+        
+        /// <summary>
         ///  Fired for received events from the repetier server. Note that temp, move and log events are not included here.
         ///  They can be enabled by setting the appropriate properties.
         /// </summary>

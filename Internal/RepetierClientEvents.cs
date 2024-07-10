@@ -10,16 +10,25 @@ namespace RepetierSharp.Internal
         public AsyncEvent<LoginRequiredEventArgs> LoginRequiredEvent = new();
         public AsyncEvent<LoginResultEventArgs> LoginResultEvent = new();
         public AsyncEvent<PermissionDeniedEventArgs> PermissionDeniedEvent = new();
-
+        public AsyncEvent<SessionIdReceivedEventArgs> SessionIdReceivedEvent = new();
         public AsyncEvent<RepetierEventReceivedEventArgs> RepetierEventReceivedEvent = new();
         public AsyncEvent<RepetierResponseReceivedEventArgs> RepetierResponseReceivedEvent = new();
         public AsyncEvent<RawRepetierEventReceivedEventArgs> RawRepetierEventReceivedEvent = new();
         public AsyncEvent<RawRepetierResponseReceivedEventArgs> RawRepetierResponseReceivedEvent = new();
     }
 
-    /// <summary>
-    /// Event which is fired when a command is not permitted for the current sessionId.
-    /// </summary>
+
+    public sealed class SessionIdReceivedEventArgs : EventArgs
+    {
+        public SessionIdReceivedEventArgs(string sessionId)
+        {
+            SessionId = sessionId;
+        }
+
+        public string SessionId { get; }
+    }
+
+
     public sealed class PermissionDeniedEventArgs : EventArgs
     {
         public PermissionDeniedEventArgs(int commandId)
@@ -27,12 +36,9 @@ namespace RepetierSharp.Internal
             CommandId = commandId;
         }
 
-        public int CommandId { get; set; }
+        public int CommandId { get; }
     }
 
-    /// <summary>
-    /// Event for received events from the repetier server.
-    /// </summary>
     public sealed class RepetierEventReceivedEventArgs : EventArgs
     {
         public RepetierEventReceivedEventArgs(string eventName, string printer, IRepetierEvent? repetierEvent)
@@ -42,19 +48,14 @@ namespace RepetierSharp.Internal
             RepetierEvent = repetierEvent;
         }
 
-        public IRepetierEvent? RepetierEvent { get; set; }
-        public string EventName { get; set; }
-        public string Printer { get; set; }
+        public IRepetierEvent? RepetierEvent { get; }
+        public string EventName { get; }
+        public string Printer { get; }
     }
 
-    /// <summary>
-    /// Fired whenever an event from the repetier server is received. 
-    /// The payload is the raw event itself (content of the data field of the json from the documentation).
-    /// </summary>
     public sealed class RawRepetierEventReceivedEventArgs : EventArgs
     {
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="eventName"> Name of the received event </param>
         /// <param name="printer"> Printer associated with the event or empty if global </param>
@@ -66,9 +67,9 @@ namespace RepetierSharp.Internal
             EventPayload = eventPayload;
         }
 
-        public byte[] EventPayload { get; set; }
-        public string EventName { get; set; }
-        public string Printer { get; set; }
+        public byte[] EventPayload { get; }
+        public string EventName { get; }
+        public string Printer { get; }
     }
 
     public sealed class RepetierResponseReceivedEventArgs : EventArgs
@@ -80,20 +81,14 @@ namespace RepetierSharp.Internal
             Message = message;
         }
 
-        public string Command { get; set; }
-        public int CallbackId { get; set; }
-        public IRepetierMessage? Message { get; set; }
+        public string Command { get; }
+        public int CallbackId { get; }
+        public IRepetierMessage? Message { get; }
     }
 
-
-    /// <summary>
-    /// Fired whenever a command response from the repetier server is received. 
-    /// The payload is the raw response itself (content of the data field of the json from the documentation).
-    /// </summary>
     public sealed class RawRepetierResponseReceivedEventArgs : EventArgs
     {
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="callbackId"> CallBackId to identify the received command response </param>
         /// <param name="command"> Name of the command associated with the received response </param>
@@ -105,9 +100,9 @@ namespace RepetierSharp.Internal
             ResponsePayload = responsePayload;
         }
 
-        public string Command { get; set; }
-        public int CallbackId { get; set; }
-        public byte[] ResponsePayload { get; set; }
+        public string Command { get; }
+        public int CallbackId { get; }
+        public byte[] ResponsePayload { get; }
     }
 
 
@@ -118,14 +113,11 @@ namespace RepetierSharp.Internal
             LoginResult = loginResult;
         }
 
-        public LoginResponse LoginResult { get; set; }
+        public LoginResponse LoginResult { get; }
     }
 
     public sealed class LoginRequiredEventArgs : EventArgs
     {
-        public LoginRequiredEventArgs()
-        {
-        }
     }
 
 
