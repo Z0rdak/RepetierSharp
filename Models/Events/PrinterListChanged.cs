@@ -6,11 +6,7 @@ namespace RepetierSharp.Models.Events
     [EventId("printerListChanged")]
     public class PrinterListChanged : IRepetierEvent
     {
-        [JsonPropertyName("data")]
-        public List<Printer> Printers { get; set; } = new List<Printer>();
-
-        public PrinterListChanged() { }
+        [JsonPropertyName("data")] public List<Printer> Printers { get; set; } = new();
         // Payload: List of printers like in listPrinters response.
     }
-
 }

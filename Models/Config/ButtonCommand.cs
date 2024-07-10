@@ -4,12 +4,8 @@ namespace RepetierSharp.Models.Config
 {
     public class ButtonCommand
     {
-        [JsonPropertyName("command")]
-        public string Command { get; set; }
+        [JsonPropertyName("command")] public string Command { get; set; }
 
-        [JsonPropertyName("name")]
-        public string Name { get; set; }
-
-        public ButtonCommand() { }
+        [JsonPropertyName("name")] public string Name { get; set; }
     }
 }

@@ -6,20 +6,13 @@ namespace RepetierSharp.Models.Messages
 {
     public class UserListResponse : IRepetierResponse
     {
-        [JsonPropertyName("data")]
-        public UserListContainer UserListContainer { get; set; }
-
-        public UserListResponse() { }
+        [JsonPropertyName("data")] public UserListContainer UserListContainer { get; set; }
     }
 
     public class UserListContainer
     {
-        [JsonPropertyName("loginRequired")]
-        public bool LoginRequired { get; set; }
+        [JsonPropertyName("loginRequired")] public bool LoginRequired { get; set; }
 
-        [JsonPropertyName("users")]
-        public List<User> Users { get; set; }
-
-        public UserListContainer() { }
+        [JsonPropertyName("users")] public List<User> Users { get; set; }
     }
 }

@@ -7,16 +7,14 @@ namespace RepetierSharp.Models.Messages
     {
         // no payload
     }
-    
+
     public class OkResponse : IRepetierResponse
     {
-        [JsonPropertyName("ok")]
-        public bool Success { get; set; }
+        [JsonPropertyName("ok")] public bool Success { get; set; }
     }
 
     public class OkErrorResponse : OkResponse
     {
-        [JsonPropertyName("error")]
-        public string? Error { get; set; }
+        [JsonPropertyName("error")] public string? Error { get; set; }
     }
 }

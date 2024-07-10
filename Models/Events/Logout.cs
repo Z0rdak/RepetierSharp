@@ -3,7 +3,6 @@
     [EventId("logout")]
     public class Logout : IRepetierEvent
     {
-        Logout() { }
+        private Logout() { }
     }
-
 }

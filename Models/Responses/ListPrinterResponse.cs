@@ -5,9 +5,6 @@ namespace RepetierSharp.Models.Messages
 {
     public class ListPrinterResponse : IRepetierResponse
     {
-        public List<Printer> Printers { get; set; } = new List<Printer>();
-
-        public ListPrinterResponse() { }
+        public List<Printer> Printers { get; set; } = new();
     }
-    
 }

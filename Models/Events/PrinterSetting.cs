@@ -5,11 +5,8 @@ namespace RepetierSharp.Models.Events
     [EventId("printerSettingChanged")]
     public class PrinterSetting : IRepetierEvent
     {
-        [JsonPropertyName("key")]
-        public string Key { get; set; }
-        [JsonPropertyName("value")]
-        public string Value { get; set; }
+        [JsonPropertyName("key")] public string Key { get; set; }
 
-        public PrinterSetting() { }
+        [JsonPropertyName("value")] public string Value { get; set; }
     }
 }

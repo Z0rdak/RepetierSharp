@@ -5,11 +5,10 @@ namespace RepetierSharp.Models.Requests
 {
     public class ListPrinterRequest : IRepetierRequest
     {
-        [JsonIgnore]
-        public string CommandIdentifier => CommandConstants.LIST_PRINTER;
-
         private ListPrinterRequest() { }
 
-        public static ListPrinterRequest Instance => new ListPrinterRequest();
+        public static ListPrinterRequest Instance => new();
+
+        [JsonIgnore] public string CommandIdentifier => CommandConstants.LIST_PRINTER;
     }
 }

@@ -7,7 +7,5 @@ namespace RepetierSharp.Models.Messages
     {
         [JsonPropertyName("source")] // "source": "gui"
         public string Source { get; set; }
-
-        public PingResponse() { }
     }
 }

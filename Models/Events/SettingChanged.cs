@@ -6,11 +6,8 @@ namespace RepetierSharp.Models.Events
     public class SettingChanged : IRepetierEvent
     {
         // TODO: list of settings
-        [JsonPropertyName("key")]
-        public string Key { get; set; }
-        [JsonPropertyName("value")]
-        public string Value { get; set; }
+        [JsonPropertyName("key")] public string Key { get; set; }
 
-        public SettingChanged() { }
+        [JsonPropertyName("value")] public string Value { get; set; }
     }
 }

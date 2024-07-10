@@ -5,11 +5,8 @@ namespace RepetierSharp.Models.Requests
 {
     public class SendMovesRequest : IRepetierRequest
     {
-        [JsonIgnore]
-        public string CommandIdentifier => CommandConstants.SEND_MOVES;
+        public static SendMovesRequest Instance => new();
 
-        public SendMovesRequest() { }
-
-        public static SendMovesRequest Instance => new SendMovesRequest();
+        [JsonIgnore] public string CommandIdentifier => CommandConstants.SEND_MOVES;
     }
 }

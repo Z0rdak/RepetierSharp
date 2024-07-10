@@ -5,8 +5,6 @@ namespace RepetierSharp.Models.Events
 {
     public class EventIdAttribute : Attribute
     {
-        public List<string> EventNames { get; } = new List<string>();
-
         public EventIdAttribute(string eventName)
         {
             EventNames.Add(eventName);
@@ -16,5 +14,7 @@ namespace RepetierSharp.Models.Events
         {
             EventNames.AddRange(events);
         }
+
+        public List<string> EventNames { get; } = new();
     }
 }

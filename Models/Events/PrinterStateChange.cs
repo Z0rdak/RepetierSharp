@@ -4,8 +4,5 @@
     public class PrinterStateChange : IRepetierEvent
     {
         public PrinterState PrinterState { get; set; }
-
-        public PrinterStateChange() { }
     }
-
 }

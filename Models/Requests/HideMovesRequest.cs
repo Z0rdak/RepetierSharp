@@ -5,11 +5,8 @@ namespace RepetierSharp.Models.Requests
 {
     public class HideMovesRequest : IRepetierRequest
     {
-        [JsonIgnore]
-        public string CommandIdentifier => CommandConstants.HIDE_MOVES;
+        public static HideMovesRequest Instance => new();
 
-        public HideMovesRequest() { }
-
-        public static HideMovesRequest Instance => new HideMovesRequest();
+        [JsonIgnore] public string CommandIdentifier => CommandConstants.HIDE_MOVES;
     }
 }

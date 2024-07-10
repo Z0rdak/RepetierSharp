@@ -5,14 +5,13 @@ namespace RepetierSharp.Models.Requests
 {
     public class DeleteUserRequest : IRepetierRequest
     {
-        [JsonPropertyName("login")]
-        public string User { get; }
-        [JsonIgnore]
-        public string CommandIdentifier => CommandConstants.DELETE_USER;
-
         public DeleteUserRequest(string user)
         {
-            this.User = user;
+            User = user;
         }
+
+        [JsonPropertyName("login")] public string User { get; }
+
+        [JsonIgnore] public string CommandIdentifier => CommandConstants.DELETE_USER;
     }
 }

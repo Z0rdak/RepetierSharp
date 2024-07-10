@@ -5,11 +5,10 @@ namespace RepetierSharp.Models.Requests
 {
     public class PingRequest : IRepetierRequest
     {
-        [JsonIgnore]
-        public string CommandIdentifier => CommandConstants.PING;
-
         private PingRequest() { }
 
-        public static PingRequest Instance => new PingRequest();
+        public static PingRequest Instance => new();
+
+        [JsonIgnore] public string CommandIdentifier => CommandConstants.PING;
     }
 }

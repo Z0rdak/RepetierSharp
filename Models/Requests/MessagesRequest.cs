@@ -5,11 +5,10 @@ namespace RepetierSharp.Models.Requests
 {
     public class MessagesRequest : IRepetierRequest
     {
-        [JsonIgnore]
-        public string CommandIdentifier => CommandConstants.MESSAGES;
-
         private MessagesRequest() { }
 
-        public static MessagesRequest Instance => new MessagesRequest();
+        public static MessagesRequest Instance => new();
+
+        [JsonIgnore] public string CommandIdentifier => CommandConstants.MESSAGES;
     }
 }

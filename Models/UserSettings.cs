@@ -6,34 +6,23 @@ namespace RepetierSharp.Models
 {
     public class UserSettings
     {
-        [JsonPropertyName("gcodeGroup")]
-        public string GCodeGroup { get; set; }
+        [JsonPropertyName("gcodeGroup")] public string GCodeGroup { get; set; }
 
-        [JsonPropertyName("gcodeSortBy")]
-        public string GCodeSortedBy { get; set; }
+        [JsonPropertyName("gcodeSortBy")] public string GCodeSortedBy { get; set; }
 
-        [JsonPropertyName("gcodeViewMode")]
-        public string GCodeViewMode { get; set; }
+        [JsonPropertyName("gcodeViewMode")] public string GCodeViewMode { get; set; }
 
-        [JsonPropertyName("tempDiagActive")]
-        public string TempDiagActive { get; set; }
+        [JsonPropertyName("tempDiagActive")] public string TempDiagActive { get; set; }
 
-        [JsonPropertyName("tempDiagAll")]
-        public string TempDiagAll { get; set; }
+        [JsonPropertyName("tempDiagAll")] public string TempDiagAll { get; set; }
 
-        [JsonPropertyName("tempDiagBed")]
-        public string TempDiagBed { get; set; }
+        [JsonPropertyName("tempDiagBed")] public string TempDiagBed { get; set; }
 
-        [JsonPropertyName("tempDiagChamber")]
-        public string TempDiagChamber { get; set; }
+        [JsonPropertyName("tempDiagChamber")] public string TempDiagChamber { get; set; }
 
-        [JsonPropertyName("tempDiagMode")]
-        public string TempDiagMode { get; set; }
+        [JsonPropertyName("tempDiagMode")] public string TempDiagMode { get; set; }
 
-        [JsonPropertyName("theme")]
-        public string Theme { get; set; }
-
-        public UserSettings() { }
+        [JsonPropertyName("theme")] public string Theme { get; set; }
 
         public override string ToString()
         {

@@ -3,7 +3,5 @@
     [EventId("changeFilamentRequested")]
     public class ChangeFilament : IRepetierEvent
     {
-        public ChangeFilament() { }
     }
-
 }

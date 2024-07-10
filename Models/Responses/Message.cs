@@ -6,32 +6,22 @@ namespace RepetierSharp.Models.Messages
 {
     public class Message : IRepetierResponse
     {
-        [JsonPropertyName("id")]
-        public int Id { get; set; }
+        [JsonPropertyName("id")] public int Id { get; set; }
 
-        [JsonPropertyName("msg")]
-        public string Msg { get; set; }
+        [JsonPropertyName("msg")] public string Msg { get; set; }
 
-        [JsonPropertyName("link")]
-        public string FinishLink { get; set; }
+        [JsonPropertyName("link")] public string FinishLink { get; set; }
 
-        [JsonPropertyName("slug")]
-        public string PrinterSlug { get; set; }
+        [JsonPropertyName("slug")] public string PrinterSlug { get; set; }
 
         // Date ISO 8601
-        [JsonPropertyName("date")]
-        public string DateString { get; set; }
+        [JsonPropertyName("date")] public string DateString { get; set; }
 
-        [JsonPropertyName("pause")]
-        public bool IsPaused { get; set; }
-
-        public Message() { }
+        [JsonPropertyName("pause")] public bool IsPaused { get; set; }
     }
-    
+
     public class MessageList : IRepetierResponse
     {
-        public List<Message> Messages { get; set; } = new List<Message>();
-
-        public MessageList() { }
+        public List<Message> Messages { get; set; } = new();
     }
 }

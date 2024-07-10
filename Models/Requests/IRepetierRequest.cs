@@ -4,7 +4,6 @@ namespace RepetierSharp.Models.Requests
 {
     public interface IRepetierRequest
     {
-        [JsonIgnore]
-        public string CommandIdentifier { get; }
+        [JsonIgnore] public string CommandIdentifier { get; }
     }
 }

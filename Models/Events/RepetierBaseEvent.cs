@@ -1,30 +1,20 @@
-﻿using System;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace RepetierSharp.Models.Events
 {
     public class RepetierBaseEvent
     {
-        [JsonPropertyName("event")]
-        public string Event { get; set; }
+        [JsonPropertyName("event")] public string Event { get; set; }
 
-        [JsonPropertyName("printer")]
-        public string Printer { get; set; }
+        [JsonPropertyName("printer")] public string Printer { get; set; }
 
-        [JsonPropertyName("data")]
-        public IRepetierEvent RepetierEvent { get; set; }
-
-        public RepetierBaseEvent() { }
+        [JsonPropertyName("data")] public IRepetierEvent RepetierEvent { get; set; }
     }
-    
+
     public class RepetierBaseEventInfo
     {
-        [JsonPropertyName("event")]
-        public string Event { get; set; }
+        [JsonPropertyName("event")] public string Event { get; set; }
 
-        [JsonPropertyName("printer")]
-        public string Printer { get; set; }
-        
-        public RepetierBaseEventInfo() { }
+        [JsonPropertyName("printer")] public string Printer { get; set; }
     }
 }

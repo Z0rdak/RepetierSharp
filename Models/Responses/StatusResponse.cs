@@ -5,9 +5,6 @@ namespace RepetierSharp.Models.Messages
 {
     public class StatusResponse : IRepetierResponse
     {
-        [JsonPropertyName("success")]
-        public bool Success { get; set; }
-
-        public StatusResponse() { }
+        [JsonPropertyName("success")] public bool Success { get; set; }
     }
 }

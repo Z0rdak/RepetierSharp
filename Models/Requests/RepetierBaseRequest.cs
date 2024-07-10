@@ -7,51 +7,44 @@ using System.Text.Json.Serialization;
 namespace RepetierSharp.Models.Requests
 {
     /// <summary>
-    /// Represents a WebSocket command for requesting data from the Repetier Server.
-    /// A command is a JSON-object has the following structure (e.g):
-    /// {"action":"ping","data":{},"printer":"MyPrinter","callback_id":545}
-    /// source: https://www.repetier-server.com/manuals/programming/API/index.html
+    ///     Represents a WebSocket command for requesting data from the Repetier Server.
+    ///     A command is a JSON-object has the following structure (e.g):
+    ///     {"action":"ping","data":{},"printer":"MyPrinter","callback_id":545}
+    ///     source: https://www.repetier-server.com/manuals/programming/API/index.html
     /// </summary>
     public class RepetierBaseRequest
     {
-
-        [JsonPropertyName("action")]
-        public string Action { get; set; }
-
-        [JsonIgnore]
-        public Type CommandType { get; set; }
-
-        [JsonIgnore]
-        public IRepetierRequest Command { get; set; }
-
-        [JsonPropertyName("data")]
-        public Dictionary<string, object> Data { get; set; }
-
-        [JsonPropertyName("printer")]
-        public string Printer { get; set; }
-
-        [JsonPropertyName("callback_id")]
-        public int CallbackId { get; set; }
-
         public RepetierBaseRequest(IRepetierRequest command, string printer, int callbackId, Type type)
         {
-            this.Action = command.CommandIdentifier;
-            this.Command = command;
-            this.CallbackId = callbackId;
-            this.CommandType = type;
-            this.Data = JsonSerializer.Deserialize<Dictionary<string, object>>(JsonSerializer.Serialize(Command, type));
-            this.Printer = printer;
+            Action = command.CommandIdentifier;
+            Command = command;
+            CallbackId = callbackId;
+            CommandType = type;
+            Data = JsonSerializer.Deserialize<Dictionary<string, object>>(JsonSerializer.Serialize(Command, type));
+            Printer = printer;
         }
 
         public RepetierBaseRequest(Dictionary<string, object> data, string command, string printer, int callbackId)
         {
-            this.Action = command;
-            this.Command = null;
-            this.CallbackId = callbackId;
-            this.CommandType = null;
-            this.Data = data;
-            this.Printer = printer;
+            Action = command;
+            Command = null;
+            CallbackId = callbackId;
+            CommandType = null;
+            Data = data;
+            Printer = printer;
         }
+
+        [JsonPropertyName("action")] public string Action { get; set; }
+
+        [JsonIgnore] public Type CommandType { get; set; }
+
+        [JsonIgnore] public IRepetierRequest Command { get; set; }
+
+        [JsonPropertyName("data")] public Dictionary<string, object> Data { get; set; }
+
+        [JsonPropertyName("printer")] public string Printer { get; set; }
+
+        [JsonPropertyName("callback_id")] public int CallbackId { get; set; }
 
         public override string ToString()
         {

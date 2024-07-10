@@ -7,22 +7,15 @@ namespace RepetierSharp.Models.Messages
 {
     public class LoginResponse : IRepetierResponse
     {
-        [JsonPropertyName("ok")]
-        public bool Authenticated { get; set; }
+        [JsonPropertyName("ok")] public bool Authenticated { get; set; }
 
-        [JsonPropertyName("permissions")]
-        public int PermissionLevel { get; set; }
+        [JsonPropertyName("permissions")] public int PermissionLevel { get; set; }
 
-        [JsonPropertyName("login")]
-        public string LoginName { get; set; }
+        [JsonPropertyName("login")] public string LoginName { get; set; }
 
-        [JsonPropertyName("settings")]
-        public UserSettings Settings { get; set; }
+        [JsonPropertyName("settings")] public UserSettings Settings { get; set; }
 
-        [JsonPropertyName("error")]
-        public string Error { get; set; } = "";
-
-        public LoginResponse() { }
+        [JsonPropertyName("error")] public string Error { get; set; } = "";
 
         public override string ToString()
         {
