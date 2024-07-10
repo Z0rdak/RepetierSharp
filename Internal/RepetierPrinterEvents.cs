@@ -13,8 +13,34 @@ namespace RepetierSharp.Internal
         public AsyncEvent<ActivatedEventArgs> PrinterActivatedEvent { get; } = new();
         public AsyncEvent<DeactivatedEventArgs> PrinterDeactivatedEvent { get; } = new();
         public AsyncEvent<EmergencyStopTriggeredEventArgs> EmergencyStopTriggeredEvent { get; } = new();
+        public AsyncEvent<TemperatureChangedEventArgs> TemperatureChangedEvent { get; } = new();
+        public AsyncEvent<MovedEventArgs> MovedEvent { get; } = new();
     }
 
+    public sealed class MovedEventArgs : EventArgs
+    {
+        public MovedEventArgs(string printer, Move moveEntry)
+        {
+            Printer = printer;
+            MoveEntry = moveEntry;
+        }
+
+        public string Printer { get; }
+        public Move MoveEntry { get; }
+    }
+
+    public sealed class TemperatureChangedEventArgs : EventArgs
+    {
+        public TemperatureChangedEventArgs(string printer, Temp tempChange)
+        {
+            Printer = printer;
+            TempChange = tempChange;
+        }
+
+        public string Printer { get; }
+        public Temp TempChange { get; }
+    }
+    
     public sealed class EmergencyStopTriggeredEventArgs : EventArgs
     {
         public EmergencyStopTriggeredEventArgs(string printer)
