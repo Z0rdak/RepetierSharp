@@ -1,6 +1,7 @@
 using System;
 using RepetierSharp.Models.Events;
 using RepetierSharp.Models.Messages;
+using RestSharp;
 
 namespace RepetierSharp.Internal
 {
@@ -17,7 +18,19 @@ namespace RepetierSharp.Internal
         public AsyncEvent<RawRepetierEventReceivedEventArgs> RawRepetierEventReceivedEvent { get; } = new();
         public AsyncEvent<RawRepetierResponseReceivedEventArgs> RawRepetierResponseReceivedEvent { get; } = new();
         public AsyncEvent<RepetierRequestEventArgs> RepetierRequestSendEvent { get; } = new();
+        public AsyncEvent<HttpContextEventArgs> HttpRequestFailedEvent { get; } = new();
         public AsyncEvent<RepetierRequestEventArgs> RepetierRequestFailedEvent { get; } = new();
+    }
+    
+    public sealed class HttpContextEventArgs : EventArgs
+    {
+        public HttpContextEventArgs(RestRequest request, RestResponse response)
+        {
+            Request = request;
+            Response = response;
+        }
+        public RestRequest Request { get; }
+        public RestResponse Response { get; }
     }
 
     public sealed class UserCredentialsReceivedEventArgs : EventArgs
