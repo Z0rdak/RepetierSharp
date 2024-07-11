@@ -3,7 +3,7 @@
 namespace RepetierSharp.Models.Events
 {
     [EventId("log")]
-    public class Log : IRepetierEvent
+    public class LogEntry : IRepetierEvent
     {
         [JsonPropertyName("id")] public int Id { get; set; }
 

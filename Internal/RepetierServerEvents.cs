@@ -14,12 +14,12 @@ namespace RepetierSharp.Internal
     
     public sealed class PrinterListChangedEventArgs : EventArgs
     {
-        public PrinterListChangedEventArgs(ListPrinterResponse printerList)
+        public PrinterListChangedEventArgs(PrinterListChanged printerList)
         {
-            ListPrinterResponse = printerList;
+            PrinterListChanged = printerList;
         }
 
-        public ListPrinterResponse ListPrinterResponse { get; }
+        public PrinterListChanged PrinterListChanged { get; }
     }
 
     public sealed class MessagesChangedEventArgs : EventArgs
@@ -44,11 +44,11 @@ namespace RepetierSharp.Internal
 
     public sealed class LogEntryEventArgs : EventArgs
     {
-        public LogEntryEventArgs(Log logEntry)
+        public LogEntryEventArgs(LogEntry logEntry)
         {
             LogEntry = logEntry;
         }
 
-        public Log LogEntry { get; }
+        public LogEntry LogEntry { get; }
     }
 }

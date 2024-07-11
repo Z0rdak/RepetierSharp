@@ -3,7 +3,7 @@
 namespace RepetierSharp.Models.Events
 {
     [EventId("move")]
-    public class Move : IRepetierEvent
+    public class MoveEntry : IRepetierEvent
     {
         [JsonPropertyName("x")] public float X { get; set; }
 

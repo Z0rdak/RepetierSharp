@@ -19,26 +19,26 @@ namespace RepetierSharp.Internal
 
     public sealed class MovedEventArgs : EventArgs
     {
-        public MovedEventArgs(string printer, Move moveEntry)
+        public MovedEventArgs(string printer, MoveEntry moveEntry)
         {
             Printer = printer;
             MoveEntry = moveEntry;
         }
 
         public string Printer { get; }
-        public Move MoveEntry { get; }
+        public MoveEntry MoveEntry { get; }
     }
 
     public sealed class TemperatureChangedEventArgs : EventArgs
     {
-        public TemperatureChangedEventArgs(string printer, Temp tempChange)
+        public TemperatureChangedEventArgs(string printer, TempEntry tempEntry)
         {
             Printer = printer;
-            TempChange = tempChange;
+            TempEntry = tempEntry;
         }
 
         public string Printer { get; }
-        public Temp TempChange { get; }
+        public TempEntry TempEntry { get; }
     }
 
     public sealed class EmergencyStopTriggeredEventArgs : EventArgs
@@ -109,13 +109,13 @@ namespace RepetierSharp.Internal
 
     public sealed class SettingChangedEventArgs : EventArgs
     {
-        public SettingChangedEventArgs(string printer, SettingChanged settingChanged)
+        public SettingChangedEventArgs(string printer, PrinterSetting settingChanged)
         {
             Printer = printer;
             SettingChanged = settingChanged;
         }
 
         public string Printer { get; }
-        public SettingChanged SettingChanged { get; }
+        public PrinterSetting SettingChanged { get; }
     }
 }

@@ -3,7 +3,7 @@
 namespace RepetierSharp.Models.Events
 {
     [EventId("temp")]
-    public class Temp : IRepetierEvent
+    public class TempEntry : IRepetierEvent
     {
         [JsonPropertyName("O")] public double Output { get; set; }
 

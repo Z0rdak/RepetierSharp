@@ -48,7 +48,7 @@ namespace RepetierSharp.Util
         public static readonly ImmutableDictionary<string, Type> EventMap = ImmutableDictionary.CreateRange
         (new[]
             {
-                KeyValuePair.Create("log", typeof(Log)), KeyValuePair.Create("move", typeof(Move)),
+                KeyValuePair.Create("log", typeof(LogEntry)), KeyValuePair.Create("move", typeof(MoveEntry)),
                 KeyValuePair.Create("layerChanged", typeof(LayerChanged))
             }
         );
