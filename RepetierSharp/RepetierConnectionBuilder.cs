@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
+using RepetierSharp.Models;
 using RepetierSharp.Models.Events;
-using RepetierSharp.Models.Requests;
+using RepetierSharp.Models.Commands;
 using RestSharp;
 using Websocket.Client;
 
@@ -124,37 +125,9 @@ namespace RepetierSharp
                 return this;
             }
 
-            public RepetierConnectionBuilder QueryPrinterInterval(RepetierTimer timer = RepetierTimer.Timer30)
+            public RepetierConnectionBuilder ScheduleCommand(RepetierTimer timer, IRepetierCommand command)
             {
-                if ( !_repetierConnection.QueryIntervals.ContainsKey(timer) )
-                {
-                    _repetierConnection.QueryIntervals.Add(timer, new List<IRepetierRequest>());
-                }
-
-                _repetierConnection.QueryIntervals[timer].Add(ListPrinterRequest.Instance);
-                return this;
-            }
-
-            public RepetierConnectionBuilder QueryStateInterval(RepetierTimer timer = RepetierTimer.Timer30,
-                bool withHistory = false)
-            {
-                if ( !_repetierConnection.QueryIntervals.ContainsKey(timer) )
-                {
-                    _repetierConnection.QueryIntervals.Add(timer, new List<IRepetierRequest>());
-                }
-
-                _repetierConnection.QueryIntervals[timer].Add(new StateListRequest(withHistory));
-                return this;
-            }
-
-            public RepetierConnectionBuilder WithCyclicCommand(RepetierTimer timer, IRepetierRequest command)
-            {
-                if ( !_repetierConnection.QueryIntervals.ContainsKey(timer) )
-                {
-                    _repetierConnection.QueryIntervals.Add(timer, new List<IRepetierRequest>());
-                }
-
-                _repetierConnection.QueryIntervals[timer].Add(command);
+                _repetierConnection._commandDispatcher.AddCommand(timer, command);
                 return this;
             }
         }
