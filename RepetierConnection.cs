@@ -6,28 +6,23 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using RepetierSharp.Config;
 using RepetierSharp.Extentions;
 using RepetierSharp.Internal;
 using RepetierSharp.Models;
-using RepetierSharp.Models.Requests;
-using RepetierSharp.Models.Config;
 using RepetierSharp.Models.Events;
 using RepetierSharp.Models.Messages;
+using RepetierSharp.Models.Requests;
 using RepetierSharp.Util;
 using RestSharp;
 using Websocket.Client;
-using static RepetierSharp.Internal.RepetierClientEvents;
 using ResponseMessage = Websocket.Client.ResponseMessage;
 
 namespace RepetierSharp
 {
-
-    public partial class RepetierConnection
+    public partial class RepetierConnection : Disposable
     {
         private const string FilenameParam = "filename";
         private const string NameParam = "name";
@@ -35,301 +30,25 @@ namespace RepetierSharp
         private const string ActionParam = "a";
         private const string AutostartParam = "autostart";
         private const string UploadAction = "upload";
-        public static readonly ContentType MultiPartFormData = "multipart/form-data";
+        private const ContentType MultiPartFormData = "multipart/form-data";
 
-        #region Client Events
-        
-        readonly RepetierClientEvents _clientEvents = new RepetierClientEvents();
-        /// <summary>
-        /// Fired when the connection with the server is established successfully for the first time.
-        /// At this point, the sessionId should already be assigned to this RepetierConnection. 
-        /// </summary>
-        public event Func<RepetierConnectedEventArgs, Task> ConnectedAsync
+        private static readonly JsonSerializerOptions DefaultOptions = new()
         {
-            add => _clientEvents.ConnectedEvent.AddHandler(value);
-            remove => _clientEvents.ConnectedEvent.RemoveHandler(value);
-        }
-        
-        /// <summary>
-        /// Fired after establishment of the connection to the server if the server requires a login.
-        /// This might be the case if no API-Key is supplied in the URI and the server has at least one user account.
-        /// </summary>
-        public event Func<LoginRequiredEventArgs, Task> LoginRequiredAsync
-        {
-            add => _clientEvents.LoginRequiredEvent.AddHandler(value);
-            remove => _clientEvents.LoginRequiredEvent.RemoveHandler(value);
-        }
-
-        /// <summary>
-        /// Fired when the login result response is received from the server after sending the login request.
-        /// </summary>
-        public event Func<LoginResultEventArgs, Task> LoginResultAsync
-        {
-            add => _clientEvents.LoginResultEvent.AddHandler(value);
-            remove => _clientEvents.LoginResultEvent.RemoveHandler(value);
-        }
-        
-        /// <summary>
-        ///     Event which is fired when a command is not permitted for the current sessionId.
-        /// </summary>
-        public event Func<PermissionDeniedEventArgs, Task> PermissionDeniedAsync
-        {
-            add => _clientEvents.PermissionDeniedEvent.AddHandler(value);
-            remove => _clientEvents.PermissionDeniedEvent.RemoveHandler(value);
-        }
-        
-        /// <summary>
-        ///  Event which is fired when a command is not permitted for the current sessionId.
-        /// </summary>
-        public event Func<SessionIdReceivedEventArgs, Task> SessionIdReceivedAsync
-        {
-            add => _clientEvents.SessionIdReceivedEvent.AddHandler(value);
-            remove => _clientEvents.SessionIdReceivedEvent.RemoveHandler(value);
-        }
-        
-        /// <summary>
-        ///  Fired for received events from the repetier server. Note that temp, move and log events are not included here.
-        ///  They can be enabled by setting the appropriate properties.
-        /// </summary>
-        public event Func<RepetierEventReceivedEventArgs, Task> RepetierEventReceivedAsync
-        {
-            add => _clientEvents.RepetierEventReceivedEvent.AddHandler(value);
-            remove => _clientEvents.RepetierEventReceivedEvent.RemoveHandler(value);
-        }
-        
-        /// <summary>
-        /// Fired whenever an event from the repetier server is received. Unlike the RepetierEventReceivedAsync event,
-        /// this event includes the raw event itself (content of the data field).
-        /// This is mainly a fallback event for backwards compatibility and support events in newer repetier versions,
-        /// which are not yet implemented by RepetierSharp.
-        /// </summary>
-        public event Func<RawRepetierEventReceivedEventArgs, Task> RawRepetierEventReceivedAsync
-        {
-            add => _clientEvents.RawRepetierEventReceivedEvent.AddHandler(value);
-            remove => _clientEvents.RawRepetierEventReceivedEvent.RemoveHandler(value);
-        }
-        
-        /// <summary>
-        ///  Fired when a response from the server is received. This does not include the ping response.
-        /// </summary>
-        public event Func<RepetierResponseReceivedEventArgs, Task> RepetierResponseReceivedAsync
-        {
-            add => _clientEvents.RepetierResponseReceivedEvent.AddHandler(value);
-            remove => _clientEvents.RepetierResponseReceivedEvent.RemoveHandler(value);
-        }
-        
-        /// <summary>
-        /// Fired when a raw response from the server is received. Unlike the RepetierResponseReceivedAsync event,
-        /// this event includes the raw response itself (content of the data field).
-        /// This is mainly a fallback event for backwards compatibility and support events in newer repetier versions,
-        /// which are not yet implemented by RepetierSharp.
-        /// </summary>
-        public event Func<RawRepetierResponseReceivedEventArgs, Task> RawRepetierResponseReceivedAsync
-        {
-            add => _clientEvents.RawRepetierResponseReceivedEvent.AddHandler(value);
-            remove => _clientEvents.RawRepetierResponseReceivedEvent.RemoveHandler(value);
-        }
-        #endregion
-        
-        #region PrintJob Events
-        readonly RepetierPrintJobEvents _printJobEvents = new();
-        public event Func<PrintJobStartedEventArgs, Task> PrintStartedAsync
-        {
-            add => _printJobEvents.PrintStartedEvent.AddHandler(value);
-            remove => _printJobEvents.PrintStartedEvent.RemoveHandler(value);
-        }
-        
-        /// <summary>
-        /// Fired after a print job has been finished.
-        /// </summary>
-        public event Func<PrintJobFinishedEventArgs, Task> PrintFinishedAsync
-        {
-            add => _printJobEvents.PrintFinishedEvent.AddHandler(value);
-            remove => _printJobEvents.PrintFinishedEvent.RemoveHandler(value);
-        }
-        
-        /// <summary>
-        /// Fired after a normal job has been finished or killed. Shortcut if you do not care why a job is not active anymore.
-        /// </summary>
-        public event Func<PrintJobDeactivatedEventArgs, Task> PrintDeactivatedAsync
-        {
-            add => _printJobEvents.PrintDeactivatedEvent.AddHandler(value);
-            remove => _printJobEvents.PrintDeactivatedEvent.RemoveHandler(value);
-        }
-        /// <summary>
-        /// Triggered after a print job has been killed.
-        /// </summary>
-        public event Func<PrintJobKilledEventArgs, Task> PrintKilledAsync
-        {
-            add => _printJobEvents.PrintKilledEvent.AddHandler(value);
-            remove => _printJobEvents.PrintKilledEvent.RemoveHandler(value);
-        }
-        
-        /// <summary>
-        /// Triggered when a failure upon starting a print job was detected. This usually happens when the printer is not ready or on connection issues.
-        /// </summary>
-        public event Func<PrintJobStartFailedEventArgs, Task> PrintStartFailedAsync
-        {
-            add => _printJobEvents.PrintStartFailedEvent.AddHandler(value);
-            remove => _printJobEvents.PrintStartFailedEvent.RemoveHandler(value);
-        }
-        
-        /// <summary>
-        /// Fired after a job got added. It might already be started for printing and info might be in state of evaluation at that point.
-        /// </summary>
-        public event Func<PrintJobAddedEventArgs, Task> PrintJobChangedAsync
-        {
-            add => _printJobEvents.PrintJobAddedEvent.AddHandler(value);
-            remove => _printJobEvents.PrintJobAddedEvent.RemoveHandler(value);
-        }
-        #endregion
-        
-        #region Printer Events
-        readonly RepetierPrinterEvents _printerEvents = new();
-
-        /// <summary>
-        /// Fired when the state of a printer changes.
-        /// </summary>
-        public event Func<StateChangedEventArgs, Task> PrinterStateReceivedAsync
-        {
-            add => _printerEvents.StateChangedEvent.AddHandler(value);
-            remove => _printerEvents.StateChangedEvent.RemoveHandler(value);
-        }
-
-        /// <summary>
-        /// Fired when the condition of a printer changes
-        /// </summary>
-        public event Func<ConditionChangedEventArgs, Task> PrinterConditionChangedAsync
-        {
-            add => _printerEvents.ConditionChangedEvent.AddHandler(value);
-            remove => _printerEvents.ConditionChangedEvent.RemoveHandler(value);
-        }
-
-        /// <summary>
-        /// Fired everytime settings of a printer change   
-        /// </summary>
-        public event Func<SettingChangedEventArgs, Task> PrinterSettingChangedAsync
-        {
-            add => _printerEvents.SettingChangedEvent.AddHandler(value);
-            remove => _printerEvents.SettingChangedEvent.RemoveHandler(value);
-        }
-
-        /// <summary>
-        ///   Fired when a printer has a change in it's stored g-file list.
-        /// </summary>
-        public event Func<JobsChangedEventArgs, Task> PrinterJobsChangedAsync
-        {
-            add => _printerEvents.JobsChangedEvent.AddHandler(value);
-            remove => _printerEvents.JobsChangedEvent.RemoveHandler(value);
-        }
-        
-        /// <summary>
-        ///     Fired after the response for the printer activation request from was received.
-        /// </summary>
-        public event Func<ActivatedEventArgs, Task> PrinterActivatedAsync
-        {
-            add => _printerEvents.PrinterActivatedEvent.AddHandler(value);
-            remove => _printerEvents.PrinterActivatedEvent.RemoveHandler(value);
-        }
-        /// <summary>
-        ///     Fired after the response for the printer deactivation request from was received.
-        /// </summary>
-        public event Func<DeactivatedEventArgs, Task> PrinterDeactivatedAsync
-        {
-            add => _printerEvents.PrinterDeactivatedEvent.AddHandler(value);
-            remove => _printerEvents.PrinterDeactivatedEvent.RemoveHandler(value);
-        }    
-        /// <summary>
-        ///    Fired after the response for the emergency stop request from the printer was received.
-        /// </summary>
-        public event Func<EmergencyStopTriggeredEventArgs, Task> PrinterEmergencyStopTriggeredAsync
-        {
-            add => _printerEvents.EmergencyStopTriggeredEvent.AddHandler(value);
-            remove => _printerEvents.EmergencyStopTriggeredEvent.RemoveHandler(value);
-        }
-        
-        /// <summary>
-        ///   Fired after a new temperature entry for the printer is available. Depending on the printer configuration this can be a very frequently occurring event.
-        /// </summary>
-        public event Func<TemperatureChangedEventArgs, Task> PrinterTempChangedAsync
-        {
-            add => _printerEvents.TemperatureChangedEvent.AddHandler(value);
-            remove => _printerEvents.TemperatureChangedEvent.RemoveHandler(value);
-        }
-              
-        /// <summary>
-        ///  Triggered for every move the printer does. This can be used to provide a live preview of what the printer does.
-        ///  This is only fired when moves are enabled (sendMoves action).
-        /// </summary>
-        public event Func<MovedEventArgs, Task> PrinterMovedAsync
-        {
-            add => _printerEvents.MovedEvent.AddHandler(value);
-            remove => _printerEvents.MovedEvent.RemoveHandler(value);
-        }
-
-        #endregion
-
-        #region Server Events
-              
-        public event LogEventReceived? OnLogReceived;
-        public delegate void LogEventReceived(Log logEvent);
-
-        public event PrinterListChangedReceivedHandler? OnPrinterListChanged;
-        public delegate void PrinterListChangedReceivedHandler(ListPrinterResponse printerList);
-      
-        public event UserCredentialsReceivedHandler? OnUserCredentialsReceived;
-        public delegate void UserCredentialsReceivedHandler(UserCredentials userCredentials);
-
-        public event MessagesReceivedHandler? OnMessagesReceived;
-        public delegate void MessagesReceivedHandler(MessageList messages);
-
-        public event PrinterStatesReceivedHandler? OnPrinterStates;
-        public delegate void PrinterStatesReceivedHandler(StateListResponse printerStates);
-
-        public event RepetierRequestSend? OnRequestSend;
-        public delegate void RepetierRequestSend(RepetierBaseRequest request);
-        
-        public event RepetierRequestFailed? OnFailedRequest;
-        public delegate void RepetierRequestFailed(RepetierBaseRequest request);
-        
-
-        
-    
- 
-
-        #region Properties
-        public uint PingInterval
-        {
-            get
+            AllowTrailingCommas = true,
+            UnknownTypeHandling = JsonUnknownTypeHandling.JsonElement,
+            WriteIndented = true,
+            Converters =
             {
-                return _pingInterval;
+                new RepetierEventConverter(), new RepetierMessageConverter(), new RepetierBaseEventConverter()
             }
-            set
-            {
-                _pingInterval = value;
-                Task.Run(async () => await SendExtendPing(_pingInterval));
-            }
-        }
-        private long _lastPingTimestamp = 0;
-        private uint _pingInterval = 10000;
-
-        private readonly ILogger<RepetierConnection> _logger;
-
-        private Dictionary<RepetierTimer, List<ICommandData>> QueryIntervals { get; } = new();
-        private CommandManager CommandManager { get; } = new();
-        private IWebsocketClient WebSocketClient { get; set; }
-        private IRestClient RestClient { get; set; }
-        private RepetierSession Session { get; init; }
-        private string ActivePrinter { get; set; } = "";
-
-        #endregion
+        };
 
         private RepetierConnection(ILogger<RepetierConnection>? logger = null)
         {
             _logger = logger ?? NullLogger<RepetierConnection>.Instance;
-            OnSessionEstablished += sessionId =>
+            SessionIdReceivedAsync += async sessionIdArgs =>
             {
-                OnRepetierConnected?.Invoke(sessionId);
+                await _clientEvents.ConnectedEvent.InvokeAsync(new RepetierConnectedEventArgs(sessionIdArgs.SessionId));
             };
         }
 
@@ -337,10 +56,15 @@ namespace RepetierSharp
         ///     Retrieve printer name or API-key (or both) via REST-API
         ///     If ApiKey or PrinterSlug are not empty, they will not be overwritten by the retrieved information.
         /// </summary>
-        public async Task<RepetierServerInformation> GetRepetierServerInfoAsync()
+        public async Task<RepetierServerInformation?> GetRepetierServerInfoAsync()
         {
             var response = await RestClient.ExecuteAsync(new RestRequest("/printer/info"));
-            return JsonSerializer.Deserialize<RepetierServerInformation>(response.Content);
+            if ( response is { StatusCode: HttpStatusCode.OK, Content: not null } )
+            {
+                return JsonSerializer.Deserialize<RepetierServerInformation>(response.Content);
+            }
+            await _clientEvents.HttpRequestFailedEvent.InvokeAsync(new HttpContextEventArgs(response.Request, response));
+            return null;
         }
 
         /// <summary>
@@ -355,27 +79,27 @@ namespace RepetierSharp
             try
             {
                 await WebSocketClient.StartOrFail()
-                    .ContinueWith(t => SendPing());
+                    .ContinueWith(_ => SendPing());
             }
-            catch (Exception e)
+            catch ( Exception e )
             {
-                _logger?.LogError(e, "Error while starting websocket connection: {Error}", e.Message);
+                _logger.LogError(e, "Error while starting websocket connection: {Error}", e.Message);
             }
         }
 
         private void OnMsgReceived(ResponseMessage msg)
         {
             // each message send to and from the Repetier Server is a valid JSON message
-            if (msg.MessageType != WebSocketMessageType.Text || string.IsNullOrEmpty(msg.Text))
+            if ( msg.MessageType != WebSocketMessageType.Text || string.IsNullOrEmpty(msg.Text) )
             {
                 return;
             }
 
             try
             {
-                // Send ping interval is elapsed
+                // Send ping if interval is elapsed
                 var timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-                if (_lastPingTimestamp + PingInterval < DateTimeOffset.Now.ToUnixTimeSeconds())
+                if ( _lastPingTimestamp + PingInterval < DateTimeOffset.Now.ToUnixTimeSeconds() )
                 {
                     _lastPingTimestamp = timestamp;
                     Task.Run(async () => await SendPing());
@@ -383,72 +107,141 @@ namespace RepetierSharp
 
                 // handle command response or event
                 var msgBytes = Encoding.UTF8.GetBytes(msg.Text);
-                var message = JsonSerializer.Deserialize<RepetierBaseMessage>(msgBytes);
-                var containsEvents = message.HasEvents != null && message.HasEvents == true;
+                var repetierMessage = JsonSerializer.Deserialize<RepetierBaseMessage>(msgBytes);
+                if ( repetierMessage == null )
+                {
+                    _logger.LogWarning(
+                        "Unable to serialize received message. It is not a valid Repetier message and won't be processed: '{Msg}'",
+                        msg.Text);
+                    return;
+                }
 
                 // ensures setting session ID after first ping reply back from the server
                 // when no login is required this is the first instance to require a session ID
-                if (string.IsNullOrEmpty(Session.SessionId) && !string.IsNullOrEmpty(message.SessionId))
+                if ( string.IsNullOrEmpty(Session.SessionId) && !string.IsNullOrEmpty(repetierMessage.SessionId) )
                 {
-                    Session.SessionId = message.SessionId;
-                    OnSessionEstablished?.Invoke(Session.SessionId);
+                    Session.SessionId = repetierMessage.SessionId;
+                    Task.Run(async () =>
+                    {
+                        var sessionIdArgs = new SessionIdReceivedEventArgs(Session.SessionId);
+                        await _clientEvents.SessionIdReceivedEvent.InvokeAsync(sessionIdArgs);
+                    });
                 }
 
                 var json = JsonSerializer.Deserialize<JsonDocument>(msgBytes);
-                var data = json.RootElement.GetProperty("data");
-                if (message.CallBackId == -1 || containsEvents)
+                if ( json == null )
                 {
-                    // TODO: Custom JsonConverter
-                    foreach (var eventData in data.EnumerateArray())
+                    _logger.LogWarning("Received message is not a valid JSON and won't be processed: '{Msg}'",
+                        msg.Text);
+                    return;
+                }
+
+                var dataElement = json.RootElement.GetProperty("data");
+
+                if ( repetierMessage.HasEvents is true || repetierMessage.CallBackId == -1 )
+                {
+                    PublishRawEventInfo(dataElement);
+                    // process events
+                    var repetierBaseEvents =
+                        JsonSerializer.Deserialize<List<RepetierBaseEvent>>(msgBytes, DefaultOptions);
+                    if ( repetierBaseEvents == null )
                     {
-                        var rawText = eventData.GetRawText();
-                        var repEvent = JsonSerializer.Deserialize<RepetierBaseEvent>(rawText);
+                        _logger.LogWarning("Unable to deserialize events: '{Event}'", msg.Text);
+                        return;
+                    }
+
+                    repetierBaseEvents.ForEach(repetierEvent =>
+                    {
                         Task.Run(async () =>
                         {
-                            OnRawEvent?.Invoke(repEvent.Event, repEvent.Printer,
-                                Encoding.UTF8.GetBytes(eventData.GetRawText()));
-                            await HandleEvent(repEvent, rawText);
+                            await HandleEvent(repetierEvent);
                         });
-                    }
+                    });
                 }
                 else
                 {
-                    if (msg.Text.Contains("permissionDenied"))
+                    if ( msg.Text.Contains("permissionDenied") )
                     {
-                        OnPermissionDenied?.Invoke(message.CallBackId);
+                        var permissionDeniedArgs = new PermissionDeniedEventArgs(repetierMessage.CallBackId);
+                        Task.Run(async () => await _clientEvents.PermissionDeniedEvent.InvokeAsync(permissionDeniedArgs));
                     }
                     else
                     {
                         Task.Run(async () =>
                         {
-                            OnRawResponse?.Invoke(message.CallBackId,
-                                CommandManager.CommandIdentifierFor(message.CallBackId),
-                                Encoding.UTF8.GetBytes(data.GetRawText()));
-                            await HandleMessage(message, data);
+                            var commandIdentifier = CommandManager.CommandIdentifierFor(repetierMessage.CallBackId);
+                            if ( commandIdentifier == string.Empty )
+                            {
+                                _logger.LogWarning(
+                                    "Received message callbackId '{CallbackId}' could not be found in cache. Not serializing message: '{Response}'",
+                                    repetierMessage.CallBackId, dataElement.GetRawText());
+                                return;
+                            }
+
+                            await HandleResponse(repetierMessage, commandIdentifier, dataElement);
                         });
                     }
                 }
             }
-            catch (Exception ex)
+            catch ( Exception ex )
             {
-                _logger?.LogError(ex,
-                    "[WebSocket] Error processing message from repetier server: '{Msg}'. Error: {Error}", msg.Text,
-                    ex.Message);
+                var errorMsg = "[WebSocket] Error processing message from repetier server: '{Msg}'. Error: {Error}";
+                _logger.LogError(ex, errorMsg, msg.Text, ex.Message);
+            }
+        }
+
+        private async Task HandleResponse(RepetierBaseMessage message, string commandIdentifier,
+            JsonElement dataElement)
+        {
+            var commandData = Encoding.UTF8.GetBytes(dataElement.GetRawText());
+            await _clientEvents.RawRepetierResponseReceivedEvent.InvokeAsync(
+                new RawRepetierResponseReceivedEventArgs(message.CallBackId, commandIdentifier, commandData));
+            var repetierResponse =
+                RepetierJsonSerializer.DeserializeResponse(commandIdentifier, commandData, DefaultOptions);
+            if ( repetierResponse == null )
+            {
+                _logger.LogWarning(
+                    "Unable to deserialize response for CommandIdentifier='{Command}' with Id='{CallbackId}': '{Response}'",
+                    commandIdentifier, message.CallBackId, dataElement.GetRawText());
+                return;
+            }
+
+            await ProcessResponse(repetierResponse, message.CallBackId);
+        }
+
+        private void PublishRawEventInfo(JsonElement dataElement)
+        {
+            foreach ( var eventData in dataElement.EnumerateArray() )
+            {
+                var rawText = eventData.GetRawText();
+                var repEventInfo = JsonSerializer.Deserialize<RepetierBaseEventInfo>(rawText);
+                if ( repEventInfo == null )
+                {
+                    _logger.LogWarning("Unable to deserialize event: '{Event}'", rawText);
+                    continue;
+                }
+
+                Task.Run(async () =>
+                {
+                    var bytes = Encoding.UTF8.GetBytes(eventData.GetRawText());
+                    await _clientEvents.RawRepetierEventReceivedEvent.InvokeAsync(
+                        new RawRepetierEventReceivedEventArgs(repEventInfo.Event, repEventInfo.Printer, bytes));
+                });
             }
         }
 
         private void OnDisconnect(DisconnectionInfo info)
         {
-            _logger?.LogInformation("[WebSocket] Connection closed: Reason={Reason}, Status={Status}, Desc={Desc}",
+            _logger.LogInformation("[WebSocket] Connection closed: Reason={Reason}, Status={Status}, Desc={Desc}",
                 info.Type, info.CloseStatus, info.CloseStatusDescription);
         }
 
         private void OnReconnect(ReconnectionInfo info)
         {
-            if (info.Type == ReconnectionType.Initial && Session.AuthType != AuthenticationType.Credentials)
+            if ( info.Type == ReconnectionType.Initial && Session.AuthType != AuthenticationType.Credentials )
             {
                 // Only query messages at this point when using an api-key or no auth
-                this.QueryOpenMessages();
+                Task.Run(async () => await this.QueryOpenMessages());
             }
 
             Task.Run(async () => await SendPing());
@@ -456,12 +249,12 @@ namespace RepetierSharp
 
         private async Task<bool> SendPing()
         {
-            return await SendCommand(PingCommand.Instance, typeof(PingCommand));
+            return await SendCommand(PingRequest.Instance, typeof(PingRequest));
         }
 
         public async Task<bool> SendExtendPing(uint timeout)
         {
-            return await SendCommand(new ExtendPingCommand(timeout), typeof(ExtendPingCommand));
+            return await SendCommand(new ExtendPingRequest(timeout), typeof(ExtendPingRequest));
         }
 
 
@@ -485,7 +278,7 @@ namespace RepetierSharp
                 .AddParameter(AutostartParam, $"{(int)autostart}")
                 .AddParameter(NameParam, gcodeFileName);
 
-            if (!string.IsNullOrEmpty(Session.SessionId))
+            if ( !string.IsNullOrEmpty(Session.SessionId) )
             {
                 request = request.AddParameter(SessionParam, Session.SessionId);
             }
@@ -504,7 +297,7 @@ namespace RepetierSharp
                 .AddParameter(AutostartParam, $"{(int)autostart}")
                 .AddParameter(NameParam, fileName);
 
-            if (!string.IsNullOrEmpty(Session.SessionId))
+            if ( !string.IsNullOrEmpty(Session.SessionId) )
             {
                 request = request.AddParameter(SessionParam, Session.SessionId);
             }
@@ -532,7 +325,7 @@ namespace RepetierSharp
                 .AddParameter("overwrite", $"{overwrite}")
                 .AddParameter(NameParam, gcodeFileName);
 
-            if (!string.IsNullOrEmpty(Session.SessionId))
+            if ( !string.IsNullOrEmpty(Session.SessionId) )
             {
                 request = request.AddParameter(SessionParam, Session.SessionId);
             }
@@ -560,7 +353,7 @@ namespace RepetierSharp
                 .AddParameter("overwrite", $"{overwrite}")
                 .AddParameter(NameParam, fileName);
 
-            if (!string.IsNullOrEmpty(Session.SessionId))
+            if ( !string.IsNullOrEmpty(Session.SessionId) )
             {
                 request = request.AddParameter(SessionParam, Session.SessionId);
             }
@@ -582,20 +375,20 @@ namespace RepetierSharp
             {
                 var request = UploadModel(gcodeFilePath, printer, group, overwrite);
                 var response = await RestClient.ExecuteAsync(request);
-                if (response.StatusCode != HttpStatusCode.OK)
+                if ( response.StatusCode != HttpStatusCode.OK )
                 {
-                    OnRestRequestFailed?.Invoke(printer, response);
+                    await _clientEvents.HttpRequestFailedEvent.InvokeAsync(new HttpContextEventArgs(request, response));
                     return false;
                 }
 
-                if (response.ErrorException != null)
+                if ( response.ErrorException != null )
                 {
                     throw response.ErrorException;
                 }
             }
-            catch (Exception ex)
+            catch ( Exception ex )
             {
-                _logger?.LogError(ex, "Error while uploading gcode file: {Error}", ex.Message);
+                _logger.LogError(ex, "Error while uploading gcode file: {Error}", ex.Message);
             }
 
             return await Task.FromResult(true);
@@ -616,20 +409,20 @@ namespace RepetierSharp
             {
                 var request = UploadModel(fileName, file, printer, group, overwrite);
                 var response = await RestClient.ExecuteAsync(request);
-                if (response.StatusCode != HttpStatusCode.OK)
+                if ( response.StatusCode != HttpStatusCode.OK )
                 {
-                    OnRestRequestFailed?.Invoke(printer, response);
+                    await _clientEvents.HttpRequestFailedEvent.InvokeAsync(new HttpContextEventArgs(request, response));
                     return false;
                 }
 
-                if (response.ErrorException != null)
+                if ( response.ErrorException != null )
                 {
                     throw response.ErrorException;
                 }
             }
-            catch (Exception ex)
+            catch ( Exception ex )
             {
-                _logger?.LogError(ex, "Error while uploading gcode file: {Error}", ex.Message);
+                _logger.LogError(ex, "Error while uploading gcode file: {Error}", ex.Message);
             }
 
             return await Task.FromResult(true);
@@ -640,7 +433,7 @@ namespace RepetierSharp
         /// </summary>
         /// <param name="gcodeFilePath"> The path of the file to upload (/path/file.gcode) </param>
         /// <param name="printer"> Printer slug to upload to </param>
-        /// <param name= AutostartParam> Flag to indicate the start behavior when uploading gcode. Defaults to autostart </param>
+        /// <param name="autostart"> Flag to indicate the start behavior when uploading gcode. Defaults to autostart </param>
         public async Task<bool> UploadAndStartPrint(string gcodeFilePath, string printer,
             StartBehavior autostart = StartBehavior.Autostart)
         {
@@ -648,20 +441,20 @@ namespace RepetierSharp
             {
                 var request = StartPrintRequest(gcodeFilePath, printer, autostart);
                 var response = await RestClient.ExecuteAsync(request);
-                if (response.StatusCode != HttpStatusCode.OK)
+                if ( response.StatusCode != HttpStatusCode.OK )
                 {
-                    OnRestRequestFailed?.Invoke(printer, response);
+                    await _clientEvents.HttpRequestFailedEvent.InvokeAsync(new HttpContextEventArgs(request, response));
                     return false;
                 }
 
-                if (response.ErrorException != null)
+                if ( response.ErrorException != null )
                 {
                     throw response.ErrorException;
                 }
             }
-            catch (Exception ex)
+            catch ( Exception ex )
             {
-                _logger?.LogError(ex, "Error while uploading and starting print: {Error}", ex.Message);
+                _logger.LogError(ex, "Error while uploading and starting print: {Error}", ex.Message);
             }
 
             return await Task.FromResult(true);
@@ -673,7 +466,7 @@ namespace RepetierSharp
         /// <param name="fileName"> The name of the file to upload (file.gcode) </param>
         /// <param name="file"> The content of the actual gcode file </param>
         /// <param name="printer"> Printer slug to upload to </param>
-        /// <param name= AutostartParam> Flag to indicate the start behavior when uploading gcode. Defaults to autostart </param>
+        /// <param name="autostart"> Flag to indicate the start behavior when uploading gcode. Defaults to autostart </param>
         public async Task<bool> UploadAndStartPrint(string fileName, byte[] file, string printer,
             StartBehavior autostart = StartBehavior.Autostart)
         {
@@ -681,20 +474,20 @@ namespace RepetierSharp
             {
                 var request = StartPrintRequest(fileName, file, printer, autostart);
                 var response = await RestClient.ExecuteAsync(request);
-                if (response.StatusCode != HttpStatusCode.OK)
+                if ( response.StatusCode != HttpStatusCode.OK )
                 {
-                    OnRestRequestFailed?.Invoke(printer, response);
+                    await _clientEvents.HttpRequestFailedEvent.InvokeAsync(new HttpContextEventArgs(request, response));
                     return false;
                 }
 
-                if (response.ErrorException != null)
+                if ( response.ErrorException != null )
                 {
                     throw response.ErrorException;
                 }
             }
-            catch (Exception ex)
+            catch ( Exception ex )
             {
-                _logger?.LogError(ex, "Error while uploading and starting print: {Error}", ex.Message);
+                _logger.LogError(ex, "Error while uploading and starting print: {Error}", ex.Message);
             }
 
             return await Task.FromResult(true);
@@ -706,8 +499,7 @@ namespace RepetierSharp
         /// <param name="printerSlug"> Printer to activate </param>
         public async Task<bool> ActivatePrinter(string printerSlug)
         {
-            ActivePrinter = printerSlug;
-            return await SendCommand(new ActivateCommand(printerSlug));
+            return await SendCommand(new ActivateRequest(printerSlug));
         }
 
         /// <summary>
@@ -716,170 +508,98 @@ namespace RepetierSharp
         /// <param name="printerSlug"> Printer to deactivate </param>
         public async Task<bool> DeactivatePrinter(string printerSlug)
         {
-            ActivePrinter = "";
-            return await SendCommand(new DeactivateCommand(printerSlug));
+            return await SendCommand(new DeactivateRequest(printerSlug));
         }
 
-        /// <summary>
-        /// </summary>
-        /// <param name="message"></param>
-        /// <param name="commandDataObject"></param>
-        private async Task HandleMessage(RepetierBaseMessage message, JsonElement commandDataObject)
+        private async Task ProcessResponse(IRepetierResponse response, int callbackId)
         {
-            var commandStr = CommandManager.CommandIdentifierFor(message.CallBackId);
-            var cmdData = commandDataObject.GetRawText();
-            message.Data = Encoding.UTF8.GetBytes(cmdData);
-            if (commandStr == string.Empty)
-            { 
-                _logger.LogWarning("Received message callbackId '{CallbackId}' could not be found in cache. Not serializing message: '{Json}'", message.CallBackId, cmdData);
-                return;
-            }
-            switch (commandStr)
+            var commandStr = CommandManager.CommandIdentifierFor(callbackId);
+            await _clientEvents.RepetierResponseReceivedEvent.InvokeAsync(
+                new RepetierResponseReceivedEventArgs(callbackId, commandStr, response));
+
+            switch ( commandStr )
             {
                 case CommandConstants.PING:
                     await Task.Delay(TimeSpan.FromSeconds(Math.Min(5, PingInterval / 2)))
-                        .ContinueWith(async t =>
+                        .ContinueWith(async _ =>
                         {
                             await SendPing();
                         });
                     break;
                 case CommandConstants.LOGIN:
-                    var loginMessage = JsonSerializer.Deserialize<LoginMessage>(cmdData);
-                    if (loginMessage != null)
                     {
-                        if (string.IsNullOrEmpty(loginMessage.Error))
+                        var loginMessage = (LoginResponse)response;
+                        if ( string.IsNullOrEmpty(loginMessage.Error) )
                         {
                             await this.QueryOpenMessages();
                         }
-                        OnLoginResult?.Invoke(loginMessage);
-                        if (loginMessage.Authenticated)
+
+                        await _clientEvents.LoginResultEvent.InvokeAsync(new LoginResultEventArgs(loginMessage));
+                        if ( loginMessage.Authenticated )
                         {
-                            OnSessionEstablished?.Invoke(Session.SessionId);
+                            await _clientEvents.SessionIdReceivedEvent.InvokeAsync(
+                                new SessionIdReceivedEventArgs(Session.SessionId));
                         }
                     }
-                    OnResponse?.Invoke(message.CallBackId, commandStr, loginMessage);
-                    break;
-                case CommandConstants.LOGOUT:
-                    OnResponse?.Invoke(message.CallBackId, commandStr, null);
                     break;
                 case CommandConstants.LIST_PRINTER:
-                    var listPrintersMessage = JsonSerializer.Deserialize<List<Printer>>(cmdData);
-                    if (listPrintersMessage != null)
-                    {
-                        OnPrinterListChanged?.Invoke(listPrintersMessage);
-                    }
-                    var printerMsg = new ListPrinterMessage { Printers = listPrintersMessage ?? new List<Printer>() };
-                    OnResponse?.Invoke(message.CallBackId, commandStr, printerMsg);
+                    // TODO:
+                    //var printerMsg = (ListPrinterResponse)response;
+                    //await _serverEvents.PrinterListChangedEvent.InvokeAsync(new PrinterListChangedEventArgs(printerMsg));
                     break;
                 case CommandConstants.STATE_LIST:
-                    var stateListMessage = JsonSerializer.Deserialize<Dictionary<string, PrinterState>>(cmdData);
-                    var stateMsg = new StateListMessage { PrinterStates = stateListMessage };
-                    OnResponse?.Invoke(message.CallBackId, commandStr, stateMsg);
-                    OnPrinterStates?.Invoke(stateMsg);
-                    break;
-                case CommandConstants.RESPONSE:
-                    var responseMessage = JsonSerializer.Deserialize<Models.Messages.ResponseMessage>(cmdData);
-                    OnResponse?.Invoke(message.CallBackId, commandStr, responseMessage);
+                    var stateMsg = (StateListResponse)response;
                     break;
                 case CommandConstants.MESSAGES:
-                    var messagesMessage = JsonSerializer.Deserialize<List<Message>>(cmdData);
-                    if (messagesMessage != null)
-                    {
-                        OnMessagesReceived?.Invoke(messagesMessage);
-                    }
-                    // TODO: Define IRepetierMessage type for response
-                    OnResponse?.Invoke(message.CallBackId, commandStr, null);
-                    break;
-                case CommandConstants.LIST_MODELS:
-                    // TODO:
-                    var modelList = JsonSerializer.Deserialize<List<Model>>(cmdData);
-                    // OnModelListReceived?.Invoke(this, modelList);
-                    break;
-                case CommandConstants.LIST_JOBS:
-                    // TODO:
-                    var jobList = JsonSerializer.Deserialize<List<Model>>(cmdData);
-                    // OnJobListReceived?.Invoke(this, jobList);
-                    break;
-                case CommandConstants.MODEL_INFO:
-                    // TODO:
-                    var modelInfo = JsonSerializer.Deserialize<Model>(cmdData);
-                    // OnModelInfoReceived?.Invoke(this, modelInfo);
-                    break;
-                case CommandConstants.JOB_INFO:
-                    // TODO:
-                    var jobInfo = JsonSerializer.Deserialize<Model>(cmdData);
-                    // OnJobInfoReceived?.Invoke(this, jobInfo);
+                    var messagesMessage = (MessageList)response;
                     break;
                 case CommandConstants.REMOVE_JOB:
                 case CommandConstants.SEND:
                 case CommandConstants.COPY_MODEL:
-                    OnResponse?.Invoke(message.CallBackId, commandStr, null);
-                    break;
                 case CommandConstants.EMERGENCY_STOP:
-                    /* no payload */
-                    OnResponse?.Invoke(message.CallBackId, commandStr, null);
-                    break;
                 case CommandConstants.ACTIVATE:
-                    /* no payload */
-                    OnResponse?.Invoke(message.CallBackId, commandStr, null);
-                    break;
                 case CommandConstants.DEACTIVATE:
+                case CommandConstants.UPDATE_USER:
+                case CommandConstants.START_JOB:
+                case CommandConstants.STOP_JOB:
+                case CommandConstants.CONTINUE_JOB:
+                case CommandConstants.LOGOUT:
                     /* no payload */
-                    OnResponse?.Invoke(message.CallBackId, commandStr, null);
+                    break;
+                /* vvv not yet implemented vvv */
+                case CommandConstants.LIST_MODELS:
+                    var modelList = (ModelResponseList)response;
+                    break;
+                case CommandConstants.LIST_JOBS:
+                    var jobList = (ModelResponseList)response;
+                    break;
+                case CommandConstants.MODEL_INFO:
+                    var modelInfo = (ModelResponse)response;
+                    break;
+                case CommandConstants.JOB_INFO:
+                    var jobInfo = (ModelResponse)response;
                     break;
                 case CommandConstants.CREATE_USER:
-                    var createStatusMessage = JsonSerializer.Deserialize<StatusMessage>(cmdData);
-                    OnResponse?.Invoke(message.CallBackId, commandStr, createStatusMessage);
-                    break;
-                case CommandConstants.UPDATE_USER: 
-                    /* no payload */
-                    OnResponse?.Invoke(message.CallBackId, commandStr, null);
+                    var createStatusMessage = (StatusResponse)response;
                     break;
                 case CommandConstants.DELETE_USER:
-                    var deleteStatusMessage = JsonSerializer.Deserialize<StatusMessage>(cmdData);
-                    OnResponse?.Invoke(message.CallBackId, commandStr, deleteStatusMessage);
+                    var deleteStatusMessage = (StatusResponse)response;
                     break;
                 case CommandConstants.USER_LIST:
-                    // TODO: rework/check message/deserialization
-                    var userList = JsonSerializer.Deserialize<UserListMessage>(cmdData);
-                    OnResponse?.Invoke(message.CallBackId, commandStr, userList);
-                    // payload: { "loginRequired": true, "users": [ { "id": 1, "login": "repetier", "permissions": 15 } ] }
-                    break;
-                case CommandConstants.START_JOB:
-                    /* no payload */
-                    OnResponse?.Invoke(message.CallBackId, commandStr, null);
-                    break;
-                case CommandConstants.STOP_JOB:
-                    /* no payload */
-                    OnResponse?.Invoke(message.CallBackId, commandStr, null);
-                    break;
-                case CommandConstants.CONTINUE_JOB:
-                    /* no payload */
-                    OnResponse?.Invoke(message.CallBackId, commandStr, null);
+                    var userList = (UserListResponse)response;
                     break;
             }
         }
 
-        /// <summary>
-        ///     Handles an incoming repetier event.
-        ///     The event data is then forwarded by calling their corresponding event handlers.
-        /// </summary>
-        private async Task HandleEvent(RepetierBaseEvent repetierEvent, string eventAsJson)
+        private async Task HandleEvent(RepetierBaseEvent repetierEvent)
         {
-            var json = JsonSerializer.Deserialize<JsonDocument>(eventAsJson);
-            if (json == null)
-            {
-                _logger.LogWarning("Received event '{Event}' could not be deserialized. Not processing event: '{Json}'", eventAsJson, eventAsJson);
-                return;
-            }
-            var dataJsonObject = json.RootElement.GetProperty("data");
-            var eventData = dataJsonObject.GetRawText();
-            repetierEvent.Data = Encoding.UTF8.GetBytes(dataJsonObject.GetRawText());
-
-            switch (repetierEvent.Event)
+            var repetierEventArgs = new RepetierEventReceivedEventArgs(repetierEvent.Event, repetierEvent.Printer,
+                repetierEvent.RepetierEvent);
+            await _clientEvents.RepetierEventReceivedEvent.InvokeAsync(repetierEventArgs);
+            switch ( repetierEvent.Event )
             {
                 case EventConstants.JOBS_CHANGED:
-                    OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, null);
+                    // TODO: WTH?
                     ActivePrinter = repetierEvent.Printer;
                     break;
                 case EventConstants.TIMER_30:
@@ -887,147 +607,96 @@ namespace RepetierSharp
                 case EventConstants.TIMER_300:
                 case EventConstants.TIMER_1800:
                 case EventConstants.TIMER_3600:
-                    var timer = (RepetierTimer)int.Parse(repetierEvent.Event[5..]);
-                    if (QueryIntervals.TryGetValue(timer, out var commandDataForInterval))
+                    if ( int.TryParse(repetierEvent.Event[5..], out var timerInt) )
                     {
-                        commandDataForInterval.ForEach(command =>
+                        var timer = (RepetierTimer)timerInt;
+                        var requests = _commandDispatcher.GetRequests(timer);
+                        requests.ForEach(async request =>
                         {
-                            Task.Run(async () => await SendCommand(command, command.GetType()));
+                            await SendCommand(request, request.GetType());
                         });
                     }
 
-                    OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, null);
                     break;
                 case EventConstants.LOGIN_REQUIRED:
-                    if (Session.AuthType == AuthenticationType.Credentials)
+                    // TODO: check
+                    if ( Session.AuthType == AuthenticationType.Credentials )
                     {
-                        var loginRequiredEvent = JsonSerializer.Deserialize<LoginRequired>(eventData);
-
-                        if (loginRequiredEvent != null)
-                        {
-                            Session.SessionId = loginRequiredEvent.SessionId;
-                            await Login();
-                        }
-                        OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, loginRequiredEvent);
+                        var loginRequiredEvent = (LoginRequired)repetierEvent.RepetierEvent;
+                        Session.SessionId = loginRequiredEvent.SessionId;
+                        await Login();
                     }
                     else
                     {
                         throw new InvalidOperationException("Credentials not supplied.");
                     }
-                    OnLoginRequired?.Invoke();
+
+                    await _clientEvents.LoginRequiredEvent.InvokeAsync(new LoginRequiredEventArgs());
                     break;
                 case EventConstants.USER_CREDENTIALS:
-                    var userCredentialsEvent = JsonSerializer.Deserialize<UserCredentials>(eventData);
-                    if (userCredentialsEvent != null)
-                    {
-                        OnUserCredentialsReceived?.Invoke(userCredentialsEvent);
-                    }
-                    OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, userCredentialsEvent);
+                    var userCredentialsEvent = (UserCredentials)repetierEvent.RepetierEvent;
+                    var userCredentialsArgs = new UserCredentialsReceivedEventArgs(userCredentialsEvent);
+                    await _clientEvents.SessionReconnectedEvent.InvokeAsync(userCredentialsArgs);
                     break;
                 case EventConstants.PRINTER_LIST_CHANGED:
-                    var printerListChangedEvent = JsonSerializer.Deserialize<PrinterListChanged>(eventAsJson);
-                    if (printerListChangedEvent != null)
-                    {
-                        OnPrinterListChanged?.Invoke(printerListChangedEvent.Printers);
-                    }
-                    OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, printerListChangedEvent);
-                    /*
-                    var printerList = JsonSerializer.Deserialize<Printer[]>(eventAsJson);
-                    var printerListChangedEvent = new PrinterListChanged() { Printers = new List<Printer>(printerList) };
-                    OnPrinterListChanged?.Invoke(new List<Printer>(printerList));
-                    OnRepetierEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, printerListChangedEvent);
-                    */
+                    var printerListChangedEvent = (PrinterListChanged)repetierEvent.RepetierEvent;
+                    var printerListChangedArgs = new PrinterListChangedEventArgs(printerListChangedEvent);
+                    await _serverEvents.PrinterListChangedEvent.InvokeAsync(printerListChangedArgs);
                     break;
                 case EventConstants.MESSAGES_CHANGED:
-                    OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, null);
-                    await SendCommand(MessagesCommand.Instance, repetierEvent.Printer);
+                    await SendCommand(MessagesRequest.Instance, repetierEvent.Printer);
                     break;
                 case EventConstants.MOVE:
-                    var moveEvent = JsonSerializer.Deserialize<Move>(eventData);
-                    OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, moveEvent);
+                    var moveEntry = (MoveEntry)repetierEvent.RepetierEvent;
+                    var moveEntryArgs = new MovedEventArgs(repetierEvent.Printer, moveEntry);
+                    await _printerEvents.MovedEvent.InvokeAsync(moveEntryArgs);
                     break;
                 case EventConstants.LOG:
-                    var logEvent = JsonSerializer.Deserialize<Log>(eventData);
-                    if (logEvent != null)
-                    {
-                        OnLogReceived?.Invoke(logEvent);
-                    }
-                    OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, logEvent);
+                    var logEntry = (LogEntry)repetierEvent.RepetierEvent;
+                    var logEntryArgs = new LogEntryEventArgs(logEntry);
+                    await _serverEvents.LogEntryEvent.InvokeAsync(logEntryArgs);
                     break;
                 case EventConstants.JOB_FINISHED:
-                    var jobFinishedEvent = JsonSerializer.Deserialize<JobState>(eventData);
-                    if (jobFinishedEvent != null)
-                    {
-                        OnJobFinished?.Invoke(repetierEvent.Printer, jobFinishedEvent);
-                    }
-                    OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, jobFinishedEvent);
+                    var jobFinishedState = (JobState)repetierEvent.RepetierEvent;
+                    var jobFinishedStateArgs = new PrintJobFinishedEventArgs(repetierEvent.Printer, jobFinishedState);
+                    await _printJobEvents.PrintFinishedEvent.InvokeAsync(jobFinishedStateArgs);
                     break;
                 case EventConstants.JOB_KILLED:
-                    var jobKilledEvent = JsonSerializer.Deserialize<JobState>(eventData);
-                    if (jobKilledEvent != null)
-                    {
-                        OnJobKilled?.Invoke(repetierEvent.Printer, jobKilledEvent);
-                    }
-                    OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, jobKilledEvent);
+                    var jobKilledState = (JobState)repetierEvent.RepetierEvent;
+                    var jobKilledStateArgs = new PrintJobKilledEventArgs(repetierEvent.Printer, jobKilledState);
+                    await _printJobEvents.PrintKilledEvent.InvokeAsync(jobKilledStateArgs);
                     break;
                 case EventConstants.JOB_STARTED:
-                    var jobStartedEvent = JsonSerializer.Deserialize<JobStarted>(eventData);
-                    if (jobStartedEvent != null)
-                    {
-                        OnJobStarted?.Invoke(repetierEvent.Printer, jobStartedEvent);
-                    }
-                    OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, jobStartedEvent);
-                    break;
-                case EventConstants.EEPROM_DATA:
-                    var eepromDataEvents = JsonSerializer.Deserialize<List<EepromData>>(eventData);
-                    eepromDataEvents?.ForEach(eepromData =>
-                        OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, eepromData));
+                    var jobStartedInfo = (JobStarted)repetierEvent.RepetierEvent;
+                    var jobStartedArgs = new PrintJobStartedEventArgs(repetierEvent.Printer, jobStartedInfo);
+                    await _printJobEvents.PrintStartedEvent.InvokeAsync(jobStartedArgs);
                     break;
                 case EventConstants.STATE:
-                    var printerStateChangedEvent = JsonSerializer.Deserialize<PrinterStateChange>(eventData);
-                    if (printerStateChangedEvent != null)
-                    {
-                        OnPrinterState?.Invoke(repetierEvent.Printer, printerStateChangedEvent.PrinterState);
-                    }
-                    OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, printerStateChangedEvent);
-                    break;
-                case EventConstants.CONFIG:
-                    var printerConfigEvent = JsonSerializer.Deserialize<PrinterConfig>(eventData);
-                    OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, printerConfigEvent);
-                    break;
-                case EventConstants.FIRMWARE_CHANGED:
-                    var firmwareData = JsonSerializer.Deserialize<FirmwareData>(eventData);
-                    OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, firmwareData);
+                    var printerStateChange = (PrinterStateChange)repetierEvent.RepetierEvent;
+                    var printerStateChangedArgs =
+                        new StateChangedEventArgs(repetierEvent.Printer, printerStateChange.PrinterState);
+                    await _printerEvents.StateChangedEvent.InvokeAsync(printerStateChangedArgs);
                     break;
                 case EventConstants.TEMP:
-                    var tempChangeEvent = JsonSerializer.Deserialize<Temp>(eventData);
-                    OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, tempChangeEvent);
-                    if (tempChangeEvent != null)
-                    {
-                        OnTempChange?.Invoke(repetierEvent.Printer, tempChangeEvent);    
-                    }
-                    break;
-                case EventConstants.SETTING_CHANGED:
-                    //var settings = JsonSerializer.Deserialize<List<SettingChangedEvent>>(eventData);
-                    //OnRepetierEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, settings);
+                    var tempEntry = (TempEntry)repetierEvent.RepetierEvent;
+                    var tempChangeArgs = new TemperatureChangedEventArgs(repetierEvent.Printer, tempEntry);
+                    await _printerEvents.TemperatureChangedEvent.InvokeAsync(tempChangeArgs);
                     break;
                 case EventConstants.PRINTER_SETTING_CHANGED:
-                    var printerSetting = JsonSerializer.Deserialize<SettingChanged>(eventData);
-                    if (printerSetting != null)
-                    {
-                        OnPrinterSettingChanged?.Invoke(printerSetting, repetierEvent.Printer);
-                    }
-                    OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, printerSetting);
+                    var printerSetting = (PrinterSetting)repetierEvent.RepetierEvent;
+                    var settingChangedArgs = new SettingChangedEventArgs(repetierEvent.Printer, printerSetting);
+                    await _printerEvents.SettingChangedEvent.InvokeAsync(settingChangedArgs);
                     break;
                 case EventConstants.PRINTER_CONDITION_CHANGED:
-                    var conditionChange = JsonSerializer.Deserialize<PrinterConditionChanged>(eventData);
-                    if (conditionChange != null)
-                    {
-                        OnPrinterConditionChanged?.Invoke(conditionChange, repetierEvent.Printer);
-                    }
-                    OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, conditionChange);
+                    var printerConditionChange = (PrinterConditionChanged)repetierEvent.RepetierEvent;
+                    var conditionChangedArgs =
+                        new ConditionChangedEventArgs(repetierEvent.Printer, printerConditionChange);
+                    await _printerEvents.ConditionChangedEvent.InvokeAsync(conditionChangedArgs);
                     break;
-                //case EventConstants.JOBS_CHANGED:
+                case EventConstants.EEPROM_DATA:
+                case EventConstants.SETTING_CHANGED:
+                case EventConstants.CONFIG:
+                case EventConstants.FIRMWARE_CHANGED:
                 case EventConstants.LOGOUT:
                 case EventConstants.PRINT_QUEUE_CHANGED:
                 case EventConstants.FOLDERS_CHANGED:
@@ -1038,7 +707,6 @@ namespace RepetierSharp
                 case EventConstants.CHANGE_FILAMENT_REQUESTED:
                 case EventConstants.REMOTE_SERVERS_CHANGED:
                 case EventConstants.GET_EXTERNAL_LINKS:
-                    OnEvent?.Invoke(repetierEvent.Event, repetierEvent.Printer, null);
                     break;
             }
         }
@@ -1048,35 +716,37 @@ namespace RepetierSharp
         /// </summary>
         /// <param name="command"> The command to send to the server </param>
         /// <returns></returns>
-        public async Task<bool> SendCommand(ICommandData command)
+        public async Task<bool> SendCommand(IRepetierRequest command)
         {
             return await SendCommand(command, command.GetType(), ActivePrinter);
         }
 
-        private async Task<bool> SendCommand(ICommandData command, string printer)
+        private async Task<bool> SendCommand(IRepetierRequest command, string printer)
         {
             return await SendCommand(command, command.GetType(), printer);
         }
 
-        protected async Task<bool> SendCommand(ICommandData command, Type commandType)
+        protected async Task<bool> SendCommand(IRepetierRequest command, Type commandType)
         {
             return await SendCommand(command, commandType, ActivePrinter);
         }
 
-        protected async Task<bool> SendCommand(ICommandData command, Type commandType, string printer)
+        protected async Task<bool> SendCommand(IRepetierRequest command, Type commandType, string printer)
         {
             var baseCommand = CommandManager.CommandWithId(command, commandType, printer);
-            return await Task.Run(() =>
+            return await Task.Run(async () =>
             {
                 var isInQueue = WebSocketClient.Send(baseCommand.ToBytes());
                 if ( isInQueue )
                 {
-                    OnRequestSend?.Invoke(baseCommand);
+                    await _clientEvents.RepetierRequestSendEvent.InvokeAsync(new RepetierRequestEventArgs(baseCommand));
                 }
                 else
                 {
-                    OnFailedRequest?.Invoke(baseCommand);
+                    await _clientEvents.RepetierRequestFailedEvent.InvokeAsync(
+                        new RepetierRequestEventArgs(baseCommand));
                 }
+
                 return isInQueue;
             });
         }
@@ -1100,7 +770,7 @@ namespace RepetierSharp
         /// </summary>
         public async Task Login()
         {
-            if (!string.IsNullOrEmpty(Session.LoginName) && !string.IsNullOrEmpty(Session.Password))
+            if ( !string.IsNullOrEmpty(Session.LoginName) && !string.IsNullOrEmpty(Session.Password) )
             {
                 await Login(Session.LoginName, Session.Password);
             }
@@ -1115,11 +785,367 @@ namespace RepetierSharp
         /// <param name="password"> The password in plaintext </param>
         public async Task Login(string user, string password)
         {
-            if (!string.IsNullOrEmpty(Session.SessionId))
+            if ( !string.IsNullOrEmpty(Session.SessionId) )
             {
                 var pw = CommandHelper.HashPassword(Session.SessionId, user, password);
-                await SendCommand(new LoginCommand(user, pw, Session.LongLivedSession), typeof(LoginCommand));
+                await SendCommand(new LoginRequest(user, pw, Session.LongLivedSession), typeof(LoginRequest));
             }
+        }
+
+        #region Client Events
+
+        private readonly RepetierClientEvents _clientEvents = new();
+
+        /// <summary>
+        ///     Fired when the connection with the server is established successfully for the first time. <br></br>
+        ///     At this point, the sessionId should already be assigned to this RepetierConnection.
+        /// </summary>
+        public event Func<RepetierConnectedEventArgs, Task> ConnectedAsync
+        {
+            add => _clientEvents.ConnectedEvent.AddHandler(value);
+            remove => _clientEvents.ConnectedEvent.RemoveHandler(value);
+        }
+
+        /// <summary>
+        ///     Fired after establishment of the connection to the server if the server requires a login. <br></br>
+        ///     This might be the case if no API-Key is supplied in the URI and the server has at least one user account.
+        /// </summary>
+        public event Func<LoginRequiredEventArgs, Task> LoginRequiredAsync
+        {
+            add => _clientEvents.LoginRequiredEvent.AddHandler(value);
+            remove => _clientEvents.LoginRequiredEvent.RemoveHandler(value);
+        }
+
+        /// <summary>
+        ///     Fired when the login result response is received from the server after sending the login request.
+        /// </summary>
+        public event Func<LoginResultEventArgs, Task> LoginResultAsync
+        {
+            add => _clientEvents.LoginResultEvent.AddHandler(value);
+            remove => _clientEvents.LoginResultEvent.RemoveHandler(value);
+        }
+
+        /// <summary>
+        ///     Event which is fired when a command is not permitted for the current sessionId.
+        /// </summary>
+        public event Func<PermissionDeniedEventArgs, Task> PermissionDeniedAsync
+        {
+            add => _clientEvents.PermissionDeniedEvent.AddHandler(value);
+            remove => _clientEvents.PermissionDeniedEvent.RemoveHandler(value);
+        }
+
+        /// <summary>
+        ///     Event which is fired when a command is not permitted for the current sessionId.
+        /// </summary>
+        public event Func<SessionIdReceivedEventArgs, Task> SessionIdReceivedAsync
+        {
+            add => _clientEvents.SessionIdReceivedEvent.AddHandler(value);
+            remove => _clientEvents.SessionIdReceivedEvent.RemoveHandler(value);
+        }
+
+        /// <summary>
+        ///     Fired when reconnecting to a still existing session. There is no login is required with an existing session.
+        ///     <br></br>
+        ///     This is the first event you will receive. It contains the permission flags, login name of the user and user only
+        ///     settings.
+        /// </summary>
+        public event Func<UserCredentialsReceivedEventArgs, Task> SessionReconnectedAsync
+        {
+            add => _clientEvents.SessionReconnectedEvent.AddHandler(value);
+            remove => _clientEvents.SessionReconnectedEvent.RemoveHandler(value);
+        }
+
+        /// <summary>
+        ///     Fired for received events from the repetier server. Note that temp, move and log events are not included here.
+        ///     <br></br>
+        ///     They can be enabled by setting the appropriate properties.
+        /// </summary>
+        public event Func<RepetierEventReceivedEventArgs, Task> RepetierEventReceivedAsync
+        {
+            add => _clientEvents.RepetierEventReceivedEvent.AddHandler(value);
+            remove => _clientEvents.RepetierEventReceivedEvent.RemoveHandler(value);
+        }
+
+        /// <summary>
+        ///     Fired whenever an event from the repetier server is received. Unlike the RepetierEventReceivedAsync event,
+        ///     <br></br>
+        ///     this event includes the raw event itself (content of the data field).  <br></br>
+        ///     This is mainly a fallback event for backwards compatibility and support events in newer repetier versions,
+        ///     <br></br>
+        ///     which are not yet implemented by RepetierSharp.
+        /// </summary>
+        public event Func<RawRepetierEventReceivedEventArgs, Task> RawRepetierEventReceivedAsync
+        {
+            add => _clientEvents.RawRepetierEventReceivedEvent.AddHandler(value);
+            remove => _clientEvents.RawRepetierEventReceivedEvent.RemoveHandler(value);
+        }
+
+        /// <summary>
+        ///     Fired when a response from the server is received. This does not include the ping response.
+        /// </summary>
+        public event Func<RepetierResponseReceivedEventArgs, Task> RepetierResponseReceivedAsync
+        {
+            add => _clientEvents.RepetierResponseReceivedEvent.AddHandler(value);
+            remove => _clientEvents.RepetierResponseReceivedEvent.RemoveHandler(value);
+        }
+
+        /// <summary>
+        ///     Fired when a raw response from the server is received. Unlike the RepetierResponseReceivedAsync event, <br></br>
+        ///     this event includes the raw response itself (content of the data field). <br></br>
+        ///     This is mainly a fallback event for backwards compatibility and support events in newer repetier versions,
+        ///     <br></br>
+        ///     which are not yet implemented by RepetierSharp.
+        /// </summary>
+        public event Func<RawRepetierResponseReceivedEventArgs, Task> RawRepetierResponseReceivedAsync
+        {
+            add => _clientEvents.RawRepetierResponseReceivedEvent.AddHandler(value);
+            remove => _clientEvents.RawRepetierResponseReceivedEvent.RemoveHandler(value);
+        }
+
+        #endregion
+
+        #region PrintJob Events
+
+        private readonly RepetierPrintJobEvents _printJobEvents = new();
+
+        public event Func<PrintJobStartedEventArgs, Task> PrintStartedAsync
+        {
+            add => _printJobEvents.PrintStartedEvent.AddHandler(value);
+            remove => _printJobEvents.PrintStartedEvent.RemoveHandler(value);
+        }
+
+        /// <summary>
+        ///     Fired after a print job has been finished.
+        /// </summary>
+        public event Func<PrintJobFinishedEventArgs, Task> PrintFinishedAsync
+        {
+            add => _printJobEvents.PrintFinishedEvent.AddHandler(value);
+            remove => _printJobEvents.PrintFinishedEvent.RemoveHandler(value);
+        }
+
+        /// <summary>
+        ///     Fired after a normal job has been finished or killed. Shortcut if you do not care why a job is not active anymore.
+        /// </summary>
+        public event Func<PrintJobDeactivatedEventArgs, Task> PrintDeactivatedAsync
+        {
+            add => _printJobEvents.PrintDeactivatedEvent.AddHandler(value);
+            remove => _printJobEvents.PrintDeactivatedEvent.RemoveHandler(value);
+        }
+
+        /// <summary>
+        ///     Triggered after a print job has been killed.
+        /// </summary>
+        public event Func<PrintJobKilledEventArgs, Task> PrintKilledAsync
+        {
+            add => _printJobEvents.PrintKilledEvent.AddHandler(value);
+            remove => _printJobEvents.PrintKilledEvent.RemoveHandler(value);
+        }
+
+        /// <summary>
+        ///     Triggered when a failure upon starting a print job was detected. This usually happens when the printer is not ready
+        ///     or on connection issues.
+        /// </summary>
+        public event Func<PrintJobStartFailedEventArgs, Task> PrintStartFailedAsync
+        {
+            add => _printJobEvents.PrintStartFailedEvent.AddHandler(value);
+            remove => _printJobEvents.PrintStartFailedEvent.RemoveHandler(value);
+        }
+
+        /// <summary>
+        ///     Fired after a job got added. It might already be started for printing and info might be in state of evaluation at
+        ///     that point.
+        /// </summary>
+        public event Func<PrintJobAddedEventArgs, Task> PrintJobChangedAsync
+        {
+            add => _printJobEvents.PrintJobAddedEvent.AddHandler(value);
+            remove => _printJobEvents.PrintJobAddedEvent.RemoveHandler(value);
+        }
+
+        #endregion
+
+        #region Printer Events
+
+        private readonly RepetierPrinterEvents _printerEvents = new();
+
+        /// <summary>
+        ///     Fired when the state of a printer changes.
+        /// </summary>
+        public event Func<StateChangedEventArgs, Task> PrinterStateReceivedAsync
+        {
+            add => _printerEvents.StateChangedEvent.AddHandler(value);
+            remove => _printerEvents.StateChangedEvent.RemoveHandler(value);
+        }
+
+        /// <summary>
+        ///     Fired when the condition of a printer changes
+        /// </summary>
+        public event Func<ConditionChangedEventArgs, Task> PrinterConditionChangedAsync
+        {
+            add => _printerEvents.ConditionChangedEvent.AddHandler(value);
+            remove => _printerEvents.ConditionChangedEvent.RemoveHandler(value);
+        }
+
+        /// <summary>
+        ///     Fired everytime settings of a printer change
+        /// </summary>
+        public event Func<SettingChangedEventArgs, Task> PrinterSettingChangedAsync
+        {
+            add => _printerEvents.SettingChangedEvent.AddHandler(value);
+            remove => _printerEvents.SettingChangedEvent.RemoveHandler(value);
+        }
+
+        /// <summary>
+        ///     Fired when a printer has a change in it's stored g-file list.
+        /// </summary>
+        public event Func<JobsChangedEventArgs, Task> PrinterJobsChangedAsync
+        {
+            add => _printerEvents.JobsChangedEvent.AddHandler(value);
+            remove => _printerEvents.JobsChangedEvent.RemoveHandler(value);
+        }
+
+        /// <summary>
+        ///     Fired after the response for the printer activation request from was received.
+        /// </summary>
+        public event Func<ActivatedEventArgs, Task> PrinterActivatedAsync
+        {
+            add => _printerEvents.PrinterActivatedEvent.AddHandler(value);
+            remove => _printerEvents.PrinterActivatedEvent.RemoveHandler(value);
+        }
+
+        /// <summary>
+        ///     Fired after the response for the printer deactivation request from was received.
+        /// </summary>
+        public event Func<DeactivatedEventArgs, Task> PrinterDeactivatedAsync
+        {
+            add => _printerEvents.PrinterDeactivatedEvent.AddHandler(value);
+            remove => _printerEvents.PrinterDeactivatedEvent.RemoveHandler(value);
+        }
+
+        /// <summary>
+        ///     Fired after the response for the emergency stop request from the printer was received.
+        /// </summary>
+        public event Func<EmergencyStopTriggeredEventArgs, Task> PrinterEmergencyStopTriggeredAsync
+        {
+            add => _printerEvents.EmergencyStopTriggeredEvent.AddHandler(value);
+            remove => _printerEvents.EmergencyStopTriggeredEvent.RemoveHandler(value);
+        }
+
+        /// <summary>
+        ///     Fired after a new temperature entry for the printer is available. Depending on the printer configuration this can
+        ///     be a very frequently occurring event.
+        /// </summary>
+        public event Func<TemperatureChangedEventArgs, Task> PrinterTempChangedAsync
+        {
+            add => _printerEvents.TemperatureChangedEvent.AddHandler(value);
+            remove => _printerEvents.TemperatureChangedEvent.RemoveHandler(value);
+        }
+
+        /// <summary>
+        ///     Triggered for every move the printer does. This can be used to provide a live preview of what the printer does.
+        ///     This is only fired when moves are enabled (sendMoves action).
+        /// </summary>
+        public event Func<MovedEventArgs, Task> PrinterMovedAsync
+        {
+            add => _printerEvents.MovedEvent.AddHandler(value);
+            remove => _printerEvents.MovedEvent.RemoveHandler(value);
+        }
+
+        #endregion
+
+        #region Server Events
+
+        private readonly RepetierServerEvents _serverEvents = new();
+
+        /// <summary>
+        ///     Fired for each new log line. You received logs depends on the log level set at the server.
+        /// </summary>
+        public event Func<LogEntryEventArgs, Task> LogEntryAsync
+        {
+            add => _serverEvents.LogEntryEvent.AddHandler(value);
+            remove => _serverEvents.LogEntryEvent.RemoveHandler(value);
+        }
+
+        /// <summary>
+        ///     Fired whenever a printer was added, deleted or modified.
+        /// </summary>
+        public event Func<PrinterListChangedEventArgs, Task> PrinterListChangedAsync
+        {
+            add => _serverEvents.PrinterListChangedEvent.AddHandler(value);
+            remove => _serverEvents.PrinterListChangedEvent.RemoveHandler(value);
+        }
+
+        /// <summary>
+        ///     Fired when a new message gets available. <br></br>
+        ///     Contains the new added message as payload or null when a message got removed.
+        /// </summary>
+        public event Func<MessagesChangedEventArgs, Task> MessagesChangedAsync
+        {
+            add => _serverEvents.MessagesChangedEvent.AddHandler(value);
+            remove => _serverEvents.MessagesChangedEvent.RemoveHandler(value);
+        }
+
+        /// <summary>
+        ///     Fired for every command/request send to the repetier server. <br></br>
+        ///     This is mainly useful for debugging purposes.
+        /// </summary>
+        public event Func<RepetierRequestEventArgs, Task> RepetierRequestSendAsync
+        {
+            add => _clientEvents.RepetierRequestSendEvent.AddHandler(value);
+            remove => _clientEvents.RepetierRequestSendEvent.RemoveHandler(value);
+        }
+
+        /// <summary>
+        ///     Fired when a request to the repetier server failed. <br></br>
+        ///     This happens when the websocket client is unable to queue the request internally. <br></br>
+        ///     To check if the server received the response either listen for the corresponding response.
+        /// </summary>
+        public event Func<RepetierRequestEventArgs, Task> RepetierRequestFailedAsync
+        {
+            add => _clientEvents.RepetierRequestFailedEvent.AddHandler(value);
+            remove => _clientEvents.RepetierRequestFailedEvent.RemoveHandler(value);
+        }
+
+        public event Func<HttpContextEventArgs, Task> HttpRequestFailedAsync
+        {
+            add => _clientEvents.HttpRequestFailedEvent.AddHandler(value);
+            remove => _clientEvents.HttpRequestFailedEvent.RemoveHandler(value);
+        }
+
+        #endregion
+
+        public uint PingInterval
+        {
+            get => _pingInterval;
+            set
+            {
+                _pingInterval = value;
+                Task.Run(async () => await SendExtendPing(_pingInterval));
+            }
+        }
+
+        private long _lastPingTimestamp;
+        private uint _pingInterval = 10000;
+        private TimeSpan _pingTimeSpan = TimeSpan.FromMilliseconds(10000);
+
+        private readonly ILogger<RepetierConnection> _logger;
+
+        private readonly CommandDispatcher _commandDispatcher = new();
+        private CommandManager CommandManager { get; } = new();
+        private IWebsocketClient WebSocketClient { get; set; }
+        private IRestClient RestClient { get; set; }
+        private RepetierSession Session { get; init; }
+        private string ActivePrinter { get; set; } = "";
+    }
+
+    public sealed class CommandDispatcher
+    {
+        public Dictionary<RepetierTimer, List<IRepetierRequest>> QueryIntervals { get; } = new();
+
+        public List<IRepetierRequest> GetRequests(RepetierTimer timer)
+        {
+            return QueryIntervals.TryGetValue(timer, out var commandDataForInterval)
+                ? commandDataForInterval
+                : new List<IRepetierRequest>();
         }
     }
 }
