@@ -1,7 +1,7 @@
 using System;
 using RepetierSharp.Models.Events;
 using RepetierSharp.Models.Messages;
-using RepetierSharp.Models.Requests;
+using RepetierSharp.Models.Commands;
 
 namespace RepetierSharp.Internal
 {

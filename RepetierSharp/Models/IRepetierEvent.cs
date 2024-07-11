@@ -1,4 +1,4 @@
-﻿namespace RepetierSharp.Models.Events
+﻿namespace RepetierSharp.Models
 {
     public interface IRepetierMessage
     {

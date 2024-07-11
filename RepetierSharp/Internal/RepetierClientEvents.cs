@@ -1,4 +1,5 @@
 using System;
+using RepetierSharp.Models;
 using RepetierSharp.Models.Events;
 using RepetierSharp.Models.Messages;
 using RestSharp;

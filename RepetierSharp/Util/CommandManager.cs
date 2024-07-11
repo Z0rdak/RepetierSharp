@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using RepetierSharp.Models.Requests;
+using RepetierSharp.Models;
+using RepetierSharp.Models.Commands;
 
 namespace RepetierSharp.Util
 {
@@ -27,7 +28,7 @@ namespace RepetierSharp.Util
             return _callBackId += 1;
         }
 
-        public RepetierBaseRequest CommandWithId(IRepetierRequest command, Type commandType, string printer = "")
+        public RepetierBaseRequest CommandWithId(IRepetierCommand command, Type commandType, string printer = "")
         {
             var callbackId = Next();
             _callbackMap.Add(callbackId, command.CommandIdentifier);

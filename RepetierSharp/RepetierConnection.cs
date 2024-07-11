@@ -14,10 +14,12 @@ using RepetierSharp.Internal;
 using RepetierSharp.Models;
 using RepetierSharp.Models.Events;
 using RepetierSharp.Models.Messages;
-using RepetierSharp.Models.Requests;
+using RepetierSharp.Models.Commands;
 using RepetierSharp.Util;
 using RestSharp;
 using Websocket.Client;
+using LoginCommand = RepetierSharp.Models.Commands.LoginCommand;
+using PingCommand = RepetierSharp.Models.Commands.PingCommand;
 using ResponseMessage = Websocket.Client.ResponseMessage;
 
 namespace RepetierSharp
@@ -254,12 +256,12 @@ namespace RepetierSharp
 
         private async Task<bool> SendPing()
         {
-            return await SendCommand(PingRequest.Instance, typeof(PingRequest));
+            return await SendCommand(PingCommand.Instance, typeof(PingCommand));
         }
 
         public async Task<bool> SendExtendPing(uint timeout)
         {
-            return await SendCommand(new ExtendPingRequest(timeout), typeof(ExtendPingRequest));
+            return await SendCommand(new ExtendPingCommand(timeout), typeof(ExtendPingCommand));
         }
 
 
@@ -504,7 +506,7 @@ namespace RepetierSharp
         /// <param name="printerSlug"> Printer to activate </param>
         public async Task<bool> ActivatePrinter(string printerSlug)
         {
-            return await SendCommand(new ActivateRequest(printerSlug));
+            return await SendCommand(new ActivateCommand(printerSlug));
         }
 
         /// <summary>
@@ -513,7 +515,7 @@ namespace RepetierSharp
         /// <param name="printerSlug"> Printer to deactivate </param>
         public async Task<bool> DeactivatePrinter(string printerSlug)
         {
-            return await SendCommand(new DeactivateRequest(printerSlug));
+            return await SendCommand(new DeactivateCommand(printerSlug));
         }
 
         private async Task ProcessResponse(IRepetierResponse response, int callbackId)
@@ -649,7 +651,7 @@ namespace RepetierSharp
                     await _serverEvents.PrinterListChangedEvent.InvokeAsync(printerListChangedArgs);
                     break;
                 case EventConstants.MESSAGES_CHANGED:
-                    await SendCommand(MessagesRequest.Instance, repetierEvent.Printer);
+                    await SendCommand(MessagesCommand.Instance, repetierEvent.Printer);
                     break;
                 case EventConstants.MOVE:
                     var moveEntry = (MoveEntry)repetierEvent.RepetierEvent;
@@ -721,22 +723,22 @@ namespace RepetierSharp
         /// </summary>
         /// <param name="command"> The command to send to the server </param>
         /// <returns></returns>
-        public async Task<bool> SendCommand(IRepetierRequest command)
+        public async Task<bool> SendCommand(IRepetierCommand command)
         {
             return await SendCommand(command, command.GetType(), ActivePrinter);
         }
 
-        private async Task<bool> SendCommand(IRepetierRequest command, string printer)
+        private async Task<bool> SendCommand(IRepetierCommand command, string printer)
         {
             return await SendCommand(command, command.GetType(), printer);
         }
 
-        protected async Task<bool> SendCommand(IRepetierRequest command, Type commandType)
+        protected async Task<bool> SendCommand(IRepetierCommand command, Type commandType)
         {
             return await SendCommand(command, commandType, ActivePrinter);
         }
 
-        protected async Task<bool> SendCommand(IRepetierRequest command, Type commandType, string printer)
+        protected async Task<bool> SendCommand(IRepetierCommand command, Type commandType, string printer)
         {
             var baseCommand = CommandManager.CommandWithId(command, commandType, printer);
             return await Task.Run(async () =>
@@ -793,7 +795,7 @@ namespace RepetierSharp
             if ( !string.IsNullOrEmpty(Session.SessionId) )
             {
                 var pw = CommandHelper.HashPassword(Session.SessionId, user, password);
-                await SendCommand(new LoginRequest(user, pw, Session.LongLivedSession), typeof(LoginRequest));
+                await SendCommand(new LoginCommand(user, pw, Session.LongLivedSession), typeof(LoginCommand));
             }
         }
 
@@ -1060,6 +1062,12 @@ namespace RepetierSharp
             add => _printerEvents.MovedEvent.AddHandler(value);
             remove => _printerEvents.MovedEvent.RemoveHandler(value);
         }
+        
+        public event Func<LayerChangedEventArgs, Task> LayerChangedAsync
+        {
+            add => _printerEvents.LayerChangedEvent.AddHandler(value);
+            remove => _printerEvents.LayerChangedEvent.RemoveHandler(value);
+        }
 
         #endregion
 
@@ -1146,17 +1154,5 @@ namespace RepetierSharp
         private IRestClient RestClient { get; set; }
         private RepetierSession Session { get; init; }
         private string ActivePrinter { get; set; } = "";
-    }
-
-    public sealed class CommandDispatcher
-    {
-        public Dictionary<RepetierTimer, List<IRepetierRequest>> QueryIntervals { get; } = new();
-
-        public List<IRepetierRequest> GetRequests(RepetierTimer timer)
-        {
-            return QueryIntervals.TryGetValue(timer, out var commandDataForInterval)
-                ? commandDataForInterval
-                : new List<IRepetierRequest>();
-        }
     }
 }

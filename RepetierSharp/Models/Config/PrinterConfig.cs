@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using RepetierSharp.Models;
 using RepetierSharp.Models.Config;
 using RepetierSharp.Models.Events;
 
