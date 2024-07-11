@@ -2,12 +2,14 @@ using System;
 using RepetierSharp.Models.Events;
 using RepetierSharp.Models.Messages;
 using RestSharp;
+using Websocket.Client;
 
 namespace RepetierSharp.Internal
 {
     public sealed class RepetierClientEvents
     {
         public AsyncEvent<RepetierConnectedEventArgs> ConnectedEvent { get; } = new();
+        public AsyncEvent<RepetierDisconnectedEventArgs> DisconnectedEvent { get; } = new();
         public AsyncEvent<LoginRequiredEventArgs> LoginRequiredEvent { get; } = new();
         public AsyncEvent<LoginResultEventArgs> LoginResultEvent { get; } = new();
         public AsyncEvent<PermissionDeniedEventArgs> PermissionDeniedEvent { get; } = new();
@@ -146,6 +148,15 @@ namespace RepetierSharp.Internal
     {
     }
 
+    public sealed class RepetierDisconnectedEventArgs : EventArgs
+    {
+        public RepetierDisconnectedEventArgs(DisconnectionInfo info)
+        {
+            Info = info;
+        }
+
+        public DisconnectionInfo Info { get; }
+    }
 
     public sealed class RepetierConnectedEventArgs : EventArgs
     {

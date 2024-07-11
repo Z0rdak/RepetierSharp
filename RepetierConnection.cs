@@ -232,6 +232,11 @@ namespace RepetierSharp
 
         private void OnDisconnect(DisconnectionInfo info)
         {
+            Task.Run(async () =>
+            {
+                var disconnectedArgs = new RepetierDisconnectedEventArgs(info);
+                await _clientEvents.DisconnectedEvent.InvokeAsync(disconnectedArgs);
+            });
             _logger.LogInformation("[WebSocket] Connection closed: Reason={Reason}, Status={Status}, Desc={Desc}",
                 info.Type, info.CloseStatus, info.CloseStatusDescription);
         }
@@ -805,6 +810,12 @@ namespace RepetierSharp
             add => _clientEvents.ConnectedEvent.AddHandler(value);
             remove => _clientEvents.ConnectedEvent.RemoveHandler(value);
         }
+        
+        public event Func<RepetierDisconnectedEventArgs, Task> DisconnectedAsync
+        {
+            add => _clientEvents.DisconnectedEvent.AddHandler(value);
+            remove => _clientEvents.DisconnectedEvent.RemoveHandler(value);
+        }
 
         /// <summary>
         ///     Fired after establishment of the connection to the server if the server requires a login. <br></br>
@@ -860,7 +871,7 @@ namespace RepetierSharp
         ///     <br></br>
         ///     They can be enabled by setting the appropriate properties.
         /// </summary>
-        public event Func<RepetierEventReceivedEventArgs, Task> RepetierEventReceivedAsync
+        public event Func<RepetierEventReceivedEventArgs, Task> EventReceivedAsync
         {
             add => _clientEvents.RepetierEventReceivedEvent.AddHandler(value);
             remove => _clientEvents.RepetierEventReceivedEvent.RemoveHandler(value);
