@@ -6,5 +6,6 @@ namespace RepetierSharp.Models.Events
     public class LayerChanged : IRepetierEvent
     {
         [JsonPropertyName("layer")] public int Layer { get; set; }
+        [JsonPropertyName("maxLayer")] public int MaxLayer { get; set; }
     }
 }

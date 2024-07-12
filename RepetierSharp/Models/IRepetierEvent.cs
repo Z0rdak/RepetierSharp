@@ -11,4 +11,6 @@
     public interface IRepetierEvent : IRepetierMessage
     {
     }
+    
+    public class EmptyEvent : IRepetierEvent {}
 }

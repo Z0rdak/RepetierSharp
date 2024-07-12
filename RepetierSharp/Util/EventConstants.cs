@@ -45,12 +45,5 @@ namespace RepetierSharp.Util
         public const string TIMER_1800 = "timer1800";
         public const string TIMER_3600 = "timer3600";
 
-        public static readonly ImmutableDictionary<string, Type> EventMap = ImmutableDictionary.CreateRange
-        (new[]
-            {
-                KeyValuePair.Create("log", typeof(LogEntry)), KeyValuePair.Create("move", typeof(MoveEntry)),
-                KeyValuePair.Create("layerChanged", typeof(LayerChanged))
-            }
-        );
     }
 }
