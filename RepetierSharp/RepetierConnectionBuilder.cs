@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Net;
-using RepetierSharp.Models;
 using RepetierSharp.Models.Events;
 using RepetierSharp.Models.Commands;
 using RestSharp;
@@ -93,17 +91,6 @@ namespace RepetierSharp
             }
 
             /// <summary>
-            ///     Keep alive interval for the websocket connection.
-            /// </summary>
-            /// <param name="interval"></param>
-            /// <returns></returns>
-            public RepetierConnectionBuilder PingInterval(uint interval = 3000)
-            {
-                _repetierConnection.PingInterval = interval;
-                return this;
-            }
-
-            /// <summary>
             /// </summary>
             /// <param name="apiKey"></param>
             /// <returns></returns>
@@ -111,6 +98,29 @@ namespace RepetierSharp
             {
                 _repetierConnection.Session.ApiKey = apiKey;
                 _repetierConnection.Session.AuthType = AuthenticationType.ApiKey;
+                return this;
+            }
+            
+            /// <summary>
+            ///     Keep alive interval for the websocket connection.
+            /// </summary>
+            /// <param name="seconds"></param>
+            /// <returns></returns>
+            public RepetierConnectionBuilder WithTimeout(int seconds = 10)
+            {
+                _repetierConnection.Session.KeepAlivePing = TimeSpan.FromSeconds(seconds);
+                return this;
+            }
+
+            
+            /// <summary>
+            ///     Keep alive interval for the websocket connection.
+            /// </summary>
+            /// <param name="timeout"></param>
+            /// <returns></returns>
+            public RepetierConnectionBuilder WithTimeout(TimeSpan timeout)
+            {
+                _repetierConnection.Session.KeepAlivePing = timeout;
                 return this;
             }
 
