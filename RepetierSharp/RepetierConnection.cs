@@ -37,7 +37,7 @@ namespace RepetierSharp
             WriteIndented = true,
             Converters =
             {
-                new RepetierEventConverter(), new RepetierMessageConverter(), new RepetierBaseEventConverter()
+                new RepetierBaseEventConverter()
             }
         };
 
@@ -48,6 +48,12 @@ namespace RepetierSharp
             {
                 await _clientEvents.ConnectedEvent.InvokeAsync(new RepetierConnectedEventArgs(sessionIdArgs.SessionId));
             };
+        }
+        
+        public RepetierConnection(RestClient restClient, IWebsocketClient websocket) : this()
+        {
+            this.RestClient = restClient;
+            this.WebSocketClient = websocket;
         }
 
         /// <summary>
@@ -142,8 +148,7 @@ namespace RepetierSharp
                 {
                     PublishRawEventInfo(dataElement);
                     // process events
-                    var repetierBaseEvents =
-                        JsonSerializer.Deserialize<List<RepetierBaseEvent>>(msgBytes, DefaultOptions);
+                    var repetierBaseEvents = JsonSerializer.Deserialize<List<RepetierBaseEvent>>(msgBytes, DefaultOptions);
                     if ( repetierBaseEvents == null )
                     {
                         _logger.LogWarning("Unable to deserialize events: '{Event}'", msg.Text);

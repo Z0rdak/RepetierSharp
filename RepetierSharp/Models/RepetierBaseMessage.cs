@@ -1,7 +1,6 @@
 ﻿using System.Text.Json.Serialization;
-using RepetierSharp.Models.Events;
 
-namespace RepetierSharp.Models.Messages
+namespace RepetierSharp.Models
 {
     /* Message sent by the server as a response
      * to a command or containing a event message */
