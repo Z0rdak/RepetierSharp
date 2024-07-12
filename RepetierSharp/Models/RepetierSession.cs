@@ -1,4 +1,6 @@
-﻿namespace RepetierSharp
+﻿using System;
+
+namespace RepetierSharp
 {
     public class RepetierSession
     {
@@ -8,5 +10,7 @@
         public bool LongLivedSession { get; set; }
         public string LoginName { get; set; }
         public string Password { get; set; }
+
+        public TimeSpan KeepAlivePing { get; set; } = TimeSpan.FromSeconds(15);
     }
 }
