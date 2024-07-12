@@ -2,10 +2,28 @@
 using System.Threading.Tasks;
 using RepetierSharp.Models.Commands;
 
-namespace RepetierSharp.Extentions
+namespace RepetierSharp.Util
 {
-    public static class RepetierConnectionExtentions
+    public static class RepetierConnectionExtensions
     {
+        /// <summary>
+        ///     Activate printer with given printerSlug by sending the corresponding command to the server.
+        /// </summary>
+        /// <param name="printerSlug"> Printer to activate </param>
+        public static async Task ActivatePrinter(this RepetierConnection rc, string printerSlug)
+        {
+            await rc.SendCommand(new ActivateCommand(printerSlug));
+        }
+
+        /// <summary>
+        ///     Deactivate printer with given printerSlug by sending the corresponding command to the server.
+        /// </summary>
+        /// <param name="printerSlug"> Printer to deactivate </param>
+        public static async Task DeactivatePrinter(this RepetierConnection rc, string printerSlug)
+        {
+            await rc.SendCommand(new DeactivateCommand(printerSlug));
+        }
+        
         /// <summary>
         ///     Send a single "listPrinters" message to the repetier rerver.
         ///     The response to a "listPrinters" command contains the current print progress.
@@ -24,9 +42,9 @@ namespace RepetierSharp.Extentions
             await rc.SendCommand(new StateListCommand(includeHistory));
         }
 
-        public static async Task PauseJob(this RepetierConnection rc)
+        public static async Task PauseJob(this RepetierConnection rc, string reason = "RepetierSharp requested pause")
         {
-            await rc.SendCommand(new SendCommand("@pause RepetierSharp requested pause."));
+            await rc.SendCommand(new SendCommand($"@pause {reason}"));
         }
 
         /// <summary>
