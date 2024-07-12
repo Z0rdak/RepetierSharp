@@ -617,13 +617,8 @@ namespace RepetierSharp
                     if ( int.TryParse(repetierEvent.Event[5..], out var timerInt) )
                     {
                         var timer = (RepetierTimer)timerInt;
-                        var requests = _commandDispatcher.GetRequests(timer);
-                        requests.ForEach(async request =>
-                        {
-                            await SendCommand(request, request.GetType());
-                        });
+                        await _commandDispatcher.DispatchCommands(timer, this);
                     }
-
                     break;
                 case EventConstants.LOGIN_REQUIRED:
                     // TODO: check
