@@ -17,11 +17,68 @@ namespace RepetierSharp.Util
             return ExtendableEventTypes.ToImmutableDictionary();
         }
 
+        private static readonly ImmutableDictionary<string, Type> EventTypes = ImmutableDictionary.CreateRange
+        (new[]
+            {
+                /* core event types */ 
+                KeyValuePair.Create("loginRequired", typeof(LoginRequired)),
+                KeyValuePair.Create("logout", typeof(EmptyEvent)),
+                KeyValuePair.Create("userCredentials", typeof(UserCredentials)),
+                KeyValuePair.Create("printerListChanged", typeof(PrinterListChanged)),
+                KeyValuePair.Create("messagesChanged", typeof(MessagesChanged)),
+                KeyValuePair.Create("move", typeof(MoveEntry)), 
+                KeyValuePair.Create("log", typeof(LogEntry)),
+                KeyValuePair.Create("gcodeInfoUpdated", typeof(GcodeInfoUpdated)),
+                KeyValuePair.Create("jobsChanged", typeof(EmptyEvent)),
+                KeyValuePair.Create("printJobAdded", typeof(EmptyEvent)),
+                KeyValuePair.Create("jobFinished", typeof(JobState)),
+                KeyValuePair.Create("jobKilled", typeof(JobState)),
+                KeyValuePair.Create("jobDeactivated", typeof(JobState)),
+                KeyValuePair.Create("jobStarted", typeof(JobStarted)),
+                KeyValuePair.Create("printerConditionChanged", typeof(PrinterConditionChanged)),
+                KeyValuePair.Create("printqueueChanged", typeof(EmptyEvent)),
+                KeyValuePair.Create("foldersChanged", typeof(EmptyEvent)),
+                KeyValuePair.Create("eepromClear", typeof(EmptyEvent)),
+                KeyValuePair.Create("eepromData", typeof(EepromData)),
+                KeyValuePair.Create("state", typeof(PrinterStateChanged)),
+                KeyValuePair.Create("config", typeof(ConfigChanged)),
+                KeyValuePair.Create("firmwareChanged", typeof(FirmwareChanged)),
+                KeyValuePair.Create("temp", typeof(TempEntry)),
+                KeyValuePair.Create("settingChanged", typeof(SettingChanged)),
+                KeyValuePair.Create("printerSettingChanged", typeof(PrinterSettingChanged)),
+                KeyValuePair.Create("modelGroupListChanged", typeof(EmptyEvent)),
+                KeyValuePair.Create("prepareJob", typeof(EmptyEvent)),
+                KeyValuePair.Create("prepareJobFinished", typeof(EmptyEvent)),
+                KeyValuePair.Create("changeFilamentRequested", typeof(EmptyEvent)),
+                KeyValuePair.Create("remoteServersChanged", typeof(EmptyEvent)),
+                KeyValuePair.Create("recoverChanged", typeof(RecoverChanged)),
+                KeyValuePair.Create("timelapseChanged", typeof(RecoverChanged)),
+                KeyValuePair.Create("gpioPinChanged", typeof(RecoverChanged)),
+                KeyValuePair.Create("gpioListChanged", typeof(EmptyEvent)),
+                KeyValuePair.Create("externalLinksChanged", typeof(EmptyEvent)),
+                KeyValuePair.Create("autoupdateStarted", typeof(EmptyEvent)),
+                KeyValuePair.Create("timer30", typeof(EmptyEvent)), 
+                KeyValuePair.Create("timer60", typeof(EmptyEvent)),
+                KeyValuePair.Create("timer300", typeof(EmptyEvent)),
+                KeyValuePair.Create("timer1800", typeof(EmptyEvent)),
+                KeyValuePair.Create("timer3600", typeof(EmptyEvent)),
+                KeyValuePair.Create("duetDialogOpened", typeof(RecoverChanged)),
+                /* project event types */ 
+                KeyValuePair.Create("projectChanged", typeof(ProjectChanged)),
+                KeyValuePair.Create("projectDeleted", typeof(ProjectDeleted)),
+                KeyValuePair.Create("projectFolderChanged", typeof(ProjectFolderChanged)),
+                KeyValuePair.Create("globalErrorsChanged", typeof(EmptyEvent)),
+                KeyValuePair.Create("reloadKlipper", typeof(EmptyEvent)),
+                /* not listed / custom event types */ 
+                KeyValuePair.Create("layerChanged", typeof(LayerChanged)),
+                KeyValuePair.Create("updatePrinterState", typeof(UpdatePrinterState))
+            }
+        );
         public static bool RemoveDeserializationMapping(string eventType)
         {
             return ExtendableEventTypes.Remove(eventType);
         }
-        
+
         public static bool AddDeserializationMapping(string eventType, Type type)
         {
             // prevent overriding of existing/build-in event types 
@@ -31,31 +88,7 @@ namespace RepetierSharp.Util
             }
             return ExtendableEventTypes.TryAdd(eventType, type);
         }
-        
-        private static readonly Dictionary<string, Type> EventTypes = new()
-        {
-            { "changeFilamentRequested", typeof(ChangeFilament) },
-            { "eepromData", typeof(EepromData) },
-            { "globalErrorsChanged", typeof(GlobalErrorsChanged) },
-            { "jobsChanged", typeof(JobsChanged) },
-            { "jobStarted", typeof(JobStarted) },
-            { "jobKilled", typeof(JobState) },
-            { "jobDeactivated", typeof(JobState) },
-            { "jobFinished", typeof(JobState) },
-            { "layerChanged", typeof(LayerChanged) },
-            { "logEntry", typeof(LogEntry) },
-            { "logout", typeof(Logout) },
-            { "messagesChanged", typeof(MessagesChanged) },
-            { "move", typeof(MoveEntry) },
-            { "printerConditionChanged", typeof(PrinterConditionChanged) },
-            { "printerListChanged", typeof(PrinterListChanged) },
-            { "printerSettingChanged", typeof(PrinterSettingChanged) },
-            { "state", typeof(PrinterStateChanged) },
-            { "settingChanged", typeof(SettingChanged) },
-            { "temp", typeof(TempEntry) },
-            { "userCredentials", typeof(UserCredentials) },
-        };
-        
+
         public override RepetierBaseEvent Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             if ( reader.TokenType != JsonTokenType.StartObject )

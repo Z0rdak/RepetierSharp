@@ -523,7 +523,7 @@ namespace RepetierSharp
             switch ( commandStr )
             {
                 case CommandConstants.PING:
-                    await Task.Delay(TimeSpan.FromSeconds(Math.Min(5, Session.KeepAlivePing.Seconds / 2)))
+                    await Task.Delay(TimeSpan.FromSeconds(Math.Min(3, Session.KeepAlivePing.Seconds / 2)))
                         .ContinueWith(async _ =>
                         {
                             await SendPing();
