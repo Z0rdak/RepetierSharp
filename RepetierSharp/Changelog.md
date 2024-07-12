@@ -16,13 +16,14 @@
   WebsocketClient instance directly.
   This gives more flexibility to the end user and makes it easier to set up a correct RepetierConnection. Please refer
   to the readme for code examples.
-* Commands are now called Requests
 * Messages are now called Responses
 * Updated System.Text.Json to 8.0.4
+* Rename the ``RepetierConnectionBuilder`` method ``WithCyclicCommand`` to ``ScheduleCommand``
 
 ## Removed
 
 * Various overloads and confusing methods for building a RepetierConnection instance when using the builder.
+* Helper methods for the RepetierConnectionBuilder which could be used to schedule querying the printer state and printer list. That's now all covered by the `ScheduleCommand` method. 
 
 ## Fixed
 
