@@ -9,18 +9,14 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using RepetierSharp.Extentions;
 using RepetierSharp.Internal;
 using RepetierSharp.Models;
+using RepetierSharp.Models.Commands;
 using RepetierSharp.Models.Events;
 using RepetierSharp.Models.Messages;
-using RepetierSharp.Models.Commands;
 using RepetierSharp.Util;
 using RestSharp;
 using Websocket.Client;
-using LoginCommand = RepetierSharp.Models.Commands.LoginCommand;
-using PingCommand = RepetierSharp.Models.Commands.PingCommand;
-using ResponseMessage = Websocket.Client.ResponseMessage;
 
 namespace RepetierSharp
 {
@@ -58,14 +54,16 @@ namespace RepetierSharp
         ///     Retrieve printer name or API-key (or both) via REST-API
         ///     If ApiKey or PrinterSlug are not empty, they will not be overwritten by the retrieved information.
         /// </summary>
-        public async Task<RepetierServerInformation?> GetRepetierServerInfoAsync()
+        public async Task<RepetierServerInformation?> GetRepetierServerInfo()
         {
             var response = await RestClient.ExecuteAsync(new RestRequest("/printer/info"));
             if ( response is { StatusCode: HttpStatusCode.OK, Content: not null } )
             {
                 return JsonSerializer.Deserialize<RepetierServerInformation>(response.Content);
             }
-            await _clientEvents.HttpRequestFailedEvent.InvokeAsync(new HttpContextEventArgs(response.Request, response));
+
+            await _clientEvents.HttpRequestFailedEvent.InvokeAsync(new HttpContextEventArgs(response.Request,
+                response));
             return null;
         }
 
@@ -101,7 +99,7 @@ namespace RepetierSharp
             {
                 // Send ping if interval is elapsed
                 var timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-                if ( _lastPingTimestamp + PingInterval < DateTimeOffset.Now.ToUnixTimeSeconds() )
+                if ( _lastPingTimestamp + Session.KeepAlivePing.Seconds < DateTimeOffset.Now.ToUnixTimeSeconds() )
                 {
                     _lastPingTimestamp = timestamp;
                     Task.Run(async () => await SendPing());
@@ -165,7 +163,8 @@ namespace RepetierSharp
                     if ( msg.Text.Contains("permissionDenied") )
                     {
                         var permissionDeniedArgs = new PermissionDeniedEventArgs(repetierMessage.CallBackId);
-                        Task.Run(async () => await _clientEvents.PermissionDeniedEvent.InvokeAsync(permissionDeniedArgs));
+                        Task.Run(
+                            async () => await _clientEvents.PermissionDeniedEvent.InvokeAsync(permissionDeniedArgs));
                     }
                     else
                     {
@@ -259,11 +258,10 @@ namespace RepetierSharp
             return await SendCommand(PingCommand.Instance, typeof(PingCommand));
         }
 
-        public async Task<bool> SendExtendPing(uint timeout)
+        public async Task<bool> SendExtendPing(TimeSpan timeout)
         {
-            return await SendCommand(new ExtendPingCommand(timeout), typeof(ExtendPingCommand));
+            return await SendCommand(new ExtendPingCommand((uint)timeout.Seconds), typeof(ExtendPingCommand));
         }
-
 
         /// <summary>
         ///     Closes the WebSocket connection
@@ -273,6 +271,8 @@ namespace RepetierSharp
             WebSocketClient.Stop(WebSocketCloseStatus.Empty, "Closing initiated by user");
             WebSocketClient.Dispose();
         }
+
+        #region REST calls
 
         private RestRequest StartPrintRequest(string gcodeFilePath, string printerName,
             StartBehavior autostart = StartBehavior.Autostart)
@@ -293,7 +293,6 @@ namespace RepetierSharp
             return request;
         }
 
-
         private RestRequest StartPrintRequest(string fileName, byte[] data, string printerName,
             StartBehavior autostart = StartBehavior.Autostart)
         {
@@ -311,7 +310,6 @@ namespace RepetierSharp
 
             return request;
         }
-
 
         /// <summary>
         ///     Create a REST request for uploading a gcode file
@@ -367,7 +365,6 @@ namespace RepetierSharp
 
             return request;
         }
-
 
         /// <summary>
         ///     Upload a gcode file via REST API
@@ -500,23 +497,7 @@ namespace RepetierSharp
             return await Task.FromResult(true);
         }
 
-        /// <summary>
-        ///     Activate printer with given printerSlug by sending the corresponding command to the server.
-        /// </summary>
-        /// <param name="printerSlug"> Printer to activate </param>
-        public async Task<bool> ActivatePrinter(string printerSlug)
-        {
-            return await SendCommand(new ActivateCommand(printerSlug));
-        }
-
-        /// <summary>
-        ///     Deactivate printer with given printerSlug by sending the corresponding command to the server.
-        /// </summary>
-        /// <param name="printerSlug"> Printer to deactivate </param>
-        public async Task<bool> DeactivatePrinter(string printerSlug)
-        {
-            return await SendCommand(new DeactivateCommand(printerSlug));
-        }
+        #endregion
 
         private async Task ProcessResponse(IRepetierResponse response, int callbackId)
         {
@@ -527,7 +508,7 @@ namespace RepetierSharp
             switch ( commandStr )
             {
                 case CommandConstants.PING:
-                    await Task.Delay(TimeSpan.FromSeconds(Math.Min(5, PingInterval / 2)))
+                    await Task.Delay(TimeSpan.FromSeconds(Math.Min(5, Session.KeepAlivePing.Seconds / 2)))
                         .ContinueWith(async _ =>
                         {
                             await SendPing();
@@ -606,19 +587,20 @@ namespace RepetierSharp
             switch ( repetierEvent.Event )
             {
                 case EventConstants.JOBS_CHANGED:
-                    // TODO: WTH?
-                    ActivePrinter = repetierEvent.Printer;
+                    await _printerEvents.JobsChangedEvent.InvokeAsync(new JobsChangedEventArgs(repetierEvent.Printer));
                     break;
                 case EventConstants.TIMER_30:
                 case EventConstants.TIMER_60:
                 case EventConstants.TIMER_300:
                 case EventConstants.TIMER_1800:
                 case EventConstants.TIMER_3600:
+                    // Try to get the numbers from the string and parse it to a RepetierTimer 
                     if ( int.TryParse(repetierEvent.Event[5..], out var timerInt) )
                     {
                         var timer = (RepetierTimer)timerInt;
                         await _commandDispatcher.DispatchCommands(timer, this);
                     }
+
                     break;
                 case EventConstants.LOGIN_REQUIRED:
                     // TODO: check
@@ -706,7 +688,7 @@ namespace RepetierSharp
                 case EventConstants.MODEL_GROUPLIST_CHANGED:
                 case EventConstants.PREPARE_JOB:
                 case EventConstants.PREPARE_JOB_FINIHSED:
-                case EventConstants.CHANGE_FILAMENT_REQUESTED:
+                case EventConstants.CHANGE_FILAMENT_REQUESTED: // TODO: make dedicated event
                 case EventConstants.REMOTE_SERVERS_CHANGED:
                 case EventConstants.GET_EXTERNAL_LINKS:
                     break;
@@ -720,7 +702,7 @@ namespace RepetierSharp
         /// <returns></returns>
         public async Task<bool> SendCommand(IRepetierCommand command)
         {
-            return await SendCommand(command, command.GetType(), ActivePrinter);
+            return await SendCommand(command, command.GetType(), SelectedPrinter);
         }
 
         private async Task<bool> SendCommand(IRepetierCommand command, string printer)
@@ -730,7 +712,7 @@ namespace RepetierSharp
 
         protected async Task<bool> SendCommand(IRepetierCommand command, Type commandType)
         {
-            return await SendCommand(command, commandType, ActivePrinter);
+            return await SendCommand(command, commandType, SelectedPrinter);
         }
 
         protected async Task<bool> SendCommand(IRepetierCommand command, Type commandType, string printer)
@@ -794,6 +776,8 @@ namespace RepetierSharp
             }
         }
 
+        #region Events
+
         #region Client Events
 
         private readonly RepetierClientEvents _clientEvents = new();
@@ -807,7 +791,7 @@ namespace RepetierSharp
             add => _clientEvents.ConnectedEvent.AddHandler(value);
             remove => _clientEvents.ConnectedEvent.RemoveHandler(value);
         }
-        
+
         public event Func<RepetierDisconnectedEventArgs, Task> DisconnectedAsync
         {
             add => _clientEvents.DisconnectedEvent.AddHandler(value);
@@ -1057,7 +1041,7 @@ namespace RepetierSharp
             add => _printerEvents.MovedEvent.AddHandler(value);
             remove => _printerEvents.MovedEvent.RemoveHandler(value);
         }
-        
+
         public event Func<LayerChangedEventArgs, Task> LayerChangedAsync
         {
             add => _printerEvents.LayerChangedEvent.AddHandler(value);
@@ -1127,19 +1111,7 @@ namespace RepetierSharp
 
         #endregion
 
-        public uint PingInterval
-        {
-            get => _pingInterval;
-            set
-            {
-                _pingInterval = value;
-                Task.Run(async () => await SendExtendPing(_pingInterval));
-            }
-        }
-
-        private long _lastPingTimestamp;
-        private uint _pingInterval = 10000;
-        private TimeSpan _pingTimeSpan = TimeSpan.FromMilliseconds(10000);
+        #endregion
 
         private readonly ILogger<RepetierConnection> _logger;
 
@@ -1148,6 +1120,10 @@ namespace RepetierSharp
         private IWebsocketClient WebSocketClient { get; set; }
         private IRestClient RestClient { get; set; }
         private RepetierSession Session { get; init; }
-        private string ActivePrinter { get; set; } = "";
+
+        private long _lastPingTimestamp;
+
+        // PrinterInfo
+        private string SelectedPrinter { get; } = "";
     }
 }
