@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using RepetierSharp.Models;
@@ -9,7 +10,29 @@ namespace RepetierSharp.Util
 { 
     public class RepetierBaseEventConverter : JsonConverter<RepetierBaseEvent>
     {
-        public static readonly Dictionary<string, Type> EventTypes = new()
+        private static readonly Dictionary<string, Type> ExtendableEventTypes = new();
+
+        public static ImmutableDictionary<string, Type> GetExtendableEventTypes()
+        {
+            return ExtendableEventTypes.ToImmutableDictionary();
+        }
+
+        public static bool RemoveDeserializationMapping(string eventType)
+        {
+            return ExtendableEventTypes.Remove(eventType);
+        }
+        
+        public static bool AddDeserializationMapping(string eventType, Type type)
+        {
+            // prevent overriding of existing/build-in event types 
+            if ( EventTypes.ContainsKey(eventType) )
+            {
+                return false;
+            }
+            return ExtendableEventTypes.TryAdd(eventType, type);
+        }
+        
+        private static readonly Dictionary<string, Type> EventTypes = new()
         {
             { "changeFilamentRequested", typeof(ChangeFilament) },
             { "eepromData", typeof(EepromData) },
@@ -63,16 +86,29 @@ namespace RepetierSharp.Util
                             printer = reader.GetString();
                             break;
                         case "data":
-                            if ( eventDiscriminator != null && EventTypes.TryGetValue(eventDiscriminator, out var eventType) )
+                            if ( eventDiscriminator != null )
                             {
-                                var res = JsonSerializer.Deserialize(ref reader, eventType, options);
-                                if ( res == null )
+                                if ( ExtendableEventTypes.TryGetValue(eventDiscriminator, out var extendableType) )
                                 {
-                                    throw new JsonException(
-                                        $"Unable to deserialize event with type: {eventDiscriminator}");
+                                    var res = JsonSerializer.Deserialize(ref reader, extendableType, options);
+                                    if ( res == null )
+                                    {
+                                        throw new JsonException(
+                                            $"Unable to deserialize event with type: {eventDiscriminator}");
+                                    }
+                                    repetierEvent = (IRepetierEvent)res;
                                 }
 
-                                repetierEvent = (IRepetierEvent)res;
+                                if ( EventTypes.TryGetValue(eventDiscriminator, out var eventType) )
+                                {
+                                    var res = JsonSerializer.Deserialize(ref reader, eventType, options);
+                                    if ( res == null )
+                                    {
+                                        throw new JsonException(
+                                            $"Unable to deserialize event with type: {eventDiscriminator}");
+                                    }
+                                    repetierEvent = (IRepetierEvent)res;
+                                }
                             }
                             else
                             {
