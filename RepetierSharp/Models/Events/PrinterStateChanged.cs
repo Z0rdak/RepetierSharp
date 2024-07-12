@@ -1,7 +1,7 @@
 ﻿namespace RepetierSharp.Models.Events
 {
     [EventId("state")]
-    public class PrinterStateChange : IRepetierEvent
+    public class PrinterStateChanged : IRepetierEvent
     {
         public PrinterState PrinterState { get; set; }
     }

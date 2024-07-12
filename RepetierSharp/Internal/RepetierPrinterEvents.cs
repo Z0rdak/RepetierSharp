@@ -121,13 +121,13 @@ namespace RepetierSharp.Internal
 
     public sealed class SettingChangedEventArgs : EventArgs
     {
-        public SettingChangedEventArgs(string printer, PrinterSetting settingChanged)
+        public SettingChangedEventArgs(string printer, PrinterSettingChanged settingChangedChanged)
         {
             Printer = printer;
-            SettingChanged = settingChanged;
+            SettingChangedChanged = settingChangedChanged;
         }
 
         public string Printer { get; }
-        public PrinterSetting SettingChanged { get; }
+        public PrinterSettingChanged SettingChangedChanged { get; }
     }
 }
