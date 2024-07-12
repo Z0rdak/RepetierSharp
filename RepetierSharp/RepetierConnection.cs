@@ -89,8 +89,7 @@ namespace RepetierSharp
 
         private void OnMsgReceived(ResponseMessage msg)
         {
-            // each message send to and from the Repetier Server is a valid JSON message
-            if ( msg.MessageType != WebSocketMessageType.Text || string.IsNullOrEmpty(msg.Text) )
+            if (IsInvalidRepetierMsg(msg))
             {
                 return;
             }
@@ -138,7 +137,8 @@ namespace RepetierSharp
 
                 var dataElement = json.RootElement.GetProperty("data");
 
-                if ( repetierMessage.HasEvents is true || repetierMessage.CallBackId == -1 )
+                var containsEvent = repetierMessage.HasEvents is true || repetierMessage.CallBackId == -1;
+                if (containsEvent)
                 {
                     PublishRawEventInfo(dataElement);
                     // process events
@@ -189,6 +189,16 @@ namespace RepetierSharp
                 var errorMsg = "[WebSocket] Error processing message from repetier server: '{Msg}'. Error: {Error}";
                 _logger.LogError(ex, errorMsg, msg.Text, ex.Message);
             }
+        }
+
+        /// <summary>
+        /// Each message send to and from the Repetier Server is a valid JSON message
+        /// </summary>
+        /// <param name="msg"></param>
+        /// <returns></returns>
+        private static bool IsInvalidRepetierMsg(ResponseMessage msg)
+        {
+            return msg.MessageType != WebSocketMessageType.Text || string.IsNullOrEmpty(msg.Text);
         }
 
         private async Task HandleResponse(RepetierBaseMessage message, string commandIdentifier,
@@ -531,9 +541,7 @@ namespace RepetierSharp
                     }
                     break;
                 case CommandConstants.LIST_PRINTER:
-                    // TODO:
-                    //var printerMsg = (ListPrinterResponse)response;
-                    //await _serverEvents.PrinterListChangedEvent.InvokeAsync(new PrinterListChangedEventArgs(printerMsg));
+                    var printerMsg = (ListPrinterResponse)response;
                     break;
                 case CommandConstants.STATE_LIST:
                     var stateMsg = (StateListResponse)response;
@@ -656,7 +664,7 @@ namespace RepetierSharp
                     await _printJobEvents.PrintStartedEvent.InvokeAsync(jobStartedArgs);
                     break;
                 case EventConstants.STATE:
-                    var printerStateChange = (PrinterStateChange)repetierEvent.RepetierEvent;
+                    var printerStateChange = (PrinterStateChanged)repetierEvent.RepetierEvent;
                     var printerStateChangedArgs =
                         new StateChangedEventArgs(repetierEvent.Printer, printerStateChange.PrinterState);
                     await _printerEvents.StateChangedEvent.InvokeAsync(printerStateChangedArgs);
@@ -667,7 +675,7 @@ namespace RepetierSharp
                     await _printerEvents.TemperatureChangedEvent.InvokeAsync(tempChangeArgs);
                     break;
                 case EventConstants.PRINTER_SETTING_CHANGED:
-                    var printerSetting = (PrinterSetting)repetierEvent.RepetierEvent;
+                    var printerSetting = (PrinterSettingChanged)repetierEvent.RepetierEvent;
                     var settingChangedArgs = new SettingChangedEventArgs(repetierEvent.Printer, printerSetting);
                     await _printerEvents.SettingChangedEvent.InvokeAsync(settingChangedArgs);
                     break;
