@@ -19,6 +19,8 @@
 * Messages are now called Responses
 * Updated System.Text.Json to 8.0.4
 * Rename the ``RepetierConnectionBuilder`` method ``WithCyclicCommand`` to ``ScheduleCommand``
+* Rename ``GetRepetierServerInfoAsync`` to ``GetRepetierServerInfo``
+* PingInterval is now called `KeepAlivePing`, is a TimeSpan and moved in ``RepetierSession``
 
 ## Removed
 
