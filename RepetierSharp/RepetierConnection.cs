@@ -28,7 +28,7 @@ namespace RepetierSharp
         private const string ActionParam = "a";
         private const string AutostartParam = "autostart";
         private const string UploadAction = "upload";
-        private const ContentType MultiPartFormData = "multipart/form-data";
+        private const string MultiPartFormData = "multipart/form-data";
 
         private static readonly JsonSerializerOptions DefaultOptions = new()
         {
@@ -1136,7 +1136,7 @@ namespace RepetierSharp
 
         private long _lastPingTimestamp;
 
-        // PrinterInfo
+        // PrinterInfo TODO
         private string SelectedPrinter { get; } = "";
     }
 }
