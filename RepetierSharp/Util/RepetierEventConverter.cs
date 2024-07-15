@@ -41,7 +41,7 @@ namespace RepetierSharp.Util
                 KeyValuePair.Create("foldersChanged", typeof(EmptyEvent)),
                 KeyValuePair.Create("eepromClear", typeof(EmptyEvent)),
                 KeyValuePair.Create("eepromData", typeof(EepromData)),
-                KeyValuePair.Create("state", typeof(PrinterStateChanged)),
+                KeyValuePair.Create("state", typeof(PrinterState)),
                 KeyValuePair.Create("config", typeof(PrinterConfig)),
                 KeyValuePair.Create("firmwareChanged", typeof(FirmwareData)),
                 KeyValuePair.Create("temp", typeof(TempEntry)),
