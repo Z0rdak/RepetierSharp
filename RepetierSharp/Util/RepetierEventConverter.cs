@@ -37,6 +37,7 @@ namespace RepetierSharp.Util
                 KeyValuePair.Create("jobStarted", typeof(JobStarted)),
                 KeyValuePair.Create("printerConditionChanged", typeof(PrinterConditionChanged)),
                 KeyValuePair.Create("printqueueChanged", typeof(EmptyEvent)),
+                KeyValuePair.Create("lastPrintsChanged", typeof(EmptyEvent)),
                 KeyValuePair.Create("foldersChanged", typeof(EmptyEvent)),
                 KeyValuePair.Create("eepromClear", typeof(EmptyEvent)),
                 KeyValuePair.Create("eepromData", typeof(EepromData)),
