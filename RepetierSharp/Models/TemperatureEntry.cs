@@ -3,9 +3,9 @@ using System.Text.Json.Serialization;
 
 namespace RepetierSharp.Models
 {
-    public class PrinterTemperature
+    public class TemperatureEntry
     {
-        [JsonPropertyName("history")] public List<TempHistorySet> History { get; set; }
+        [JsonPropertyName("history")] public List<TempHistoryEntry> History { get; set; }
 
         [JsonPropertyName("error")] public int Error { get; set; }
 
@@ -14,10 +14,5 @@ namespace RepetierSharp.Models
         [JsonPropertyName("tempRead")] public double Read { get; set; }
 
         [JsonPropertyName("tempSet")] public double Set { get; set; }
-
-        public override string ToString()
-        {
-            return $"{Read} -> {Set}";
-        }
     }
 }

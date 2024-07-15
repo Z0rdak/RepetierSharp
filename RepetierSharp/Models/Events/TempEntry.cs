@@ -11,7 +11,7 @@ namespace RepetierSharp.Models.Events
 
         [JsonPropertyName("T")] public double Measured { get; set; }
 
-        [JsonPropertyName("id")] public int ExtruderNo { get; set; }
+        [JsonPropertyName("id")] public int Id { get; set; }
 
         [JsonPropertyName("t")] public long Timestamp { get; set; }
     }

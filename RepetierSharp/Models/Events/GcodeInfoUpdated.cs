@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace RepetierSharp.Models.Events
 {
-    public class GcodeInfoUpdated
+    public class GcodeInfoUpdated : IRepetierEvent
     {
         [JsonPropertyName("modelId")]
         public int ModelId { get; set; }

@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace RepetierSharp.Models
 {
-    public class PrinterState
+    public class PrinterState : IRepetierEvent
     {
         [JsonPropertyName("activeExtruder")] public int ActiveExtruder { get; set; }
 
@@ -14,7 +14,7 @@ namespace RepetierSharp.Models
 
         [JsonPropertyName("doorOpen")] public bool IsDoorOpen { get; set; }
 
-        [JsonPropertyName("extruder")] public List<PrinterTemperature> Extruders { get; set; }
+        [JsonPropertyName("extruder")] public List<TemperatureEntry> Extruders { get; set; }
 
         [JsonPropertyName("fans")] public List<Fan> Fans { get; set; }
         [JsonPropertyName("f")] public double F { get; set; }
@@ -33,9 +33,9 @@ namespace RepetierSharp.Models
 
         [JsonPropertyName("hasZHome")] public bool HasZHome { get; set; }
 
-        [JsonPropertyName("heatedBeds")] public List<PrinterTemperature> Heatedbeds { get; set; }
+        [JsonPropertyName("heatedBeds")] public List<TemperatureEntry> Heatedbeds { get; set; }
 
-        [JsonPropertyName("heatedChambers")] public List<PrinterTemperature> HeatedChambers { get; set; }
+        [JsonPropertyName("heatedChambers")] public List<TemperatureEntry> HeatedChambers { get; set; }
 
         [JsonPropertyName("layer")] public int CurrentLayer { get; set; }
 
@@ -57,6 +57,7 @@ namespace RepetierSharp.Models
         [JsonPropertyName("speedMultiply")] public double SpeedMultiplier { get; set; }
 
         [JsonPropertyName("volumetric")] public bool IsVolumetric { get; set; }
+        [JsonPropertyName("webcams")] public List<Webcam> Webcams { get; set; }
 
         [JsonPropertyName("x")] public double X { get; set; }
 

@@ -2,14 +2,14 @@
 
 namespace RepetierSharp.Models
 {
-    public class TempHistorySet
+    public class TempHistoryEntry
     {
-        [JsonPropertyName("O")] public double Out { get; set; }
+    [JsonPropertyName("O")] public double Out { get; set; }
 
         [JsonPropertyName("S")] public double Set { get; set; }
 
         [JsonPropertyName("T")] public double Read { get; set; }
-
+        
         [JsonPropertyName("t")] public long TimeStamp { get; set; }
     }
 }
