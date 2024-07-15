@@ -17,6 +17,7 @@ namespace RepetierSharp.Models
         [JsonPropertyName("extruder")] public List<PrinterTemperature> Extruders { get; set; }
 
         [JsonPropertyName("fans")] public List<Fan> Fans { get; set; }
+        [JsonPropertyName("f")] public double F { get; set; }
 
         [JsonPropertyName("filterFan")] public bool FilterFan { get; set; }
 
