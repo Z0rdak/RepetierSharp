@@ -57,7 +57,7 @@ namespace RepetierSharp.Models
         [JsonPropertyName("speedMultiply")] public double SpeedMultiplier { get; set; }
 
         [JsonPropertyName("volumetric")] public bool IsVolumetric { get; set; }
-        [JsonPropertyName("webcams")] public List<Webcam> Webcams { get; set; }
+        [JsonPropertyName("webcams")] public List<WebcamState> Webcams { get; set; }
 
         [JsonPropertyName("x")] public double X { get; set; }
 

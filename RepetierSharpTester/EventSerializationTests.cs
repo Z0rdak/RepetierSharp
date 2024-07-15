@@ -7,7 +7,6 @@ using RepetierSharp.Models.Events;
 using RepetierSharp.Models.Messages;
 using RepetierSharp.Util;
 using Xunit;
-using Webcam = RepetierSharp.Models.Webcam;
 
 namespace RepetierSharpTester
 {
@@ -65,7 +64,7 @@ namespace RepetierSharpTester
             ShutDownAfterPrint = false,
             SpeedMultiplier = 100,
             IsVolumetric = false,
-            Webcams = new List<Webcam>()
+            Webcams = new List<WebcamState>()
             {
                 new () { Recording = false },
                 new () { Recording = false }
