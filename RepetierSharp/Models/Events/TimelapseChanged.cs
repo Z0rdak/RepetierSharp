@@ -3,14 +3,14 @@ using System.Text.Json.Serialization;
 
 namespace RepetierSharp.Models.Events
 {
-    public class TimelapseChanged
+    public class TimelapseChanged : IRepetierEvent
     {
         [JsonPropertyName("running")] 
         public bool Running { get; set; }
         [JsonPropertyName("runningEntries")]
-        List<TimeLapseEntry> RunningEntries { get; set; }
+        public List<TimeLapseEntry> RunningEntries { get; set; }
         [JsonPropertyName("timelapses")]
-        List<TimeLapseEntry> Timelapses { get; set; }
+        public List<TimeLapseEntry> Timelapses { get; set; }
     }
 
 
