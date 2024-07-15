@@ -23,15 +23,15 @@ namespace RepetierSharp.Models
         [JsonPropertyName("tempDiagMode")] public string TempDiagMode { get; set; }
 
         [JsonPropertyName("theme")] public string Theme { get; set; }
-
-        public override string ToString()
-        {
-            return GetType().GetProperties()
-                .Select(info => (info.Name, Value: info.GetValue(this, null) ?? "(null)"))
-                .Aggregate(
-                    new StringBuilder($"{GetType().Name}\n"),
-                    (sb, pair) => sb.AppendLine($"- {pair.Name}: {pair.Value}"),
-                    sb => sb.ToString());
-        }
+        
+        [JsonPropertyName("preview2dOptions")] public string Preview2DOptions { get; set; }
+        
+        [JsonPropertyName("timelapseViewFailed")] public string TimelapseViewFailed { get; set; }
+        
+        [JsonPropertyName("timelapseViewMode")] public string TimelapseViewMode { get; set; }
+        
+        [JsonPropertyName("printerOrder")] public string PrinterOrder { get; set; }
+        
+        [JsonPropertyName("leftPrinterList")] public string LeftPrinterList { get; set; }
     }
 }
