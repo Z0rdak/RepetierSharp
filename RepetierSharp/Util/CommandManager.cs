@@ -42,6 +42,11 @@ namespace RepetierSharp.Util
             return new RepetierBaseRequest(data, command, printer, callbackId);
         }
 
+        public void AcknowledgeCommand(int callbackId)
+        {
+            _callbackMap.Remove(callbackId);
+        }
+        
         public string CommandIdentifierFor(int callbackId)
         {
             return _callbackMap.TryGetValue(callbackId, out var commandIdentifier)

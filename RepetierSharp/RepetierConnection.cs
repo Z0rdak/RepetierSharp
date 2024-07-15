@@ -175,7 +175,7 @@ namespace RepetierSharp
                     {
                         Task.Run(async () =>
                         {
-                            var commandIdentifier = CommandManager.CommandIdentifierFor(repetierMessage.CallBackId);
+                            var commandIdentifier = _commandManager.CommandIdentifierFor(repetierMessage.CallBackId);
                             if ( commandIdentifier == string.Empty )
                             {
                                 _logger.LogWarning(
@@ -516,7 +516,7 @@ namespace RepetierSharp
 
         private async Task ProcessResponse(IRepetierResponse response, int callbackId)
         {
-            var commandStr = CommandManager.CommandIdentifierFor(callbackId);
+            var commandStr = _commandManager.CommandIdentifierFor(callbackId);
             await _clientEvents.RepetierResponseReceivedEvent.InvokeAsync(
                 new RepetierResponseReceivedEventArgs(callbackId, commandStr, response));
 
@@ -590,6 +590,7 @@ namespace RepetierSharp
                     var userList = (UserListResponse)response;
                     break;
             }
+            _commandManager.AcknowledgeCommand(callbackId);
         }
 
         private async Task HandleEvent(RepetierBaseEvent repetierEvent)
@@ -730,7 +731,7 @@ namespace RepetierSharp
 
         protected async Task<bool> SendCommand(IRepetierCommand command, Type commandType, string printer)
         {
-            var baseCommand = CommandManager.CommandWithId(command, commandType, printer);
+            var baseCommand = _commandManager.CommandWithId(command, commandType, printer);
             return await Task.Run(async () =>
             {
                 var isInQueue = WebSocketClient.Send(baseCommand.ToBytes());
@@ -756,7 +757,7 @@ namespace RepetierSharp
         /// <param name="data"> The raw data as key-value pairs </param>
         public async Task<bool> SendCommand(string command, string printer, Dictionary<string, object> data)
         {
-            var baseCommand = CommandManager.CommandWithId(command, printer, data);
+            var baseCommand = _commandManager.CommandWithId(command, printer, data);
             return await Task.Run(() => WebSocketClient.Send(baseCommand.ToBytes()));
         }
 
@@ -1127,9 +1128,8 @@ namespace RepetierSharp
         #endregion
 
         private readonly ILogger<RepetierConnection> _logger;
-
         private readonly CommandDispatcher _commandDispatcher = new();
-        private CommandManager CommandManager { get; } = new();
+        private readonly CommandManager _commandManager = new();
         private IWebsocketClient WebSocketClient { get; set; }
         private IRestClient RestClient { get; set; }
         private RepetierSession Session { get; init; }
