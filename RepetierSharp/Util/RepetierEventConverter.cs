@@ -19,7 +19,7 @@ namespace RepetierSharp.Util
             return ExtendableEventTypes.ToImmutableDictionary();
         }
 
-        private static readonly ImmutableDictionary<string, Type> EventTypes = ImmutableDictionary.CreateRange
+        public static readonly ImmutableDictionary<string, Type> EventTypes = ImmutableDictionary.CreateRange
         (new[]
             {
                 /* core event types */ KeyValuePair.Create("loginRequired", typeof(LoginRequired)),
@@ -96,81 +96,60 @@ namespace RepetierSharp.Util
                 throw new JsonException("Expected start of object.");
             }
 
+            using var document = JsonDocument.ParseValue(ref reader);
+            var jsonObject = document.RootElement;
             string eventDiscriminator = null;
             string printer = null;
             IRepetierEvent repetierEvent = null;
 
-            while ( reader.Read() )
+            if (jsonObject.TryGetProperty("event", out JsonElement eventElement))
             {
-                if ( reader.TokenType == JsonTokenType.EndObject )
+                eventDiscriminator = eventElement.GetString();
+            }
+            if (jsonObject.TryGetProperty("printer", out JsonElement printerElement))
+            {
+                printer = printerElement.GetString();
+            }
+            if (eventDiscriminator != null && jsonObject.TryGetProperty("data", out JsonElement dataElement))
+            {
+                if ( ExtendableEventTypes.TryGetValue(eventDiscriminator, out var extendableType) )
                 {
-                    break;
-                }
-
-                if ( reader.TokenType == JsonTokenType.PropertyName )
-                {
-                    var propertyName = reader.GetString();
-                    reader.Read();
-
-                    switch ( propertyName )
+                    var res = JsonSerializer.Deserialize(dataElement.GetRawText(), extendableType, options);
+                    if ( res == null )
                     {
-                        case "event":
-                            eventDiscriminator = reader.GetString();
-                            break;
-                        case "printer":
-                            printer = reader.GetString();
-                            break;
-                        case "data":
-                            if ( eventDiscriminator != null )
-                            {
-                                if ( ExtendableEventTypes.TryGetValue(eventDiscriminator, out var extendableType) )
-                                {
-                                    var res = JsonSerializer.Deserialize(ref reader, extendableType, options);
-                                    if ( res == null )
-                                    {
-                                        throw new JsonException(
-                                            $"Unable to deserialize event with type: {eventDiscriminator}");
-                                    }
-
-                                    repetierEvent = (IRepetierEvent)res;
-                                }
-
-                                if ( EventTypes.TryGetValue(eventDiscriminator, out var eventType) )
-                                {
-                                    var res = JsonSerializer.Deserialize(ref reader, eventType, options);
-                                    if ( res == null )
-                                    {
-                                        throw new JsonException(
-                                            $"Unable to deserialize event with type: {eventDiscriminator}");
-                                    }
-
-                                    repetierEvent = (IRepetierEvent)res;
-                                }
-                            }
-                            else
-                            {
-                                throw new JsonException($"Unknown event type: {eventDiscriminator}");
-                            }
-
-                            break;
+                        throw new JsonException(
+                            $"Unable to deserialize event with type: {eventDiscriminator}");
                     }
+
+                    repetierEvent = (IRepetierEvent)res;
+                }
+                if ( EventTypes.TryGetValue(eventDiscriminator, out var eventType) )
+                {
+                    var res = JsonSerializer.Deserialize(dataElement.GetRawText(), eventType, options);
+                    if ( res == null )
+                    {
+                        throw new JsonException(
+                            $"Unable to deserialize event with type: {eventDiscriminator}");
+                    }
+
+                    repetierEvent = (IRepetierEvent)res;
                 }
             }
-
             if ( eventDiscriminator == null )
             {
                 throw new JsonException("Missing event discriminator.");
             }
-
             return new RepetierBaseEvent
             {
-                Event = eventDiscriminator, Printer = printer, RepetierEvent = repetierEvent
+                Event = eventDiscriminator,
+                Printer = printer,
+                RepetierEvent = repetierEvent
             };
         }
 
         public override void Write(Utf8JsonWriter writer, RepetierBaseEvent value, JsonSerializerOptions options)
         {
-            throw new NotImplementedException("Serialization is not implemented.");
+            JsonSerializer.Serialize(writer, value, value.GetType(), options);
         }
     }
 }
