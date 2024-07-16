@@ -161,11 +161,9 @@ namespace RepetierSharp.Internal
 
     public sealed class RepetierConnectedEventArgs : EventArgs
     {
-        public RepetierConnectedEventArgs(string sessionId)
+        public RepetierConnectedEventArgs()
         {
-            SessionId = sessionId;
         }
-
-        public string SessionId { get; }
+        
     }
 }
