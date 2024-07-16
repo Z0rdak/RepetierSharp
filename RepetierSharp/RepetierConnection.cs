@@ -95,11 +95,11 @@ namespace RepetierSharp
 
         private void OnMsgReceived(ResponseMessage msg)
         {
-            if (IsInvalidRepetierMsg(msg))
+            // Each message send to and from the Repetier Server is a valid JSON message
+            if (msg.MessageType != WebSocketMessageType.Text || string.IsNullOrEmpty(msg.Text))
             {
                 return;
             }
-
             try
             {
                 // Send ping if interval is elapsed
@@ -112,7 +112,8 @@ namespace RepetierSharp
 
                 // handle command response or event
                 var msgBytes = Encoding.UTF8.GetBytes(msg.Text);
-                var repetierMessage = JsonSerializer.Deserialize<RepetierBaseMessage>(msgBytes);
+               
+                var repetierMessage = JsonSerializer.Deserialize<RepetierBaseMessageInfo>(msgBytes);
                 if ( repetierMessage == null )
                 {
                     _logger.LogWarning(
@@ -148,7 +149,7 @@ namespace RepetierSharp
                 {
                     PublishRawEventInfo(dataElement);
                     // process events
-                    var repetierBaseEvents = JsonSerializer.Deserialize<List<RepetierBaseEvent>>(msgBytes, DefaultOptions);
+                    var repetierBaseEvents = JsonSerializer.Deserialize<List<RepetierBaseEvent>>(dataElement.GetRawText(), _defaultOptions);
                     if ( repetierBaseEvents == null )
                     {
                         _logger.LogWarning("Unable to deserialize events: '{Event}'", msg.Text);
