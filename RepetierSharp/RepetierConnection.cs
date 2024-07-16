@@ -30,7 +30,7 @@ namespace RepetierSharp
         private const string UploadAction = "upload";
         private const string MultiPartFormData = "multipart/form-data";
 
-        private static readonly JsonSerializerOptions DefaultOptions = new()
+        private static readonly JsonSerializerOptions _defaultOptions = new()
         {
             AllowTrailingCommas = true,
             UnknownTypeHandling = JsonUnknownTypeHandling.JsonElement,
@@ -46,7 +46,8 @@ namespace RepetierSharp
             _logger = logger ?? NullLogger<RepetierConnection>.Instance;
             SessionIdReceivedAsync += async sessionIdArgs =>
             {
-                await _clientEvents.ConnectedEvent.InvokeAsync(new RepetierConnectedEventArgs(sessionIdArgs.SessionId));
+                _logger.LogInformation("Session ID received: {SessionId}", sessionIdArgs.SessionId);
+                await _clientEvents.ConnectedEvent.InvokeAsync(new RepetierConnectedEventArgs());
             };
         }
         
@@ -78,14 +79,13 @@ namespace RepetierSharp
         /// </summary>
         public async Task Connect()
         {
-            WebSocketClient.ReconnectTimeout = TimeSpan.FromSeconds(15);
+            WebSocketClient.ReconnectTimeout = TimeSpan.FromSeconds(5);
             WebSocketClient.ReconnectionHappened.Subscribe(OnReconnect);
             WebSocketClient.DisconnectionHappened.Subscribe(OnDisconnect);
             WebSocketClient.MessageReceived.Subscribe(OnMsgReceived);
             try
             {
-                await WebSocketClient.StartOrFail()
-                    .ContinueWith(_ => SendPing());
+                await WebSocketClient.StartOrFail().ContinueWith(_ => SendPing());
             }
             catch ( Exception e )
             {
@@ -196,24 +196,16 @@ namespace RepetierSharp
             }
         }
 
-        /// <summary>
-        /// Each message send to and from the Repetier Server is a valid JSON message
-        /// </summary>
-        /// <param name="msg"></param>
-        /// <returns></returns>
-        private static bool IsInvalidRepetierMsg(ResponseMessage msg)
-        {
-            return msg.MessageType != WebSocketMessageType.Text || string.IsNullOrEmpty(msg.Text);
-        }
-
-        private async Task HandleResponse(RepetierBaseMessage message, string commandIdentifier,
+        private async Task HandleResponse(RepetierBaseMessageInfo message, string commandIdentifier,
             JsonElement dataElement)
         {
             var commandData = Encoding.UTF8.GetBytes(dataElement.GetRawText());
-            await _clientEvents.RawRepetierResponseReceivedEvent.InvokeAsync(
-                new RawRepetierResponseReceivedEventArgs(message.CallBackId, commandIdentifier, commandData));
-            var repetierResponse =
-                RepetierJsonSerializer.DeserializeResponse(commandIdentifier, commandData, DefaultOptions);
+            var rawRepetierResponseReceivedEventArgs = new RawRepetierResponseReceivedEventArgs(message.CallBackId, commandIdentifier, commandData);
+            if ( commandIdentifier != CommandConstants.PING || !_excludePing )
+            {
+                await _clientEvents.RawRepetierResponseReceivedEvent.InvokeAsync(rawRepetierResponseReceivedEventArgs);
+            }
+            var repetierResponse = RepetierJsonSerializer.DeserializeResponse(commandIdentifier, commandData, _defaultOptions);
             if ( repetierResponse == null )
             {
                 _logger.LogWarning(
@@ -517,9 +509,11 @@ namespace RepetierSharp
         private async Task ProcessResponse(IRepetierResponse response, int callbackId)
         {
             var commandStr = _commandManager.CommandIdentifierFor(callbackId);
-            await _clientEvents.RepetierResponseReceivedEvent.InvokeAsync(
-                new RepetierResponseReceivedEventArgs(callbackId, commandStr, response));
-
+            var repetierResponseReceivedEventArgs = new RepetierResponseReceivedEventArgs(callbackId, commandStr, response);
+            if ( commandStr != CommandConstants.PING || !_excludePing )
+            {
+                await _clientEvents.RepetierResponseReceivedEvent.InvokeAsync(repetierResponseReceivedEventArgs);
+            }
             switch ( commandStr )
             {
                 case CommandConstants.PING:
@@ -735,16 +729,21 @@ namespace RepetierSharp
             return await Task.Run(async () =>
             {
                 var isInQueue = WebSocketClient.Send(baseCommand.ToBytes());
+                var shouldExcludePing = command.CommandIdentifier != CommandConstants.PING || !_excludePing;
                 if ( isInQueue )
                 {
-                    await _clientEvents.RepetierRequestSendEvent.InvokeAsync(new RepetierRequestEventArgs(baseCommand));
+                    if ( shouldExcludePing )
+                    {
+                        await _clientEvents.RepetierRequestSendEvent.InvokeAsync(new RepetierRequestEventArgs(baseCommand));
+                    }
                 }
                 else
                 {
-                    await _clientEvents.RepetierRequestFailedEvent.InvokeAsync(
-                        new RepetierRequestEventArgs(baseCommand));
+                    if ( shouldExcludePing )
+                    {
+                        await _clientEvents.RepetierRequestFailedEvent.InvokeAsync(new RepetierRequestEventArgs(baseCommand));
+                    }
                 }
-
                 return isInQueue;
             });
         }
@@ -1133,6 +1132,7 @@ namespace RepetierSharp
         private IWebsocketClient WebSocketClient { get; set; }
         private IRestClient RestClient { get; set; }
         private RepetierSession Session { get; init; }
+        private bool _excludePing;
 
         private long _lastPingTimestamp;
 

@@ -101,6 +101,19 @@ namespace RepetierSharp
                 return this;
             }
             
+            public RepetierConnectionBuilder WithSession(string sessionId)
+            {
+                _repetierConnection.Session.SessionId = sessionId;
+                return this;
+            }
+            
+            public RepetierConnectionBuilder ExcludePing(bool exclude = true)
+            {
+                _repetierConnection._excludePing = exclude;
+                return this;
+            }
+
+            
             /// <summary>
             ///     Keep alive interval for the websocket connection.
             /// </summary>
