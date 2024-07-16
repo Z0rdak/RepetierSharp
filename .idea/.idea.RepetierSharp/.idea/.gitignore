@@ -1,3 +1,16 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+# Rider ignored files
+/.idea.RepetierSharp.iml
+/contentModel.xml
+/projectSettingsUpdater.xml
+/modules.xml
+# Editor-based HTTP Client requests
+/httpRequests/
+# Datasource local storage ignored files
+/dataSources/
+/dataSources.local.xml
 # Created by https://www.toptal.com/developers/gitignore/api/csharp,windows,jetbrains,jetbrains+all,rider,dotnetcore
 # Edit at https://www.toptal.com/developers/gitignore?templates=csharp,windows,jetbrains,jetbrains+all,rider,dotnetcore
 
