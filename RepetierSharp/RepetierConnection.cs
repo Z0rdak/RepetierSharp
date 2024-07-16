@@ -35,10 +35,7 @@ namespace RepetierSharp
             AllowTrailingCommas = true,
             UnknownTypeHandling = JsonUnknownTypeHandling.JsonElement,
             WriteIndented = true,
-            Converters =
-            {
-                new RepetierBaseEventConverter()
-            }
+            Converters = { new RepetierBaseEventConverter() }
         };
 
         private RepetierConnection(ILogger<RepetierConnection>? logger = null)
@@ -50,11 +47,11 @@ namespace RepetierSharp
                 await _clientEvents.ConnectedEvent.InvokeAsync(new RepetierConnectedEventArgs());
             };
         }
-        
+
         public RepetierConnection(RestClient restClient, IWebsocketClient websocket) : this()
         {
-            this.RestClient = restClient;
-            this.WebSocketClient = websocket;
+            RestClient = restClient;
+            WebSocketClient = websocket;
         }
 
         /// <summary>
@@ -96,10 +93,11 @@ namespace RepetierSharp
         private void OnMsgReceived(ResponseMessage msg)
         {
             // Each message send to and from the Repetier Server is a valid JSON message
-            if (msg.MessageType != WebSocketMessageType.Text || string.IsNullOrEmpty(msg.Text))
+            if ( msg.MessageType != WebSocketMessageType.Text || string.IsNullOrEmpty(msg.Text) )
             {
                 return;
             }
+
             try
             {
                 // Send ping if interval is elapsed
@@ -112,7 +110,7 @@ namespace RepetierSharp
 
                 // handle command response or event
                 var msgBytes = Encoding.UTF8.GetBytes(msg.Text);
-               
+
                 var repetierMessage = JsonSerializer.Deserialize<RepetierBaseMessageInfo>(msgBytes);
                 if ( repetierMessage == null )
                 {
@@ -145,11 +143,12 @@ namespace RepetierSharp
                 var dataElement = json.RootElement.GetProperty("data");
 
                 var containsEvent = repetierMessage.HasEvents is true || repetierMessage.CallBackId == -1;
-                if (containsEvent)
+                if ( containsEvent )
                 {
                     PublishRawEventInfo(dataElement);
                     // process events
-                    var repetierBaseEvents = JsonSerializer.Deserialize<List<RepetierBaseEvent>>(dataElement.GetRawText(), _defaultOptions);
+                    var repetierBaseEvents =
+                        JsonSerializer.Deserialize<List<RepetierBaseEvent>>(dataElement.GetRawText(), _defaultOptions);
                     if ( repetierBaseEvents == null )
                     {
                         _logger.LogWarning("Unable to deserialize events: '{Event}'", msg.Text);
@@ -201,12 +200,15 @@ namespace RepetierSharp
             JsonElement dataElement)
         {
             var commandData = Encoding.UTF8.GetBytes(dataElement.GetRawText());
-            var rawRepetierResponseReceivedEventArgs = new RawRepetierResponseReceivedEventArgs(message.CallBackId, commandIdentifier, commandData);
+            var rawRepetierResponseReceivedEventArgs =
+                new RawRepetierResponseReceivedEventArgs(message.CallBackId, commandIdentifier, commandData);
             if ( commandIdentifier != CommandConstants.PING || !_excludePing )
             {
                 await _clientEvents.RawRepetierResponseReceivedEvent.InvokeAsync(rawRepetierResponseReceivedEventArgs);
             }
-            var repetierResponse = RepetierJsonSerializer.DeserializeResponse(commandIdentifier, commandData, _defaultOptions);
+
+            var repetierResponse =
+                RepetierJsonSerializer.DeserializeResponse(commandIdentifier, commandData, _defaultOptions);
             if ( repetierResponse == null )
             {
                 _logger.LogWarning(
@@ -252,10 +254,14 @@ namespace RepetierSharp
 
         private void OnReconnect(ReconnectionInfo info)
         {
-            if ( info.Type == ReconnectionType.Initial && Session.AuthType != AuthenticationType.Credentials )
+            if ( info.Type == ReconnectionType.Initial )
             {
-                // Only query messages at this point when using an api-key or no auth
-                Task.Run(async () => await this.QueryOpenMessages());
+                Task.Run(async () => await _clientEvents.ConnectedEvent.InvokeAsync(new RepetierConnectedEventArgs()));
+                if ( Session.AuthType != AuthenticationType.Credentials )
+                {
+                    // Only query messages at this point when using an api-key or no auth
+                    Task.Run(async () => await this.QueryOpenMessages());
+                }
             }
 
             Task.Run(async () => await SendPing());
@@ -510,11 +516,13 @@ namespace RepetierSharp
         private async Task ProcessResponse(IRepetierResponse response, int callbackId)
         {
             var commandStr = _commandManager.CommandIdentifierFor(callbackId);
-            var repetierResponseReceivedEventArgs = new RepetierResponseReceivedEventArgs(callbackId, commandStr, response);
+            var repetierResponseReceivedEventArgs =
+                new RepetierResponseReceivedEventArgs(callbackId, commandStr, response);
             if ( commandStr != CommandConstants.PING || !_excludePing )
             {
                 await _clientEvents.RepetierResponseReceivedEvent.InvokeAsync(repetierResponseReceivedEventArgs);
             }
+
             switch ( commandStr )
             {
                 case CommandConstants.PING:
@@ -585,6 +593,7 @@ namespace RepetierSharp
                     var userList = (UserListResponse)response;
                     break;
             }
+
             _commandManager.AcknowledgeCommand(callbackId);
         }
 
@@ -735,16 +744,19 @@ namespace RepetierSharp
                 {
                     if ( shouldExcludePing )
                     {
-                        await _clientEvents.RepetierRequestSendEvent.InvokeAsync(new RepetierRequestEventArgs(baseCommand));
+                        await _clientEvents.RepetierRequestSendEvent.InvokeAsync(
+                            new RepetierRequestEventArgs(baseCommand));
                     }
                 }
                 else
                 {
                     if ( shouldExcludePing )
                     {
-                        await _clientEvents.RepetierRequestFailedEvent.InvokeAsync(new RepetierRequestEventArgs(baseCommand));
+                        await _clientEvents.RepetierRequestFailedEvent.InvokeAsync(
+                            new RepetierRequestEventArgs(baseCommand));
                     }
                 }
+
                 return isInQueue;
             });
         }
@@ -1134,10 +1146,23 @@ namespace RepetierSharp
         private IRestClient RestClient { get; set; }
         private RepetierSession Session { get; init; }
         private bool _excludePing;
-
         private long _lastPingTimestamp;
 
-        // PrinterInfo TODO
-        public string SelectedPrinter { get; set; } = "EVOlizer";
+        public string SelectedPrinter { get; set; }
+
+        public void SelectPrinter(PrinterInfo printer)
+        {
+            SelectedPrinter = printer.Slug;
+        }
+
+        public void SelectPrinter(Printer printer)
+        {
+            SelectedPrinter = printer.PrinterSlug;
+        }
+
+        public void SelectPrinter(string printerSlug)
+        {
+            SelectedPrinter = printerSlug;
+        }
     }
 }
