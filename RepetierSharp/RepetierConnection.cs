@@ -1138,6 +1138,6 @@ namespace RepetierSharp
         private long _lastPingTimestamp;
 
         // PrinterInfo TODO
-        private string SelectedPrinter { get; } = "";
+        public string SelectedPrinter { get; set; } = "EVOlizer";
     }
 }

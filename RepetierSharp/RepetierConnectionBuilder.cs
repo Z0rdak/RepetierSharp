@@ -112,7 +112,12 @@ namespace RepetierSharp
                 _repetierConnection._excludePing = exclude;
                 return this;
             }
-
+            
+            public RepetierConnectionBuilder SelectPrinter(string printerSlug)
+            {
+                _repetierConnection.SelectedPrinter = printerSlug;
+                return this;
+            }
             
             /// <summary>
             ///     Keep alive interval for the websocket connection.
