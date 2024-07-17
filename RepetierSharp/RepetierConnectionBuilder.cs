@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Web;
+using Microsoft.Extensions.Logging;
 using RepetierSharp.Models.Commands;
 using RepetierSharp.Util;
 using RestSharp;
@@ -11,14 +13,17 @@ namespace RepetierSharp
     {
         public class RepetierConnectionBuilder
         {
-            private readonly RepetierConnection _repetierConnection = new();
-
             private IWebsocketClient? _websocketClient;
             private IRestClient? _restClient;
             private string? _webSocketHost;
             private string? _restHost;
+            private string? _selectedPrinter;
+            private ILogger<RepetierConnection>? _logger;
             private RepetierSession _session = new();
             private RestClientOptions? _restClientOptions = new();
+            private readonly List<Predicate<string>> _commandFilters = new();
+            private readonly List<Predicate<string>> _eventFilters = new();
+            private readonly CommandDispatcher _commandDispatcher = new();
 
             public RepetierConnection Build()
             {
@@ -35,8 +40,9 @@ namespace RepetierSharp
                 // Create default clients if not provided
                 if ( _websocketClient == null && !string.IsNullOrEmpty(_webSocketHost) )
                 {
-                    var uriBuilder = new UriBuilder(_webSocketHost);
-                    var queryParameters = HttpUtility.ParseQueryString(string.Empty);
+                    var uri = new Uri(_webSocketHost);
+                    var uriBuilder = new UriBuilder(uri);
+                    var queryParameters = HttpUtility.ParseQueryString(uri.Query);
                     if ( _session.ApiKey != null )
                     {
                         queryParameters["apiKey"] = _session.ApiKey;
@@ -82,7 +88,19 @@ namespace RepetierSharp
                     throw new InvalidOperationException("Rest client and websocket client must be set.");
                 }
 
-                return new RepetierConnection(_restClient, _websocketClient, _session);
+                var con = new RepetierConnection(_restClient, _websocketClient, _session, _logger);
+                // TODO: move to constructor?
+                con._eventFilters = _eventFilters;
+                con._commandFilters = _commandFilters;
+                con.SelectedPrinter = _selectedPrinter ?? string.Empty;
+                con._commandDispatcher = _commandDispatcher;
+                return con;
+            }
+
+            public RepetierConnectionBuilder WithLogger(ILogger<RepetierConnection> logger)
+            {
+                _logger = logger;
+                return this;
             }
 
             public RepetierConnectionBuilder WithWebsocketHost(string host)
@@ -218,7 +236,7 @@ namespace RepetierSharp
             {
                 if ( exclude )
                 {
-                    _repetierConnection._commandFilters.Add(eventId => eventId == "ping");
+                    _commandFilters.Add(eventId => eventId == "ping");
                 }
 
                 return this;
@@ -226,37 +244,37 @@ namespace RepetierSharp
 
             public RepetierConnectionBuilder SelectPrinter(string printerSlug)
             {
-                _repetierConnection.SelectedPrinter = printerSlug;
+                _selectedPrinter = printerSlug;
                 return this;
             }
 
             public RepetierConnectionBuilder WithEventFilter(Predicate<string> eventFilter)
             {
-                _repetierConnection._eventFilters.Add(eventFilter);
+                _eventFilters.Add(eventFilter);
                 return this;
             }
 
             public RepetierConnectionBuilder WithEventFilter(string eventToFilter)
             {
-                _repetierConnection._eventFilters.Add(eventId => eventId == eventToFilter);
+                _eventFilters.Add(eventId => eventId == eventToFilter);
                 return this;
             }
 
             public RepetierConnectionBuilder WithCommandFilter(Predicate<string> commandFilter)
             {
-                _repetierConnection._commandFilters.Add(commandFilter);
+                _commandFilters.Add(commandFilter);
                 return this;
             }
 
             public RepetierConnectionBuilder WithCommandFilter(string commandToFilter)
             {
-                _repetierConnection._commandFilters.Add(eventId => eventId == commandToFilter);
+                _commandFilters.Add(eventId => eventId == commandToFilter);
                 return this;
             }
 
             public RepetierConnectionBuilder ScheduleCommand(RepetierTimer timer, IRepetierCommand command)
             {
-                _repetierConnection._commandDispatcher.AddCommand(timer, command);
+                _commandDispatcher.AddCommand(timer, command);
                 return this;
             }
 
