@@ -48,7 +48,7 @@ namespace RepetierSharp
             };
         }
 
-        private RepetierConnection(IRestClient restClient, IWebsocketClient websocket, RepetierSession? session = null) : this()
+        private RepetierConnection(IRestClient restClient, IWebsocketClient websocket, RepetierSession? session = null, ILogger<RepetierConnection>? logger = null) : this(logger)
         {
             Session = session ?? new RepetierSession();
             RestClient = restClient;
@@ -174,19 +174,7 @@ namespace RepetierSharp
                     }
                     else
                     {
-                        Task.Run(async () =>
-                        {
-                            var commandIdentifier = _commandManager.CommandIdentifierFor(repetierMessage.CallBackId);
-                            if ( commandIdentifier == string.Empty )
-                            {
-                                _logger.LogWarning(
-                                    "Received message callbackId '{CallbackId}' could not be found in cache. Not serializing message: '{Response}'",
-                                    repetierMessage.CallBackId, dataElement.GetRawText());
-                                return;
-                            }
-
-                            await HandleResponse(repetierMessage, commandIdentifier, dataElement);
-                        });
+                        Task.Run(async () => await HandleResponse(repetierMessage, dataElement));
                     }
                 }
             }
@@ -197,10 +185,17 @@ namespace RepetierSharp
             }
         }
 
-        private async Task HandleResponse(RepetierBaseMessageInfo message, string commandIdentifier,
-            JsonElement dataElement)
+        private async Task HandleResponse(RepetierBaseMessageInfo message, JsonElement dataElement)
         {
             var commandData = Encoding.UTF8.GetBytes(dataElement.GetRawText());
+            var commandIdentifier = _commandManager.CommandIdentifierFor(message.CallBackId);
+            if ( commandIdentifier == string.Empty )
+            {
+                _logger.LogWarning(
+                    "Received message callbackId '{CallbackId}' could not be found in cache. Not serializing message: '{Response}'",
+                    message.CallBackId, dataElement.GetRawText());
+                return;
+            }
             var rawRepetierResponseReceivedEventArgs =
                 new RawRepetierResponseReceivedEventArgs(message.CallBackId, commandIdentifier, commandData);
             var hasFilter = _commandFilters.Exists(pre => pre.Invoke(commandIdentifier));
@@ -219,7 +214,7 @@ namespace RepetierSharp
                 return;
             }
 
-            await ProcessResponse(repetierResponse, message.CallBackId);
+            await ProcessResponse(repetierResponse, message.CallBackId, commandIdentifier);
         }
 
         private void PublishRawEventInfo(JsonElement dataElement)
@@ -254,7 +249,7 @@ namespace RepetierSharp
                 var disconnectedArgs = new RepetierDisconnectedEventArgs(info);
                 await _clientEvents.DisconnectedEvent.InvokeAsync(disconnectedArgs);
             });
-            _logger.LogInformation("[WebSocket] Connection closed: Reason={Reason}, Status={Status}, Desc={Desc}",
+            _logger.LogWarning("[WebSocket] Connection closed: Reason={Reason}, Status={Status}, Desc={Desc}",
                 info.Type, info.CloseStatus, info.CloseStatusDescription);
         }
 
@@ -263,13 +258,7 @@ namespace RepetierSharp
             if ( info.Type == ReconnectionType.Initial )
             {
                 Task.Run(async () => await _clientEvents.ConnectedEvent.InvokeAsync(new RepetierConnectedEventArgs()));
-                if ( Session.AuthType != AuthenticationType.Credentials )
-                {
-                    // Only query messages at this point when using an api-key or no auth
-                    Task.Run(async () => await this.QueryOpenMessages());
-                }
             }
-
             Task.Run(async () => await SendPing());
         }
 
@@ -286,9 +275,9 @@ namespace RepetierSharp
         /// <summary>
         ///     Closes the WebSocket connection
         /// </summary>
-        public void Close()
+        public async Task Close()
         {
-            WebSocketClient.Stop(WebSocketCloseStatus.Empty, "Closing initiated by user");
+            await WebSocketClient.Stop(WebSocketCloseStatus.Empty, "Closing initiated by user");
             WebSocketClient.Dispose();
         }
 
@@ -519,18 +508,17 @@ namespace RepetierSharp
 
         #endregion
 
-        private async Task ProcessResponse(IRepetierResponse response, int callbackId)
+        private async Task ProcessResponse(IRepetierResponse response, int callbackId, string commandIdentifier)
         {
-            var commandStr = _commandManager.CommandIdentifierFor(callbackId);
             var repetierResponseReceivedEventArgs =
-                new RepetierResponseReceivedEventArgs(callbackId, commandStr, response);
-            var hasFilter = _eventFilters.Exists(pre => pre.Invoke(commandStr));
+                new RepetierResponseReceivedEventArgs(callbackId, commandIdentifier, response);
+            var hasFilter = _commandFilters.Exists(pre => pre.Invoke(commandIdentifier));
             if ( !hasFilter )
             {
                 await _clientEvents.RepetierResponseReceivedEvent.InvokeAsync(repetierResponseReceivedEventArgs);
             }
 
-            switch ( commandStr )
+            switch ( commandIdentifier )
             {
                 case CommandConstants.PING:
                     await Task.Delay(TimeSpan.FromSeconds(Math.Min(3, Session.KeepAlivePing.Seconds / 2)))
@@ -1163,14 +1151,14 @@ namespace RepetierSharp
         #endregion
 
         private readonly ILogger<RepetierConnection> _logger;
-        private readonly CommandDispatcher _commandDispatcher = new();
+        private CommandDispatcher _commandDispatcher = new();
         private readonly CommandManager _commandManager = new();
         private IWebsocketClient WebSocketClient { get; set; }
         private IRestClient RestClient { get; set; }
         private RepetierSession Session { get; set; }
         private long _lastPingTimestamp;
-        private readonly List<Predicate<string>> _commandFilters = new();
-        private readonly List<Predicate<string>> _eventFilters = new();
+        private List<Predicate<string>> _commandFilters = new();
+        private List<Predicate<string>> _eventFilters = new();
         public string SelectedPrinter { get; set; }
 
         public void SelectPrinter(PrinterInfo printer)
