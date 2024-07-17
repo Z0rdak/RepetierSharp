@@ -3,7 +3,9 @@
 ## Added
 
 * RestSharp Authenticator for ApiKey authentication. Please refer to the readme for code examples.
-* Add proper logging support for the RepetierConnection instead of using Console.WriteLine.
+* Add proper logging support for the RepetierConnection instead of using Console.WriteLine. You can supply your own logger when using the RepetierConnectionBuilder or use a default console logger.
+* Add a whole array of new events which are triggered for the repetier server events and other client related events.
+* Add a filter for events and commands (and their responses) for the RepetierConnectionBuilder. This filters these events so they don't get fired in the first place.
 
 ## Changed
 
