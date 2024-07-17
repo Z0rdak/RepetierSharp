@@ -1,8 +1,7 @@
-# [Unversioned] - YYYY-MM-DD
+# [0.2.0] - YYYY-MM-DD
 
 ## Added
 
-* RestSharp Authenticator for ApiKey authentication. Please refer to the readme for code examples.
 * Add proper logging support for the RepetierConnection instead of using Console.WriteLine. You can supply your own logger when using the RepetierConnectionBuilder or use a default console logger.
 * Add a whole array of new events which are triggered for the repetier server events and other client related events.
 * Add a filter for events and commands (and their responses) for the RepetierConnectionBuilder. This filters these events so they don't get fired in the first place.
@@ -14,20 +13,24 @@
   Credit to the authors of [MQTTnet](https://github.com/dotnet/MQTTnet) for the inspiration on how to implement this.
 * All Http requests are now async. This mainly is relevant for the methods which upload gcode files or upload and start
   gcode.
-* Streamlined the RepetierConnectionBuilder. To establish a connection you can now supply a RestClient and
-  WebsocketClient instance directly.
-  This gives more flexibility to the end user and makes it easier to set up a correct RepetierConnection. Please refer
+* ``ActivatePrinter`` and ``DeactivePrinter`` no longer select the active printer to send commands to. Instead they work like the repetier server api describes them. Set the `SelectedPrinter` for this: `repetierCon.SelectedPrinter = "AwesomePrinterSlug"`. Alternatively you can select the printer when setting up the connection with the ``RepetierConnectionBuilder``.
+* Streamlined the ``RepetierConnectionBuilder``. It's possible to supply a ``RestClient`` and/or 
+  a ``WebsocketClient`` instance directly.
+  This gives more flexibility to the end user and makes it easier to set up a correct ``RepetierConnection``. Please refer
   to the readme for code examples.
 * Messages are now called Responses
 * Updated System.Text.Json to 8.0.4
 * Rename the ``RepetierConnectionBuilder`` method ``WithCyclicCommand`` to ``ScheduleCommand``
 * Rename ``GetRepetierServerInfoAsync`` to ``GetRepetierServerInfo``
 * PingInterval is now called `KeepAlivePing`, is a TimeSpan and moved in ``RepetierSession``
+* Move some properties from the `RepetierSession` to type ``RepetierAuthentication``. This includes only the info which needs to be supplied whenever a `loginRequired` event is fired. When supplied with the `RepetierConnectionBuilder` this is automatically used for authentication.
+* Implement custom JsonSerializer for repetier server events to streamline to process of deserializing the events. It is possible to add custom event entries to a dictionary in the `RepetierEventConverter` alongside with a type which is used for deserialization.
+* A lot of internal refactoring
 
 ## Removed
 
 * Various overloads and confusing methods for building a RepetierConnection instance when using the builder.
-* Helper methods for the RepetierConnectionBuilder which could be used to schedule querying the printer state and printer list. That's now all covered by the `ScheduleCommand` method. 
+* Helper methods for the ``RepetierConnectionBuilder`` which could be used to schedule querying the printer state and printer list. That's now all covered by the `ScheduleCommand` method. 
 
 ## Fixed
 
