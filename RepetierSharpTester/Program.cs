@@ -1,4 +1,6 @@
-﻿using RepetierSharp;
+﻿using System.Text;
+using Microsoft.Extensions.Logging;
+using RepetierSharp;
 using RepetierSharp.Util;
 using RestSharp;
 using Websocket.Client;
@@ -9,76 +11,101 @@ namespace RepetierSharpTester
     {
         private static async Task Main()
         {
-            var builder = new RepetierConnection.RepetierConnectionBuilder()
-                .WithApiKey("e630a6e6-b745-4a2f-b002-4b04034840bc") // TODO: 
-                .ExcludePing()
-                .SelectPrinter("EVOlizer")
-                .UseWebSocketClient(new WebsocketClient(
-                    new Uri("ws://10.197.45.104/socket/?lang=de&apiKey=e630a6e6-b745-4a2f-b002-4b04034840bc")))
-                .UseRestClient(new RestClient("http://10.197.45.104"))
-                .UseRestOptions(new RestClientOptions
+            try
+            {
+      
+                using var factory = LoggerFactory.Create(builder =>
                 {
-                    Authenticator =
-                        new RepetierApiKeyRequestHeaderAuthenticator("e630a6e6-b745-4a2f-b002-4b04034840bc")
+                    builder.AddConsole();
                 });
+                var logger = factory.CreateLogger<RepetierConnection>();
+                var builder = new RepetierConnection.RepetierConnectionBuilder()
+                    .WithLogger(logger )
+                    .SelectPrinter("EVOlizer")
+                //.WithCommandFilter("ping")
+                //.WithEventFilter("temp")
+                    .WithCommandFilter("ping")
+                    .WithEventFilter("temp")
+                    // .WithEventFilter("ping")
+                    .WithSession("e630a6e6-b745-4a2f-b002-4b04034840bc")
+                    .WithApiKey("lFajzG5d7wHlgP2wh4UI6IUKAbbdd49g")
+                .WithWebsocketHost("ws://10.197.45.104/socket/?sess=lFajzG5d7wHlgP2wh4UI6IUKAbbdd49g&lang=de&apiKey=e630a6e6-b745-4a2f-b002-4b04034840bc")
+                .WithWebsocketAuth("Repetier-Admin", "sfm_2020", true)
+                    //.UseWebSocketClient(new WebsocketClient(new Uri("ws://10.197.45.104/socket/?sess=1234542135462354&lang=de&apiKey=e630a6e6-b745-4a2f-b002-4b04034840bc")))
+                .UseRestClient(new RestClient("http://10.197.45.104"));
 
             var repetierConn = builder.Build();
-
-            using ( repetierConn )
+            repetierConn.ConnectedAsync += eventArgs =>
             {
-                await repetierConn.Connect();
+                Console.WriteLine("Connected");
+                return Task.CompletedTask;
+            };
+            
+            repetierConn.PermissionDeniedAsync += eventArgs =>
+            {
+                Console.WriteLine("PermDenied");
+                return Task.CompletedTask;
+            };
 
-                repetierConn.ConnectedAsync += eventArgs =>
-                {
-                    Console.WriteLine("Connected");
-                    return Task.CompletedTask;
-                };
+            repetierConn.LoginRequiredAsync += eventArgs =>
+            {
+                return Task.CompletedTask;
+            };
 
-                repetierConn.LoginRequiredAsync += eventArgs =>
-                {
-                    Console.WriteLine("Login Required");
-                    return Task.CompletedTask;
-                };
+            repetierConn.DisconnectedAsync += eventArgs =>
+            {
+                return Task.CompletedTask;
+            };
 
-                repetierConn.DisconnectedAsync += eventArgs =>
-                {
-                    Console.WriteLine("Disconnected");
-                    Environment.Exit(0);
-                    return Task.CompletedTask;
-                };
+            repetierConn.RepetierRequestSendAsync += eventArgs =>
+            {
+                Console.WriteLine(
+                    $" ===> {eventArgs.RepetierBaseRequest.CallbackId} {eventArgs.RepetierBaseRequest.Action} {eventArgs.RepetierBaseRequest.Printer}");
+                return Task.CompletedTask;
+            };
 
-                repetierConn.RepetierRequestSendAsync += eventArgs =>
-                {
-                    Console.WriteLine(
-                        $" ===> {eventArgs.RepetierBaseRequest.CallbackId} {eventArgs.RepetierBaseRequest.Action} {eventArgs.RepetierBaseRequest.Printer}");
-                    return Task.CompletedTask;
-                };
+            repetierConn.RepetierRequestFailedAsync += eventArgs =>
+            {
+                Console.WriteLine($" =X=> {eventArgs.RepetierBaseRequest.CallbackId} {eventArgs.RepetierBaseRequest.Action} {eventArgs.RepetierBaseRequest.Printer}");
+                return Task.CompletedTask;
+            };
 
-                repetierConn.RepetierRequestFailedAsync += eventArgs =>
-                {
-                    Console.WriteLine($" =X=> {eventArgs.RepetierBaseRequest.CallbackId}");
-                    return Task.CompletedTask;
-                };
+            repetierConn.RepetierResponseReceivedAsync += eventArgs =>
+            {
+                Console.WriteLine($" <=== {eventArgs.CallbackId} {eventArgs.Command}");
+                return Task.CompletedTask;
+            };
 
-                repetierConn.RepetierResponseReceivedAsync += eventArgs =>
-                {
-                    Console.WriteLine($" <=== {eventArgs.CallbackId}");
-                    return Task.CompletedTask;
-                };
+            repetierConn.EventReceivedAsync += eventArgs =>
+            {
+                Console.WriteLine($" <=!= {eventArgs.EventName}");
+                return Task.CompletedTask;
+            };
 
-                repetierConn.EventReceivedAsync += eventArgs =>
+            repetierConn.RawRepetierEventReceivedAsync += eventArgs =>
+            {
+                Console.WriteLine($" <=?= {eventArgs.EventName}");
+                if ( eventArgs.EventName == "wifiChanged" ||eventArgs.EventName == "extruder1")
                 {
-                    Console.WriteLine($" <=!= {eventArgs.EventName}");
-                    return Task.CompletedTask;
-                };
+                    Console.WriteLine($" ########### {Encoding.UTF8.GetString(eventArgs.EventPayload)}");
+                }
+                return Task.CompletedTask;
+            };
+            await repetierConn.Connect();
 
-                repetierConn.RawRepetierEventReceivedAsync += eventArgs =>
-                {
-                    Console.WriteLine($" <=?= {eventArgs.EventName}");
-                    return Task.CompletedTask;
-                };
-                while ( true ) { }
+            while ( true )
+            {
             }
+
+            await repetierConn.Close();
+            await Task.CompletedTask;
+            }
+            catch ( Exception e )
+            {
+                Console.Error.WriteLine(e); 
+            }
+         
         }
+        
     }
 }
