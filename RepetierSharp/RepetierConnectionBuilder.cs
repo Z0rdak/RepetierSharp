@@ -102,6 +102,16 @@ namespace RepetierSharp
                 _logger = logger;
                 return this;
             }
+            
+            public RepetierConnectionBuilder WithDefaultLogger()
+            {
+                using var factory = LoggerFactory.Create(builder =>
+                {
+                    builder.AddConsole();
+                });
+                _logger = factory.CreateLogger<RepetierConnection>();
+                return this;
+            }
 
             public RepetierConnectionBuilder WithWebsocketHost(string host)
             {
