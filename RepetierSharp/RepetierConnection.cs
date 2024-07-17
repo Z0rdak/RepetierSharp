@@ -48,8 +48,9 @@ namespace RepetierSharp
             };
         }
 
-        public RepetierConnection(RestClient restClient, IWebsocketClient websocket) : this()
+        private RepetierConnection(IRestClient restClient, IWebsocketClient websocket, RepetierSession? session = null) : this()
         {
+            Session = session ?? new RepetierSession();
             RestClient = restClient;
             WebSocketClient = websocket;
         }
@@ -202,7 +203,8 @@ namespace RepetierSharp
             var commandData = Encoding.UTF8.GetBytes(dataElement.GetRawText());
             var rawRepetierResponseReceivedEventArgs =
                 new RawRepetierResponseReceivedEventArgs(message.CallBackId, commandIdentifier, commandData);
-            if ( commandIdentifier != CommandConstants.PING || !_excludePing )
+            var hasFilter = _commandFilters.Exists(pre => pre.Invoke(commandIdentifier));
+            if ( !hasFilter )
             {
                 await _clientEvents.RawRepetierResponseReceivedEvent.InvokeAsync(rawRepetierResponseReceivedEventArgs);
             }
@@ -235,8 +237,12 @@ namespace RepetierSharp
                 Task.Run(async () =>
                 {
                     var bytes = Encoding.UTF8.GetBytes(eventData.GetRawText());
-                    await _clientEvents.RawRepetierEventReceivedEvent.InvokeAsync(
-                        new RawRepetierEventReceivedEventArgs(repEventInfo.Event, repEventInfo.Printer, bytes));
+                    var hasFilter = _eventFilters.Exists(pre => pre.Invoke(repEventInfo.Event));
+                    if ( !hasFilter )
+                    {
+                        await _clientEvents.RawRepetierEventReceivedEvent.InvokeAsync(
+                            new RawRepetierEventReceivedEventArgs(repEventInfo.Event, repEventInfo.Printer, bytes));
+                    }
                 });
             }
         }
@@ -518,7 +524,8 @@ namespace RepetierSharp
             var commandStr = _commandManager.CommandIdentifierFor(callbackId);
             var repetierResponseReceivedEventArgs =
                 new RepetierResponseReceivedEventArgs(callbackId, commandStr, response);
-            if ( commandStr != CommandConstants.PING || !_excludePing )
+            var hasFilter = _eventFilters.Exists(pre => pre.Invoke(commandStr));
+            if ( !hasFilter )
             {
                 await _clientEvents.RepetierResponseReceivedEvent.InvokeAsync(repetierResponseReceivedEventArgs);
             }
@@ -601,7 +608,11 @@ namespace RepetierSharp
         {
             var repetierEventArgs = new RepetierEventReceivedEventArgs(repetierEvent.Event, repetierEvent.Printer,
                 repetierEvent.RepetierEvent);
-            await _clientEvents.RepetierEventReceivedEvent.InvokeAsync(repetierEventArgs);
+            var hasFilter = _eventFilters.Exists(pre => pre.Invoke(repetierEvent.Event));
+            if ( !hasFilter )
+            {
+                await _clientEvents.RepetierEventReceivedEvent.InvokeAsync(repetierEventArgs);
+            }
             switch ( repetierEvent.Event )
             {
                 case EventConstants.JOBS_CHANGED:
@@ -621,19 +632,16 @@ namespace RepetierSharp
 
                     break;
                 case EventConstants.LOGIN_REQUIRED:
-                    // TODO: check
-                    if ( Session.AuthType == AuthenticationType.Credentials )
+                    var loginRequiredEvent = (LoginRequired)repetierEvent.RepetierEvent;
+                    if ( !string.IsNullOrEmpty(Session.SessionId) )
                     {
-                        var loginRequiredEvent = (LoginRequired)repetierEvent.RepetierEvent;
                         Session.SessionId = loginRequiredEvent.SessionId;
+                    } 
+                    await _clientEvents.LoginRequiredEvent.InvokeAsync(new LoginRequiredEventArgs());
+                    if ( Session.DefaultLogin != null )
+                    { 
                         await Login();
                     }
-                    else
-                    {
-                        throw new InvalidOperationException("Credentials not supplied.");
-                    }
-
-                    await _clientEvents.LoginRequiredEvent.InvokeAsync(new LoginRequiredEventArgs());
                     break;
                 case EventConstants.USER_CREDENTIALS:
                     var userCredentialsEvent = (UserCredentials)repetierEvent.RepetierEvent;
@@ -739,10 +747,10 @@ namespace RepetierSharp
             return await Task.Run(async () =>
             {
                 var isInQueue = WebSocketClient.Send(baseCommand.ToBytes());
-                var shouldExcludePing = command.CommandIdentifier != CommandConstants.PING || !_excludePing;
+                var hasFilterCmd = _commandFilters.Exists(pre => pre.Invoke(command.CommandIdentifier));
                 if ( isInQueue )
                 {
-                    if ( shouldExcludePing )
+                    if ( !hasFilterCmd )
                     {
                         await _clientEvents.RepetierRequestSendEvent.InvokeAsync(
                             new RepetierRequestEventArgs(baseCommand));
@@ -750,7 +758,7 @@ namespace RepetierSharp
                 }
                 else
                 {
-                    if ( shouldExcludePing )
+                    if ( !hasFilterCmd )
                     {
                         await _clientEvents.RepetierRequestFailedEvent.InvokeAsync(
                             new RepetierRequestEventArgs(baseCommand));
@@ -778,12 +786,16 @@ namespace RepetierSharp
         ///     The password will be hashed. See:
         ///     https://prgdoc.repetier-server.com/v1/docs/index.html#/en/web-api/websocket/basicCommands?id=login
         /// </summary>
-        public async Task Login()
+        private async Task Login()
         {
-            if ( !string.IsNullOrEmpty(Session.LoginName) && !string.IsNullOrEmpty(Session.Password) )
+            if ( Session.DefaultLogin != null )
             {
-                await Login(Session.LoginName, Session.Password);
+                if ( !string.IsNullOrEmpty(Session.DefaultLogin.LoginName) && !string.IsNullOrEmpty(Session.DefaultLogin.Password) )
+                {
+                    await Login(Session.DefaultLogin);
+                } 
             }
+            
         }
 
         /// <summary>
@@ -793,12 +805,23 @@ namespace RepetierSharp
         /// </summary>
         /// <param name="user"> The user name for login </param>
         /// <param name="password"> The password in plaintext </param>
-        public async Task Login(string user, string password)
+        /// <param name="longLivedSession"> Flag to indicate if the session should be long lived. Defaults to true </param>
+        public async Task Login(string user, string password, bool longLivedSession = true)
         {
             if ( !string.IsNullOrEmpty(Session.SessionId) )
             {
                 var pw = CommandHelper.HashPassword(Session.SessionId, user, password);
-                await SendCommand(new LoginCommand(user, pw, Session.LongLivedSession), typeof(LoginCommand));
+                await SendCommand(new LoginCommand(user, pw, longLivedSession), typeof(LoginCommand));
+            }
+        }
+        
+        
+        public async Task Login(RepetierAuthentication repAuth)
+        {
+            if ( !string.IsNullOrEmpty(Session.SessionId) )
+            {
+                var pw = CommandHelper.HashPassword(Session.SessionId, repAuth.LoginName, repAuth.Password);
+                await SendCommand(new LoginCommand(repAuth.LoginName, pw, repAuth.LongLivedSession), typeof(LoginCommand));
             }
         }
 
@@ -1144,10 +1167,10 @@ namespace RepetierSharp
         private readonly CommandManager _commandManager = new();
         private IWebsocketClient WebSocketClient { get; set; }
         private IRestClient RestClient { get; set; }
-        private RepetierSession Session { get; init; }
-        private bool _excludePing;
+        private RepetierSession Session { get; set; }
         private long _lastPingTimestamp;
-
+        private readonly List<Predicate<string>> _commandFilters = new();
+        private readonly List<Predicate<string>> _eventFilters = new();
         public string SelectedPrinter { get; set; }
 
         public void SelectPrinter(PrinterInfo printer)
