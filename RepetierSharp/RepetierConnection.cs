@@ -41,7 +41,7 @@ namespace RepetierSharp
         private RepetierConnection(ILogger<RepetierConnection>? logger = null)
         {
             _logger = logger ?? NullLogger<RepetierConnection>.Instance;
-            SessionEstablished += async sessionIdArgs =>
+            SessionEstablishedAsync += async sessionIdArgs =>
             {
                 _logger.LogInformation("Session ID received: {SessionId}", sessionIdArgs.SessionId);
                 await _clientEvents.ConnectedEvent.InvokeAsync(new RepetierConnectedEventArgs());
@@ -829,6 +829,10 @@ namespace RepetierSharp
             remove => _clientEvents.ConnectedEvent.RemoveHandler(value);
         }
 
+        /// <summary>
+        ///     Fired when the connection with the server was closed. Either willingly or by other means. <br></br>
+        ///     In case the disconnected client had the last connection open for this particular session, the session may be discarded by the server.
+        /// </summary>
         public event Func<RepetierDisconnectedEventArgs, Task> DisconnectedAsync
         {
             add => _clientEvents.DisconnectedEvent.AddHandler(value);
@@ -866,7 +870,7 @@ namespace RepetierSharp
         /// <summary>
         ///     Event which is fired when a command is not permitted for the current sessionId.
         /// </summary>
-        public event Func<SessionIdReceivedEventArgs, Task> SessionEstablished
+        public event Func<SessionIdReceivedEventArgs, Task> SessionEstablishedAsync
         {
             add => _clientEvents.SessionIdReceivedEvent.AddHandler(value);
             remove => _clientEvents.SessionIdReceivedEvent.RemoveHandler(value);
@@ -937,6 +941,9 @@ namespace RepetierSharp
 
         private readonly RepetierPrintJobEvents _printJobEvents = new();
 
+        /// <summary>
+        ///     Fired after a print job has been started.
+        /// </summary>
         public event Func<PrintJobStartedEventArgs, Task> PrintStartedAsync
         {
             add => _printJobEvents.PrintStartedEvent.AddHandler(value);
@@ -1070,7 +1077,7 @@ namespace RepetierSharp
         }
 
         /// <summary>
-        ///     Triggered for every move the printer does. This can be used to provide a live preview of what the printer does.
+        ///     Fired for every move the printer does. This can be used to provide a live preview of what the printer does.
         ///     This is only fired when moves are enabled (sendMoves action).
         /// </summary>
         public event Func<MovedEventArgs, Task> PrinterMovedAsync
@@ -1140,6 +1147,9 @@ namespace RepetierSharp
             remove => _clientEvents.RepetierRequestFailedEvent.RemoveHandler(value);
         }
 
+        /// <summary>
+        ///    Fired when a request to the repetier server failed. <br></br>
+        /// </summary>
         public event Func<HttpContextEventArgs, Task> HttpRequestFailedAsync
         {
             add => _clientEvents.HttpRequestFailedEvent.AddHandler(value);
