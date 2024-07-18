@@ -41,7 +41,7 @@ namespace RepetierSharp
         private RepetierConnection(ILogger<RepetierConnection>? logger = null)
         {
             _logger = logger ?? NullLogger<RepetierConnection>.Instance;
-            SessionIdReceivedAsync += async sessionIdArgs =>
+            SessionEstablished += async sessionIdArgs =>
             {
                 _logger.LogInformation("Session ID received: {SessionId}", sessionIdArgs.SessionId);
                 await _clientEvents.ConnectedEvent.InvokeAsync(new RepetierConnectedEventArgs());
@@ -866,7 +866,7 @@ namespace RepetierSharp
         /// <summary>
         ///     Event which is fired when a command is not permitted for the current sessionId.
         /// </summary>
-        public event Func<SessionIdReceivedEventArgs, Task> SessionIdReceivedAsync
+        public event Func<SessionIdReceivedEventArgs, Task> SessionEstablished
         {
             add => _clientEvents.SessionIdReceivedEvent.AddHandler(value);
             remove => _clientEvents.SessionIdReceivedEvent.RemoveHandler(value);

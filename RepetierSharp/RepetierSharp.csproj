@@ -22,7 +22,7 @@
         <FileVersion>1.0.0.0</FileVersion>
         <NeutralLanguage>en</NeutralLanguage>
         <PackageTags>Repetier-Server, 3D-Printing, Websocket, API-Client</PackageTags>
-        <Version>0.1.9.1</Version>
+        <Version>0.2.0</Version>
         <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
         <SignAssembly>false</SignAssembly>
         <PackageReadmeFile>README.md</PackageReadmeFile>
