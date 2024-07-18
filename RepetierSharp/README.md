@@ -20,7 +20,7 @@ https://www.repetier-server.com/
 
 ### Versioning
 
-This library is up-to-date with RepetierServer version 1.4.x. It is downwards compatible with and working with earlier versions, but there is the possibility of incompatibility when using RepetierSharp with earlier
+This library is up-to-date with RepetierServer version 1.4.x. It is downwards compatible and working with earlier versions, but there is the possibility of incompatibility for certain events/commands when using RepetierSharp with earlier
 versions due to undocumented changes in the Repetier Server API.
 
 See the [Changelog](Changelog.md) for a more detailed overview off added/changed features.
