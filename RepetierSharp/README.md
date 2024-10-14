@@ -6,7 +6,7 @@
 
 ## Introduction
 
-![RepetierSharp](./RepetierSharp.png)
+<img alt="RepetierSharp" height="1066" src="./RepetierSharp-wide.png" width="2133"/>
 
 RepetierSharp is a simple, event-driven client which encapsulates the WebSocket and REST API of the Repetier Server
 software to manage your printers.
