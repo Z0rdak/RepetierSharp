@@ -1,4 +1,4 @@
-# RepetierSharp - A simple, event driven [Repetier Server](https://www.repetier-server.com/ "Repetier Server") client
+# RepetierSharp - A simple, async, event driven [Repetier Server](https://www.repetier-server.com/ "Repetier Server") client
 
 ![NuGet downloads](https://img.shields.io/nuget/dt/RepetierSharp)
 ![Nuget version](https://img.shields.io/nuget/v/RepetierSharp)
@@ -8,8 +8,7 @@
 
 ![RepetierSharp](./RepetierSharp-wide.png)
 
-RepetierSharp is a simple, event-driven client which encapsulates the WebSocket and REST API of the Repetier Server
-software to manage your printers.
+RepetierSharp is a simple, asynchronous, event-driven client designed to manage Repetier Servers. It seamlessly integrates both the WebSocket and REST APIs of Repetier Server software into a single streamlined library.
 
 *Disclaimer: This project is not affiliated with Repetier Server or Hot-World GmbH & Co. KG.*
 
@@ -22,8 +21,9 @@ https://www.repetier-server.com/
 
 ### Versioning
 
-This library is up-to-date with RepetierServer version 1.4.x. It is downwards compatible and working with earlier versions, but there is the possibility of incompatibility for certain events/commands when using RepetierSharp with earlier
-versions due to undocumented changes in the Repetier Server API.
+This library is fully compatible with RepetierServer version 1.4.x and maintains backward compatibility with earlier versions. 
+
+However, when using RepetierSharp with older versions, some events or commands may encounter issues due to undocumented changes in the Repetier Server API.
 
 See the [Changelog](Changelog.md) for a more detailed overview off added/changed features.
 

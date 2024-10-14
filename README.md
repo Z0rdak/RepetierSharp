@@ -1,16 +1,16 @@
-# RepetierSharp - A simple, event driven [Repetier Server](https://www.repetier-server.com/ "Repetier Server") client
+# RepetierSharp - A simple, async, event driven [Repetier Server](https://www.repetier-server.com/ "Repetier Server") client
 
 ![NuGet downloads](https://img.shields.io/nuget/dt/RepetierSharp)
 ![Nuget version](https://img.shields.io/nuget/v/RepetierSharp)
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate/?hosted_button_id=9DEWUBKE4YT3S)
 
-![RepetierSharp](./RepetierSharp/RepetierSharp-wide.png)
-
-
 ## Introduction
 
-RepetierSharp is a simple, event-driven client which encapsulates the WebSocket and REST API of the Repetier Server
-software to manage your printers.
+![RepetierSharp](./RepetierSharp-wide.png)
+
+RepetierSharp is a simple, asynchronous, event-driven client designed to manage Repetier Servers. It seamlessly integrates both the WebSocket and REST APIs of Repetier Server software into a single streamlined library.
+
+*Disclaimer: This project is not affiliated with Repetier Server or Hot-World GmbH & Co. KG.*
 
 ### What is Repetier Server?
 
@@ -21,27 +21,19 @@ https://www.repetier-server.com/
 
 ### Versioning
 
-This library is up-to-date with RepetierServer version 1.4.x. The serialization for most commands and events should be
-working with earlier versions, but there is the possibility of incompatibility when using RepetierSharp with earlier
-versions due to undocumented changes in the Repetier Server API.
+This library is fully compatible with RepetierServer version 1.4.x and maintains backward compatibility with earlier versions. 
 
-See the Changelog.md for a more detailed overview off added/changed features.
+However, when using RepetierSharp with older versions, some events or commands may encounter issues due to undocumented changes in the Repetier Server API.
+
+See the [Changelog](Changelog.md) for a more detailed overview off added/changed features.
 
 ### Framework support
 
-Currently, RepetierSharp supports .NET 6 and .NET 8.
+RepetierSharp version 0.2.0+ supports .NET 6 and .NET 8.
 
 ## Documentation
 
-The wiki is still under construction for the version 0.2.0. If you have any issues feel free to open an issue.
-
-## Roadmap
-
-The goal for this project is to add most (or even all) used WebSocket commands and events provided by the Repetier
-Server API to enable a full programmatic control of the Repetier Server.
-
-There are also some events and commands that are not documented in the API - with some time and effort, I will try to
-reconstruct these and integrate them into RepetierSharp.
+The [wiki](https://github.com/Z0rdak/RepetierSharp/wiki) for the 0.2.0 version is still under construction.  If you have any issues feel free to open an issue.
 
 ## Contribution
 
