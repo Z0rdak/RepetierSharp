@@ -28,6 +28,7 @@
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <RepositoryType>git</RepositoryType>
         <Nullable>enable</Nullable>
+        <PackageIcon>RepetierSharp.png</PackageIcon>
     </PropertyGroup>
 
     <ItemGroup>
