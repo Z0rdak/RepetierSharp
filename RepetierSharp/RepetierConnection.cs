@@ -34,11 +34,6 @@ namespace RepetierSharp
         private RepetierConnection(ILogger<RepetierConnection>? logger = null)
         {
             _logger = logger ?? NullLogger<RepetierConnection>.Instance;
-            SessionEstablishedAsync += async sessionIdArgs =>
-            {
-                _logger.LogInformation("Session ID received: {SessionId}", sessionIdArgs.SessionId);
-                await _clientEvents.ConnectedEvent.InvokeAsync(new RepetierConnectedEventArgs());
-            };
         }
 
         private RepetierConnection(IRestClient restClient, IWebsocketClient websocket, RepetierSession? session = null, ILogger<RepetierConnection>? logger = null) : this(logger)
