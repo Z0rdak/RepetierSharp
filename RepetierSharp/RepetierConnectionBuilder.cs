@@ -125,7 +125,7 @@ namespace RepetierSharp
                 return this;
             }
 
-            public RepetierConnectionBuilder WithHttpRestHost(string host)
+            public RepetierConnectionBuilder WithHttpHost(string host)
             {
                 _restHost = host;
                 return this;
