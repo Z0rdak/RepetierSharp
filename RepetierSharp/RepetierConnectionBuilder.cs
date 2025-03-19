@@ -212,10 +212,7 @@ namespace RepetierSharp
             public RepetierConnectionBuilder WithWebsocketAuth(string login, string password,
                 bool rememberSession = false)
             {
-                _session.DefaultLogin = new RepetierAuthentication
-                {
-                    LoginName = login, Password = password, LongLivedSession = rememberSession
-                };
+                _session.DefaultLogin = new RepetierAuthentication(login, password, rememberSession);
                 _session.AuthType = AuthenticationType.Credentials;
                 return this;
             }

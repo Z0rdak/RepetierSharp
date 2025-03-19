@@ -21,5 +21,12 @@ namespace RepetierSharp
         public bool LongLivedSession { get; set; } = true;
         public string LoginName { get; set; }
         public string Password { get; set; }
+
+        public RepetierAuthentication(string loginName, string password, bool longLivedSession = true)
+        {
+            this.LoginName = loginName;
+            this.Password = password;
+            this.LongLivedSession = longLivedSession;
+        }
     }
 }
