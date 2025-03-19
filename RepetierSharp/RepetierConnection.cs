@@ -689,18 +689,26 @@ namespace RepetierSharp
                         new ConditionChangedEventArgs(repetierEvent.Printer, printerConditionChange);
                     await _printerEvents.ConditionChangedEvent.InvokeAsync(conditionChangedArgs);
                     break;
+                case EventConstants.LAYER_CHANGED:
+                    var layerChangedEventArgs = new LayerChangedEventArgs(repetierEvent.Printer, (LayerChanged)repetierEvent.RepetierEvent);
+                    await _printerEvents.LayerChangedEvent.InvokeAsync(layerChangedEventArgs);
+                    break;
+                case EventConstants.CHANGE_FILAMENT_REQUESTED:
+                    var changeFilamentRequestedEventArgs = new ChangeFilamentRequestedEventArgs(repetierEvent.Printer);
+                    await _printerEvents.ChangeFilamentRequestedEvent.InvokeAsync(changeFilamentRequestedEventArgs);
+                    break;
+                case EventConstants.MODEL_GROUPLIST_CHANGED:
+                case EventConstants.PREPARE_JOB:
+                case EventConstants.PREPARE_JOB_FINIHSED:
+                case EventConstants.PRINT_QUEUE_CHANGED:
+                case EventConstants.GCODE_STORAGE_CHANGED:
                 case EventConstants.EEPROM_DATA:
                 case EventConstants.SETTING_CHANGED:
                 case EventConstants.CONFIG:
                 case EventConstants.FIRMWARE_CHANGED:
                 case EventConstants.LOGOUT:
-                case EventConstants.PRINT_QUEUE_CHANGED:
                 case EventConstants.FOLDERS_CHANGED:
                 case EventConstants.EEPROM_CLEAR:
-                case EventConstants.MODEL_GROUPLIST_CHANGED:
-                case EventConstants.PREPARE_JOB:
-                case EventConstants.PREPARE_JOB_FINIHSED:
-                case EventConstants.CHANGE_FILAMENT_REQUESTED: // TODO: make dedicated event
                 case EventConstants.REMOTE_SERVERS_CHANGED:
                 case EventConstants.GET_EXTERNAL_LINKS:
                     break;
