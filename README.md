@@ -25,7 +25,7 @@ This library is fully compatible with RepetierServer version 1.4.x and maintains
 
 However, when using RepetierSharp with older versions, some events or commands may encounter issues due to undocumented changes in the Repetier Server API.
 
-See the [Changelog](Changelog.md) for a more detailed overview off added/changed features.
+See the [Changelog](RepetierSharp/changelog.md) for a more detailed overview off added/changed features.
 
 ### Framework support
 
