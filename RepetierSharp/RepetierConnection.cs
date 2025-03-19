@@ -1002,6 +1002,16 @@ namespace RepetierSharp
             add => _printJobEvents.PrintJobAddedEvent.AddHandler(value);
             remove => _printJobEvents.PrintJobAddedEvent.RemoveHandler(value);
         }
+        
+        /// <summary>
+        ///     Gets triggered if a change in one gcode storage was detected.
+        ///     Replaces jobsChanged and printQueueChanged events starting with version 1.5
+        /// </summary>
+        public event Func<GcodeStorageChangedEventArgs, Task> GcodeStorageChangedAsync
+        {
+            add => _printJobEvents.GcodeStorageChangedEvent.AddHandler(value);
+            remove => _printJobEvents.GcodeStorageChangedEvent.RemoveHandler(value);
+        }
 
         #endregion
 

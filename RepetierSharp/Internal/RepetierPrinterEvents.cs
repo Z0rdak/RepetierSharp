@@ -19,15 +19,6 @@ namespace RepetierSharp.Internal
         public AsyncEvent<ChangeFilamentRequestedEventArgs> ChangeFilamentRequestedEvent { get; } = new();
     }
 
-    public abstract class PrinterEventArgs : EventArgs
-    {
-        public PrinterEventArgs(string printer)
-        {
-            Printer = printer;
-        }
-        public string Printer { get; }
-    }
-    
     public sealed class ChangeFilamentRequestedEventArgs : PrinterEventArgs
     {
         public ChangeFilamentRequestedEventArgs(string printer) : base(printer) { }
