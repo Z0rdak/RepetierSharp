@@ -541,6 +541,11 @@ namespace RepetierSharp
                     break;
                 case CommandConstants.STATE_LIST:
                     var stateMsg = (StateListResponse)response;
+                    foreach ( var printerState in stateMsg.PrinterStates )
+                    {
+                        var printerStateChange = new StateChangedEventArgs(printerState.Key, printerState.Value);
+                        await _printerEvents.StateChangedEvent.InvokeAsync(printerStateChange);
+                    }
                     break;
                 case CommandConstants.MESSAGES:
                     var messagesMessage = (MessageList)response;
