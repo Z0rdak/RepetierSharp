@@ -245,7 +245,7 @@ namespace RepetierSharp
         {
             if ( info.Type == ReconnectionType.Initial )
             {
-                Task.Run(async () => await _clientEvents.ConnectedEvent.InvokeAsync(new RepetierConnectedEventArgs()));
+                Task.Run(async () => await _clientEvents.ConnectedEvent.InvokeAsync(new RepetierConnectedEventArgs(false)));
             }
             Task.Run(async () => await SendPing());
         }
@@ -628,7 +628,7 @@ namespace RepetierSharp
                 case EventConstants.USER_CREDENTIALS:
                     var userCredentialsEvent = (UserCredentials)repetierEvent.RepetierEvent;
                     var userCredentialsArgs = new UserCredentialsReceivedEventArgs(userCredentialsEvent);
-                    await _clientEvents.SessionReconnectedEvent.InvokeAsync(userCredentialsArgs);
+                    await _clientEvents.CredentialsReceivedEvent.InvokeAsync(userCredentialsArgs);
                     break;
                 case EventConstants.PRINTER_LIST_CHANGED:
                     var printerListChangedEvent = (PrinterListChanged)repetierEvent.RepetierEvent;
@@ -884,10 +884,10 @@ namespace RepetierSharp
         ///     This is the first event you will receive. It contains the permission flags, login name of the user and user only
         ///     settings.
         /// </summary>
-        public event Func<UserCredentialsReceivedEventArgs, Task> SessionReconnectedAsync
+        public event Func<UserCredentialsReceivedEventArgs, Task> CredentialsReceivedAsync
         {
-            add => _clientEvents.SessionReconnectedEvent.AddHandler(value);
-            remove => _clientEvents.SessionReconnectedEvent.RemoveHandler(value);
+            add => _clientEvents.CredentialsReceivedEvent.AddHandler(value);
+            remove => _clientEvents.CredentialsReceivedEvent.RemoveHandler(value);
         }
 
         /// <summary>
