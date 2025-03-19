@@ -15,7 +15,7 @@ namespace RepetierSharp.Internal
         public AsyncEvent<LoginResultEventArgs> LoginResultEvent { get; } = new();
         public AsyncEvent<PermissionDeniedEventArgs> PermissionDeniedEvent { get; } = new();
         public AsyncEvent<SessionIdReceivedEventArgs> SessionIdReceivedEvent { get; } = new();
-        public AsyncEvent<UserCredentialsReceivedEventArgs> SessionReconnectedEvent { get; } = new();
+        public AsyncEvent<UserCredentialsReceivedEventArgs> CredentialsReceivedEvent { get; } = new();
         public AsyncEvent<RepetierEventReceivedEventArgs> RepetierEventReceivedEvent { get; } = new();
         public AsyncEvent<RepetierResponseReceivedEventArgs> RepetierResponseReceivedEvent { get; } = new();
         public AsyncEvent<RawRepetierEventReceivedEventArgs> RawRepetierEventReceivedEvent { get; } = new();
@@ -155,15 +155,16 @@ namespace RepetierSharp.Internal
         {
             Info = info;
         }
-
         public DisconnectionInfo Info { get; }
     }
 
     public sealed class RepetierConnectedEventArgs : EventArgs
     {
-        public RepetierConnectedEventArgs()
+        public RepetierConnectedEventArgs(bool reconnect = false)
         {
+            Reconnect = reconnect;
         }
+        public bool Reconnect { get; }
         
     }
 }
