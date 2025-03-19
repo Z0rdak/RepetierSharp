@@ -450,6 +450,7 @@ namespace RepetierSharp
                 if ( response.StatusCode != HttpStatusCode.OK )
                 {
                     await _clientEvents.HttpRequestFailedEvent.InvokeAsync(new HttpContextEventArgs(request, response));
+                    await _printJobEvents.PrintStartFailedEvent.InvokeAsync(new PrintJobStartFailedEventArgs(printer, response));
                     return false;
                 }
 
@@ -986,6 +987,7 @@ namespace RepetierSharp
         /// <summary>
         ///     Triggered when a failure upon starting a print job was detected. This usually happens when the printer is not ready
         ///     or on connection issues.
+        ///     This only triggers for print jobs started through this connection by calling UploadAndStartPrint.
         /// </summary>
         public event Func<PrintJobStartFailedEventArgs, Task> PrintStartFailedAsync
         {
