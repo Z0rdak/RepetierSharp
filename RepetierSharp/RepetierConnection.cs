@@ -17,19 +17,12 @@ using RepetierSharp.Models.Messages;
 using RepetierSharp.Util;
 using RestSharp;
 using Websocket.Client;
+using static RepetierSharp.Internal.Constants;
 
 namespace RepetierSharp
 {
     public partial class RepetierConnection : Disposable
     {
-        private const string FilenameParam = "filename";
-        private const string NameParam = "name";
-        private const string SessionParam = "sess";
-        private const string ActionParam = "a";
-        private const string AutostartParam = "autostart";
-        private const string UploadAction = "upload";
-        private const string MultiPartFormData = "multipart/form-data";
-
         private static readonly JsonSerializerOptions _defaultOptions = new()
         {
             AllowTrailingCommas = true,
