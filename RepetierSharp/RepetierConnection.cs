@@ -1084,6 +1084,13 @@ namespace RepetierSharp
             add => _printerEvents.LayerChangedEvent.AddHandler(value);
             remove => _printerEvents.LayerChangedEvent.RemoveHandler(value);
         }
+        
+        public event Func<ChangeFilamentRequestedEventArgs, Task> ChangeFilamentRequestedAsync
+        {
+            add => _printerEvents.ChangeFilamentRequestedEvent.AddHandler(value);
+            remove => _printerEvents.ChangeFilamentRequestedEvent.RemoveHandler(value);
+        }
+        
 
         #endregion
 
