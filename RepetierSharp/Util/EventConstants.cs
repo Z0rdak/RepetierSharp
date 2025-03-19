@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
-using RepetierSharp.Models.Events;
-
-namespace RepetierSharp.Util
+﻿namespace RepetierSharp.Util
 {
     public static class EventConstants
     {
@@ -15,11 +10,12 @@ namespace RepetierSharp.Util
         public const string MESSAGES_CHANGED = "messagesChanged";
         public const string MOVE = "move";
         public const string LOG = "log";
-        public const string JOBS_CHANGED = "jobsChanged";
         public const string JOB_FINISHED = "jobFinished";
         public const string JOB_KILLED = "jobKilled";
         public const string JOB_STARTED = "jobStarted";
-        public const string PRINT_QUEUE_CHANGED = "printqueueChanged";
+        public const string PRINT_QUEUE_CHANGED = "printqueueChanged"; // deprecated with 1.5
+        public const string JOBS_CHANGED = "jobsChanged"; // deprecated with 1.5
+        public const string GCODE_STORAGE_CHANGED = "gcodestoragechanged"; // replaces jobsChanged and printqueueChanged
         public const string FOLDERS_CHANGED = "foldersChanged";
         public const string EEPROM_CLEAR = "eepromClear";
         public const string EEPROM_DATA = "eepromData";
