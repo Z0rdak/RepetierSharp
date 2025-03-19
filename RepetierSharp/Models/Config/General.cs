@@ -14,8 +14,9 @@ namespace RepetierSharp.Config
         [JsonPropertyName("eepromType")] public string EepromType { get; set; }
 
         [JsonPropertyName("firmwareName")] public string FirmwareName { get; set; }
+        [JsonPropertyName("firmwareStyle")] public string FirmwareStyle { get; set; }
 
-        [JsonPropertyName("g9091OverrideE")] public bool G9091OverrideE { get; set; }
+        // [JsonPropertyName("g9091OverrideE")] public bool G9091OverrideE { get; set; }
 
         [JsonPropertyName("heatedBed")] public bool HeatedBed { get; set; }
 
@@ -51,7 +52,10 @@ namespace RepetierSharp.Config
 
         [JsonPropertyName("useModelFromSlug")] public string UseModelFromSlug { get; set; }
 
-        [JsonPropertyName("useOwnModelRepository")]
-        public bool UseOwnModelRepository { get; set; }
+        [JsonPropertyName("useOwnModelRepository")] public bool UseOwnModelRepository { get; set; }
+        [JsonPropertyName("enableQueue")] public bool EnableQueue { get; set; }
+        [JsonPropertyName("automaticBedClearing")] public bool AutomaticBedClearing { get; set; }
+        [JsonPropertyName("deleteJobAfterManualStop")] public bool DeleteModelAfterManualStop { get; set; }
+        
     }
 }

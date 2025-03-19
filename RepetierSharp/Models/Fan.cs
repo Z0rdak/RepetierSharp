@@ -6,6 +6,6 @@ namespace RepetierSharp.Models
     {
         [JsonPropertyName("on")] public bool On { get; set; }
 
-        [JsonPropertyName("voltage")] public int Voltage { get; set; }
+        [JsonPropertyName("voltage")] public double Voltage { get; set; }
     }
 }

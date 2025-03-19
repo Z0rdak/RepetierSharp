@@ -6,8 +6,10 @@ namespace RepetierSharp.Config
     {
         [JsonPropertyName("connectionMethod")] public int ConnectionMethod { get; set; }
 
-        [JsonPropertyName("continueAfterFastReconnect")]
-        public bool ContinueAfterFastReconnect { get; set; }
+        [JsonPropertyName("continueAfterFastReconnect")] public bool ContinueAfterFastReconnect { get; set; }
+        [JsonPropertyName("ackFixExceedingOnTimeout")] public bool AckFixExceedingOnTimeout { get; set; }
+        [JsonPropertyName("ackFixMissingBeforeSlowCommands")] public bool AckFixMissingBeforeSlowCommands { get; set; }
+        [JsonPropertyName("compressCommunication")] public bool CompressCommunication { get; set; }
 
         [JsonPropertyName("lcdTimeMode")] public int LcdTimeMode { get; set; }
 
@@ -73,5 +75,6 @@ namespace RepetierSharp.Config
         [JsonPropertyName("address")] public string Address { get; set; }
 
         [JsonPropertyName("port")] public int Port { get; set; }
+        [JsonPropertyName("keepAliveInterval")] public int KeepAliveInterval { get; set; }
     }
 }

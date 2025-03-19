@@ -27,11 +27,11 @@ namespace RepetierSharp.Config
 
         [JsonPropertyName("heatupPerSecond")] public double HeatupPerSecond { get; set; }
 
-        [JsonPropertyName("lastTemp")] public int LastTemp { get; set; }
+        [JsonPropertyName("lastTemp")] public double LastTemp { get; set; }
 
         [JsonPropertyName("maxSpeed")] public double MaxSpeed { get; set; }
 
-        [JsonPropertyName("maxTemp")] public int MaxTemp { get; set; }
+        [JsonPropertyName("maxTemp")] public double MaxTemp { get; set; }
 
         [JsonPropertyName("num")] public int Num { get; set; }
 

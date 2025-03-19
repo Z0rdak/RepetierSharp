@@ -27,6 +27,8 @@ namespace RepetierSharp.Models
         [JsonPropertyName("paused")] public bool IsPaused { get; set; }
 
         [JsonPropertyName("printStart")] public double PrintStarted { get; set; }
+        [JsonPropertyName("repeat")] public int Repeat { get; set; }
+        [JsonPropertyName("serverTime")] public double ServerTime { get; set; }
 
         [JsonPropertyName("printTime")] public double TotalPrintTime { get; set; }
 
@@ -36,6 +38,7 @@ namespace RepetierSharp.Models
         [JsonPropertyName("slug")] public string PrinterSlug { get; set; }
 
         [JsonPropertyName("start")] public long Start { get; set; }
+        [JsonPropertyName("jobstate")] public string JobState { get; set; }
 
         [JsonPropertyName("totalLines")] public long TotalLines { get; set; }
     }
