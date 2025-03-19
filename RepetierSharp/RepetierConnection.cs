@@ -1102,18 +1102,23 @@ namespace RepetierSharp
             remove => _printerEvents.MovedEvent.RemoveHandler(value);
         }
 
+        /// <summary>
+        ///     Fired when the print progresses to the next layer
+        /// </summary>
         public event Func<LayerChangedEventArgs, Task> LayerChangedAsync
         {
             add => _printerEvents.LayerChangedEvent.AddHandler(value);
             remove => _printerEvents.LayerChangedEvent.RemoveHandler(value);
         }
         
+        /// <summary>
+        ///     Firmware requested a filament change on server side.
+        /// </summary>
         public event Func<ChangeFilamentRequestedEventArgs, Task> ChangeFilamentRequestedAsync
         {
             add => _printerEvents.ChangeFilamentRequestedEvent.AddHandler(value);
             remove => _printerEvents.ChangeFilamentRequestedEvent.RemoveHandler(value);
         }
-        
 
         #endregion
 
