@@ -1173,12 +1173,12 @@ namespace RepetierSharp
 
         public void SelectPrinter(PrinterInfo printer)
         {
-            SelectedPrinter = printer.Slug;
+            SelectPrinter(printer.Slug);
         }
 
         public void SelectPrinter(Printer printer)
         {
-            SelectedPrinter = printer.PrinterSlug;
+            SelectPrinter(printer.PrinterSlug);
         }
 
         public void SelectPrinter(string printerSlug)
