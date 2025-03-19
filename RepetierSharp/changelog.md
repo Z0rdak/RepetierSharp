@@ -5,6 +5,7 @@
 * Add proper logging support for the RepetierConnection instead of using Console.WriteLine. You can supply your own logger when using the RepetierConnectionBuilder or use a default console logger.
 * Add a whole array of new events which are triggered for the repetier server events and other client related events.
 * Add a filter for events and commands (and their responses) for the RepetierConnectionBuilder. This filters these events so they don't get fired in the first place.
+* Add more dedicated events and event handlers for print job related events
 
 ## Changed
 
@@ -13,7 +14,7 @@
   Credit to the authors of [MQTTnet](https://github.com/dotnet/MQTTnet) for the inspiration on how to implement this.
 * All Http requests are now async. This mainly is relevant for the methods which upload gcode files or upload and start
   gcode.
-* ``ActivatePrinter`` and ``DeactivePrinter`` no longer select the active printer to send commands to. Instead they work like the repetier server api describes them. Set the `SelectedPrinter` for this: `repetierCon.SelectedPrinter = "AwesomePrinterSlug"`. Alternatively you can select the printer when setting up the connection with the ``RepetierConnectionBuilder``.
+* ``ActivatePrinter`` and ``DeactivePrinter`` no longer select the active printer to send commands to. Instead, they work like the repetier server api describes them. Set the `SelectedPrinter` for this: `repetierCon.SelectedPrinter = "AwesomePrinterSlug"`. Alternatively you can select the printer when setting up the connection with the ``RepetierConnectionBuilder``.
 * Streamlined the ``RepetierConnectionBuilder``. It's possible to supply a ``RestClient`` and/or 
   a ``WebsocketClient`` instance directly.
   This gives more flexibility to the end user and makes it easier to set up a correct ``RepetierConnection``. Please refer
