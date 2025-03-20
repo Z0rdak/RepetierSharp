@@ -955,10 +955,10 @@ namespace RepetierSharp
         ///     <br></br>
         ///     which are not yet implemented by RepetierSharp.
         /// </summary>
-        public event Func<RawRepetierResponseReceivedEventArgs, Task> RawRepetierResponseReceivedAsync
+        public event Func<RawResponseReceivedEventArgs, Task> RawRepetierResponseReceivedAsync
         {
-            add => _clientEvents.RawRepetierResponseReceivedEvent.AddHandler(value);
-            remove => _clientEvents.RawRepetierResponseReceivedEvent.RemoveHandler(value);
+            add => _clientEvents.RawResponseReceivedEvent.AddHandler(value);
+            remove => _clientEvents.RawResponseReceivedEvent.RemoveHandler(value);
         }
 
         #endregion
