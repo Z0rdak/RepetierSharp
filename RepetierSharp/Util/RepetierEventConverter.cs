@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Logging;
 using RepetierSharp.Config;
 using RepetierSharp.Models;
 using RepetierSharp.Models.Config;
@@ -13,7 +14,11 @@ namespace RepetierSharp.Util
     public class RepetierBaseEventConverter : JsonConverter<RepetierBaseEvent>
     {
         private static readonly Dictionary<string, Type> s_extendableEventTypes = new();
-
+        private static readonly ILogger<RepetierBaseEventConverter> _logger = LoggerFactory.Create(builder =>
+        {
+            builder.AddConsole();
+        }).CreateLogger<RepetierBaseEventConverter>();
+        
         public static ImmutableDictionary<string, Type> GetExtendableEventTypes()
         {
             return s_extendableEventTypes.ToImmutableDictionary();
@@ -48,6 +53,7 @@ namespace RepetierSharp.Util
                 KeyValuePair.Create("firmwareChanged", typeof(FirmwareData)),
                 KeyValuePair.Create("wifiChanged", typeof(WifiChanged)),
                 KeyValuePair.Create("hardwareInfo", typeof(HardwareInfo)),
+                KeyValuePair.Create("dispatcherCount", typeof(DispatcherCount)),
                 KeyValuePair.Create("temp", typeof(TempEntry)),
                 KeyValuePair.Create("settingChanged", typeof(SettingChanged)),
                 KeyValuePair.Create("printerSettingChanged", typeof(PrinterSettingChanged)),
@@ -107,13 +113,10 @@ namespace RepetierSharp.Util
 
             if (jsonObject.TryGetProperty("event", out var eventJsonElement)) 
                 eventDiscriminator = eventJsonElement.GetString();
-            if ( eventDiscriminator == "config" )
-            {
-                Console.WriteLine(document.RootElement.GetRawText());
-            }
 
             if ( string.IsNullOrEmpty(eventDiscriminator) )
             {
+                _logger.LogWarning("Missing event discriminator"); 
                 throw new JsonException("Missing event discriminator.");
             }
 
@@ -129,7 +132,10 @@ namespace RepetierSharp.Util
                 {
                     var res = JsonSerializer.Deserialize(dataJsonElement.GetRawText(), extendableType, options);
                     if ( res == null )
+                    {
+                        _logger.LogWarning("Unable to deserialize event with type: {}",eventDiscriminator); 
                         throw new JsonException($"Unable to deserialize event with type: {eventDiscriminator}");
+                    }
                     repetierEvent = (IRepetierEvent)res;
                 }
 
@@ -137,17 +143,20 @@ namespace RepetierSharp.Util
                 if (isInEventTypes)
                 {
                     var res = JsonSerializer.Deserialize(dataJsonElement.GetRawText(), eventType, options);
-                    if ( res == null ) 
+                    if ( res == null )
+                    {
+                        _logger.LogWarning("Unable to deserialize event with type: {}",eventDiscriminator); 
                         throw new JsonException($"Unable to deserialize event with type: {eventDiscriminator}");
+                    }
+                  
                     repetierEvent = (IRepetierEvent)res;
                 }
                 if (!isInCustomEventType && !isInEventTypes)
                 {
-                    Console.WriteLine(JsonSerializer.Serialize(jsonObject, new JsonSerializerOptions{WriteIndented = true}));
+                    _logger.LogWarning("No type defined for event: {}",eventDiscriminator); 
                     throw new JsonException($"No type defined for event: {eventDiscriminator}.");
                 }
             }
-
            
             return new RepetierBaseEvent
             {

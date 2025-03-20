@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using RepetierSharp.Models;
 using RepetierSharp.Models.Commands;
 
@@ -13,10 +16,16 @@ namespace RepetierSharp.Util
     internal class CommandManager
     {
         // CallbackId -> Command
-        private readonly Dictionary<int, string> _callbackMap = new();
+        private readonly ConcurrentDictionary<int, string> _callbackMap = new();
+        private readonly ILogger<RepetierConnection> _logger;
         private int _callBackId;
         public int CallbackId => Next();
 
+        public CommandManager(ILogger<RepetierConnection>? logger = null)
+        {
+            _logger = logger ?? NullLogger<RepetierConnection>.Instance;
+        }
+        
         public int Next()
         {
             if ( _callBackId == int.MaxValue )
@@ -31,20 +40,29 @@ namespace RepetierSharp.Util
         public RepetierBaseRequest CommandWithId(IRepetierCommand command, Type commandType, string printer = "")
         {
             var callbackId = Next();
-            _callbackMap.Add(callbackId, command.CommandIdentifier);
+            if (!_callbackMap.TryAdd(callbackId, command.CommandIdentifier) )
+            {
+                _logger.LogWarning("[CommandManager::CommandWithId1] Failed to add callbackId {callbackId} for command with id {CommandIdentifier}.", callbackId, command.CommandIdentifier);
+            }
             return new RepetierBaseRequest(command, printer, callbackId, commandType);
         }
 
         public RepetierBaseRequest CommandWithId(string command, string printer, Dictionary<string, object> data)
         {
             var callbackId = Next();
-            _callbackMap.Add(callbackId, command);
+            if (!_callbackMap.TryAdd(callbackId, command) )
+            {
+                _logger.LogWarning("[CommandManager::CommandWithId2] Failed to add callbackId {callbackId} for command with id {command}.", callbackId, command);
+            }
             return new RepetierBaseRequest(data, command, printer, callbackId);
         }
 
         public void AcknowledgeCommand(int callbackId)
         {
-            _callbackMap.Remove(callbackId);
+            if (!_callbackMap.TryRemove(callbackId, out var command) )
+            {
+                _logger.LogWarning("[CommandManager] Failed to remove callbackId {callbackId}.", callbackId);
+            }
         }
         
         public string CommandIdentifierFor(int callbackId)
