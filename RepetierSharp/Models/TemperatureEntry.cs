@@ -5,7 +5,7 @@ namespace RepetierSharp.Models
 {
     public class TemperatureEntry
     {
-        [JsonPropertyName("history")] public List<TempHistoryEntry> History { get; set; }
+        [JsonPropertyName("history")] public List<TempHistoryEntry> History { get; set; } = new ();
 
         [JsonPropertyName("error")] public int Error { get; set; }
 

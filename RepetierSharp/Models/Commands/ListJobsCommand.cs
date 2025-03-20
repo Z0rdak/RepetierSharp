@@ -5,9 +5,15 @@ namespace RepetierSharp.Models.Commands
 {
     public class ListJobsCommand : IRepetierCommand
     {
-        public static ListJobsCommand Instance = new();
+        public static ListJobsCommand AllJobs => new(true);
+        public static ListJobsCommand QueuedJobs => new(false);
 
-        private ListJobsCommand() { }
+        public ListJobsCommand(bool includeRunning = false)
+        {
+            this.IncludeRunning = includeRunning;
+        }
+        [JsonPropertyName("includeRunning")]
+        public bool IncludeRunning { get; set; }
 
         [JsonIgnore] public string CommandIdentifier => CommandConstants.LIST_JOBS;
     }
