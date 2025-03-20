@@ -180,6 +180,11 @@ namespace RepetierSharp
         {
             var commandData = Encoding.UTF8.GetBytes(dataElement.GetRawText());
             var commandIdentifier = _commandManager.CommandIdentifierFor(message.CallBackId);
+            if ( commandIdentifier != CommandConstants.PING )
+            {
+                _logger.LogDebug("[Response] Id={}, Cmd={}", message.CallBackId, commandIdentifier);
+                _logger.LogTrace("[Response] Id={}, Cmd={}, Data={}", message.CallBackId, commandIdentifier, JsonSerializer.Serialize(dataElement));
+            }
             if ( commandIdentifier == string.Empty )
             {
                 _logger.LogWarning(
@@ -564,10 +569,10 @@ namespace RepetierSharp
                     break;
                 /* vvv not yet implemented vvv */
                 case CommandConstants.LIST_MODELS:
-                    var modelList = (ModelResponseList)response;
+                    var modelList = (ModelInfoList)response;
                     break;
                 case CommandConstants.LIST_JOBS:
-                    var jobList = (ModelResponseList)response;
+                    var jobList = (ModelInfoList)response;
                     break;
                 case CommandConstants.MODEL_INFO:
                     var modelInfo = (ModelInfo)response;
@@ -591,6 +596,13 @@ namespace RepetierSharp
 
         private async Task HandleEvent(RepetierBaseEvent repetierEvent)
         {
+            var hasFilter = _eventFilters.Exists(pre => pre.Invoke(repetierEvent.Event));
+            if (!hasFilter)
+            {
+                _logger.LogDebug("[Event] Event={event}, Printer={Printer}", repetierEvent.Event, repetierEvent.Printer);
+                _logger.LogTrace("[Event] Event={event}, Printer={Printer}, Data={}", repetierEvent.Event, repetierEvent.Printer, 
+                    JsonSerializer.Serialize(repetierEvent.RepetierEvent, new JsonSerializerOptions{WriteIndented = true}));
+            }
             var repetierEventArgs = new RepetierEventReceivedEventArgs(repetierEvent.Event, repetierEvent.Printer,
                 repetierEvent.RepetierEvent);
             var hasFilter = _eventFilters.Exists(pre => pre.Invoke(repetierEvent.Event));
@@ -736,10 +748,12 @@ namespace RepetierSharp
 
         protected async Task<bool> SendCommand(IRepetierCommand command, Type commandType, string printer)
         {
+            // Note: Commands which don't target a printer should have the value blanked
             var baseCommand = _commandManager.CommandWithId(command, commandType, printer);
-            if ( command.CommandIdentifier != "ping" )
+            if ( command.CommandIdentifier != CommandConstants.PING )
             {
-                _logger.LogDebug("[Command]: {command} - {id}: {cmd}", command.CommandIdentifier, baseCommand.CallbackId, JsonSerializer.Serialize(baseCommand));
+                _logger.LogDebug("[Command] Id={}, Cmd={id}", baseCommand.CallbackId, command.CommandIdentifier);
+                _logger.LogTrace("[Command] Id={}, Cmd={id}, Data={cmd}", baseCommand.CallbackId, command.CommandIdentifier, JsonSerializer.Serialize(baseCommand));
             }
             return await Task.Run(async () =>
             {
