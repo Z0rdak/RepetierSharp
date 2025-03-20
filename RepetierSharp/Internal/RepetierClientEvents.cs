@@ -19,7 +19,7 @@ namespace RepetierSharp.Internal
         public AsyncEvent<RepetierEventReceivedEventArgs> RepetierEventReceivedEvent { get; } = new();
         public AsyncEvent<RepetierResponseReceivedEventArgs> RepetierResponseReceivedEvent { get; } = new();
         public AsyncEvent<RawRepetierEventReceivedEventArgs> RawRepetierEventReceivedEvent { get; } = new();
-        public AsyncEvent<RawRepetierResponseReceivedEventArgs> RawRepetierResponseReceivedEvent { get; } = new();
+        public AsyncEvent<RawResponseReceivedEventArgs> RawResponseReceivedEvent { get; } = new();
         public AsyncEvent<RepetierRequestEventArgs> RepetierRequestSendEvent { get; } = new();
         public AsyncEvent<HttpContextEventArgs> HttpRequestFailedEvent { get; } = new();
         public AsyncEvent<RepetierRequestEventArgs> RepetierRequestFailedEvent { get; } = new();
@@ -115,14 +115,14 @@ namespace RepetierSharp.Internal
         public IRepetierMessage? Message { get; }
     }
 
-    public sealed class RawRepetierResponseReceivedEventArgs : EventArgs
+    public sealed class RawResponseReceivedEventArgs : EventArgs
     {
         /// <summary>
         /// </summary>
         /// <param name="callbackId"> CallBackId to identify the received command response </param>
         /// <param name="command"> Name of the command associated with the received response </param>
         /// <param name="responsePayload"> Command response payload </param>
-        public RawRepetierResponseReceivedEventArgs(int callbackId, string command, byte[] responsePayload)
+        public RawResponseReceivedEventArgs(int callbackId, string command, byte[] responsePayload)
         {
             CallbackId = callbackId;
             Command = command;
