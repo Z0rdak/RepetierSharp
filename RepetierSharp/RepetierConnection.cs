@@ -165,7 +165,7 @@ namespace RepetierSharp
                     }
                     else
                     {
-                        Task.Run(async () => await HandleResponse(repetierMessage, dataElement));
+                        Task.Run(async () => await HandleResponse(repetierMessage, dataElement.GetProperty("data")));
                     }
                 }
             }
