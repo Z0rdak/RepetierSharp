@@ -139,8 +139,7 @@ namespace RepetierSharp
                 {
                     PublishRawEventInfo(dataElement);
                     // process events
-                    var repetierBaseEvents =
-                        JsonSerializer.Deserialize<List<RepetierBaseEvent>>(dataElement.GetRawText(), _defaultOptions);
+                    var repetierBaseEvents = JsonSerializer.Deserialize<List<RepetierBaseEvent>>(dataElement.GetRawText(), _defaultOptions);
                     if ( repetierBaseEvents == null )
                     {
                         _logger.LogWarning("Unable to deserialize events: '{Event}'", msg.Text);
@@ -192,14 +191,9 @@ namespace RepetierSharp
                     message.CallBackId, JsonSerializer.Serialize(commandData, new JsonSerializerOptions(){WriteIndented = true}) /*dataElement.GetRawText()*/);
                 return;
             }
-            var rawRepetierResponseReceivedEventArgs =
-                new RawRepetierResponseReceivedEventArgs(message.CallBackId, commandIdentifier, commandData);
-            var hasFilter = _commandFilters.Exists(pre => pre.Invoke(commandIdentifier));
-            if ( !hasFilter )
-            {
-                await _clientEvents.RawRepetierResponseReceivedEvent.InvokeAsync(rawRepetierResponseReceivedEventArgs);
-            }
-
+           
+            await ProcessRawResponse(commandData, message.CallBackId, commandIdentifier);
+            
             var repetierResponse =
                 RepetierJsonSerializer.DeserializeResponse(message.CallBackId, commandIdentifier, commandData, _defaultOptions);
             if ( repetierResponse == null )
@@ -211,6 +205,16 @@ namespace RepetierSharp
             }
 
             await ProcessResponse(repetierResponse, message.CallBackId, commandIdentifier);
+        }
+
+        private async Task ProcessRawResponse(byte[] commandData, int callbackId, string cmdIdentifier)
+        {
+            var rawResponseArgs = new RawResponseReceivedEventArgs(callbackId, cmdIdentifier, commandData);
+            var hasFilter = _commandFilters.Exists(pre => pre.Invoke(cmdIdentifier));
+            if (!hasFilter)
+            {
+                await _clientEvents.RawResponseReceivedEvent.InvokeAsync(rawResponseArgs);
+            }
         }
 
         private void PublishRawEventInfo(JsonElement dataElement)
