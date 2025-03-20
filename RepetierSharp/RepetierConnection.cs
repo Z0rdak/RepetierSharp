@@ -196,7 +196,7 @@ namespace RepetierSharp
             }
 
             var repetierResponse =
-                RepetierJsonSerializer.DeserializeResponse(commandIdentifier, commandData, _defaultOptions);
+                RepetierJsonSerializer.DeserializeResponse(message.CallBackId, commandIdentifier, commandData, _defaultOptions);
             if ( repetierResponse == null )
             {
                 _logger.LogWarning(
