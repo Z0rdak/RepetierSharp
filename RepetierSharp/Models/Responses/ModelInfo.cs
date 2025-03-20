@@ -53,8 +53,9 @@ namespace RepetierSharp.Models
         [JsonPropertyName("zMin")] public double ZMin { get; set; }
     }
 
-    public class ModelResponseList : IRepetierResponse
+    public class ModelInfoList : IRepetierResponse
     {
+        [JsonPropertyName("data")]
         public List<ModelInfo> Models { get; set; } = new();
     }
 }

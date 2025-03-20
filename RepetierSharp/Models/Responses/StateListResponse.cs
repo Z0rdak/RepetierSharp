@@ -6,6 +6,6 @@ namespace RepetierSharp.Models.Messages
 {
     public class StateListResponse : IRepetierResponse
     {
-        [JsonPropertyName("data")] public Dictionary<string, PrinterState> PrinterStates { get; set; } = new();
+        public Dictionary<string, PrinterState> PrinterStates { get; set; } = new();
     }
 }

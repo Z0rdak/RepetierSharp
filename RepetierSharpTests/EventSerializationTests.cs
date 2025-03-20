@@ -280,7 +280,7 @@ namespace RepetierSharpTester
         public void ShouldSerializeGcodeInfoUpdated()
         {
             // Arrange
-            var obj = new GcodeInfoUpdated
+            var obj = new GcodeInfo
             {
                 ModelId = 0,
                 ModelPath = "/this/is/a/path.lol",
@@ -289,7 +289,7 @@ namespace RepetierSharpTester
 
             // Act
             var json =  JsonSerializer.Serialize(obj);
-            var result = JsonSerializer.Deserialize<GcodeInfoUpdated>(json, EventSerializationOptions);
+            var result = JsonSerializer.Deserialize<GcodeInfo>(json, EventSerializationOptions);
             var json2 = JsonSerializer.Serialize(obj);
 
             Assert.NotNull(result);

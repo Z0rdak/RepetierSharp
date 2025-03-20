@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using RepetierSharp.Models;
@@ -53,17 +54,11 @@ namespace RepetierSharp.Util
                             Messages = messagesMessage ?? new List<Message>()
                         };
                     case CommandConstants.LIST_MODELS:
-                        var modelList = JsonSerializer.Deserialize<List<ModelInfo>>(msgBytes);
-                        return new ModelResponseList
-                        {
-                            Models = modelList ?? new List<ModelInfo>()
-                        };
+                        var modelList = JsonSerializer.Deserialize<ModelInfoList>(msgBytes);
+                        return modelList;
                     case CommandConstants.LIST_JOBS:
-                        var jobList = JsonSerializer.Deserialize<List<ModelInfo>>(msgBytes, options);
-                        return new ModelResponseList
-                        {
-                            Models = jobList ?? new List<ModelInfo>()
-                        };
+                        var jobList = JsonSerializer.Deserialize<ModelInfoList>(msgBytes);
+                        return jobList;
                     case CommandConstants.MODEL_INFO:
                         return JsonSerializer.Deserialize(msgBytes, typeof(ModelInfo), options) as IRepetierResponse;
                     case CommandConstants.JOB_INFO:
