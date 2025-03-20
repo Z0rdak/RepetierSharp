@@ -609,7 +609,6 @@ namespace RepetierSharp
             }
             var repetierEventArgs = new RepetierEventReceivedEventArgs(repetierEvent.Event, repetierEvent.Printer,
                 repetierEvent.RepetierEvent);
-            var hasFilter = _eventFilters.Exists(pre => pre.Invoke(repetierEvent.Event));
             if ( !hasFilter )
             {
                 await _clientEvents.RepetierEventReceivedEvent.InvokeAsync(repetierEventArgs);
