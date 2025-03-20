@@ -3,7 +3,6 @@
     <PropertyGroup>
         <OutputType>Library</OutputType>
         <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
-        <StartupObject></StartupObject>
         <Title>RepetierSharp</Title>
         <AssemblyName>RepetierSharp</AssemblyName>
         <RootNamespace>RepetierSharp</RootNamespace>
@@ -46,17 +45,17 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="C:\Users\Marcel Bartholet\Source\Repos\Z0rdak\RepetierSharp\.editorconfig"/>
+        <None Include="RepetierSharp/.editorconfig"/>
         <None Include="LICENSE.txt">
             <Pack>True</Pack>
-            <PackagePath></PackagePath>
+            <PackagePath>../</PackagePath>
         </None>
     </ItemGroup>
 
     <ItemGroup>
         <None Include="README.md">
             <Pack>True</Pack>
-            <PackagePath>\</PackagePath>
+            <PackagePath>/</PackagePath>
         </None>
     </ItemGroup>
 
