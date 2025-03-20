@@ -34,6 +34,9 @@ namespace RepetierSharp
         private RepetierConnection(ILogger<RepetierConnection>? logger = null)
         {
             _logger = logger ?? NullLogger<RepetierConnection>.Instance;
+            _commandDispatcher = new CommandDispatcher();
+            _commandManager = new CommandManager(_logger);
+
         }
 
         private RepetierConnection(IRestClient restClient, IWebsocketClient websocket, RepetierSession? session = null, ILogger<RepetierConnection>? logger = null) : this(logger)
@@ -121,15 +124,15 @@ namespace RepetierSharp
                     });
                 }
 
-                var json = JsonSerializer.Deserialize<JsonDocument>(msgBytes);
-                if ( json == null )
+                var msgJson = JsonSerializer.Deserialize<JsonDocument>(msgBytes);
+                if ( msgJson == null )
                 {
                     _logger.LogWarning("Received message is not a valid JSON and won't be processed: '{Msg}'",
                         msg.Text);
                     return;
                 }
 
-                var dataElement = json.RootElement.GetProperty("data");
+                var dataElement = msgJson.RootElement.GetProperty("data");
 
                 var containsEvent = repetierMessage.HasEvents is true || repetierMessage.CallBackId == -1;
                 if ( containsEvent )
@@ -1186,8 +1189,8 @@ namespace RepetierSharp
         #endregion
 
         private readonly ILogger<RepetierConnection> _logger;
-        private CommandDispatcher _commandDispatcher = new();
-        private readonly CommandManager _commandManager = new();
+        private CommandDispatcher _commandDispatcher;
+        private readonly CommandManager _commandManager;
         private IWebsocketClient WebSocketClient { get; set; }
         private IRestClient RestClient { get; set; }
         private RepetierSession Session { get; set; }
