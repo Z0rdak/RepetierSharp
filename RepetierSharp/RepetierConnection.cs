@@ -184,7 +184,7 @@ namespace RepetierSharp
             {
                 _logger.LogWarning(
                     "Received message callbackId '{CallbackId}' could not be found in cache. Not serializing message: '{Response}'",
-                    message.CallBackId, dataElement.GetRawText());
+                    message.CallBackId, JsonSerializer.Serialize(commandData, new JsonSerializerOptions(){WriteIndented = true}) /*dataElement.GetRawText()*/);
                 return;
             }
             var rawRepetierResponseReceivedEventArgs =
@@ -570,10 +570,10 @@ namespace RepetierSharp
                     var jobList = (ModelResponseList)response;
                     break;
                 case CommandConstants.MODEL_INFO:
-                    var modelInfo = (ModelResponse)response;
+                    var modelInfo = (ModelInfo)response;
                     break;
                 case CommandConstants.JOB_INFO:
-                    var jobInfo = (ModelResponse)response;
+                    var jobInfo = (ModelInfo)response;
                     break;
                 case CommandConstants.CREATE_USER:
                     var createStatusMessage = (StatusResponse)response;
@@ -737,6 +737,10 @@ namespace RepetierSharp
         protected async Task<bool> SendCommand(IRepetierCommand command, Type commandType, string printer)
         {
             var baseCommand = _commandManager.CommandWithId(command, commandType, printer);
+            if ( command.CommandIdentifier != "ping" )
+            {
+                _logger.LogDebug("[Command]: {command} - {id}: {cmd}", command.CommandIdentifier, baseCommand.CallbackId, JsonSerializer.Serialize(baseCommand));
+            }
             return await Task.Run(async () =>
             {
                 var isInQueue = WebSocketClient.Send(baseCommand.ToBytes());
