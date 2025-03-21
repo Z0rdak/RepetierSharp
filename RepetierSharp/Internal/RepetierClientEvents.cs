@@ -9,20 +9,20 @@ namespace RepetierSharp.Internal
 {
     public sealed class RepetierClientEvents
     {
-        public AsyncEvent<RepetierConnectedEventArgs> ConnectedEvent { get; } = new();
-        public AsyncEvent<RepetierDisconnectedEventArgs> DisconnectedEvent { get; } = new();
+        public AsyncEvent<ConnectedEventArgs> ConnectedEvent { get; } = new();
+        public AsyncEvent<DisconnectedEventArgs> DisconnectedEvent { get; } = new();
         public AsyncEvent<LoginRequiredEventArgs> LoginRequiredEvent { get; } = new();
         public AsyncEvent<LoginResultEventArgs> LoginResultEvent { get; } = new();
         public AsyncEvent<PermissionDeniedEventArgs> PermissionDeniedEvent { get; } = new();
         public AsyncEvent<SessionIdReceivedEventArgs> SessionIdReceivedEvent { get; } = new();
         public AsyncEvent<UserCredentialsReceivedEventArgs> CredentialsReceivedEvent { get; } = new();
-        public AsyncEvent<RepetierEventReceivedEventArgs> RepetierEventReceivedEvent { get; } = new();
-        public AsyncEvent<RepetierResponseReceivedEventArgs> RepetierResponseReceivedEvent { get; } = new();
-        public AsyncEvent<RawRepetierEventReceivedEventArgs> RawRepetierEventReceivedEvent { get; } = new();
+        public AsyncEvent<EventReceivedEventArgs> EventReceivedEvent { get; } = new();
+        public AsyncEvent<ResponseReceivedEventArgs> ResponseReceivedEvent { get; } = new();
+        public AsyncEvent<RawRepetierEventReceivedEventArgs> RawEventReceivedEvent { get; } = new();
         public AsyncEvent<RawResponseReceivedEventArgs> RawResponseReceivedEvent { get; } = new();
-        public AsyncEvent<RepetierRequestEventArgs> RepetierRequestSendEvent { get; } = new();
+        public AsyncEvent<CommandEventArgs> CommandSendEvent { get; } = new();
         public AsyncEvent<HttpContextEventArgs> HttpRequestFailedEvent { get; } = new();
-        public AsyncEvent<RepetierRequestEventArgs> RepetierRequestFailedEvent { get; } = new();
+        public AsyncEvent<CommandEventArgs> CommandFailedEvent { get; } = new();
     }
     
     public sealed class HttpContextEventArgs : EventArgs
@@ -68,9 +68,9 @@ namespace RepetierSharp.Internal
         public int CommandId { get; }
     }
 
-    public sealed class RepetierEventReceivedEventArgs : EventArgs
+    public sealed class EventReceivedEventArgs : EventArgs
     {
-        public RepetierEventReceivedEventArgs(string eventName, string printer, IRepetierEvent? repetierEvent)
+        public EventReceivedEventArgs(string eventName, string printer, IRepetierEvent? repetierEvent)
         {
             EventName = eventName;
             Printer = printer;
@@ -101,9 +101,9 @@ namespace RepetierSharp.Internal
         public string Printer { get; }
     }
 
-    public sealed class RepetierResponseReceivedEventArgs : EventArgs
+    public sealed class ResponseReceivedEventArgs : EventArgs
     {
-        public RepetierResponseReceivedEventArgs(int callbackId, string command, IRepetierMessage? message)
+        public ResponseReceivedEventArgs(int callbackId, string command, IRepetierMessage? message)
         {
             CallbackId = callbackId;
             Command = command;
@@ -149,18 +149,18 @@ namespace RepetierSharp.Internal
     {
     }
 
-    public sealed class RepetierDisconnectedEventArgs : EventArgs
+    public sealed class DisconnectedEventArgs : EventArgs
     {
-        public RepetierDisconnectedEventArgs(DisconnectionInfo info)
+        public DisconnectedEventArgs(DisconnectionInfo info)
         {
             Info = info;
         }
         public DisconnectionInfo Info { get; }
     }
 
-    public sealed class RepetierConnectedEventArgs : EventArgs
+    public sealed class ConnectedEventArgs : EventArgs
     {
-        public RepetierConnectedEventArgs(bool reconnect = false)
+        public ConnectedEventArgs(bool reconnect = false)
         {
             Reconnect = reconnect;
         }

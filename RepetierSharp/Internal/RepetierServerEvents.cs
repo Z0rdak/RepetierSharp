@@ -32,14 +32,14 @@ namespace RepetierSharp.Internal
         public Message? Message { get; }
     }
 
-    public sealed class RepetierRequestEventArgs : EventArgs
+    public sealed class CommandEventArgs : EventArgs
     {
-        public RepetierRequestEventArgs(RepetierBaseRequest request)
+        public CommandEventArgs(BaseCommand command)
         {
-            RepetierBaseRequest = request;
+            Command = command;
         }
 
-        public RepetierBaseRequest RepetierBaseRequest { get; }
+        public BaseCommand Command { get; }
     }
 
     public sealed class LogEntryEventArgs : EventArgs

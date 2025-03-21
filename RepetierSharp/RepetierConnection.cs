@@ -235,7 +235,7 @@ namespace RepetierSharp
                     var hasFilter = _eventFilters.Exists(pre => pre.Invoke(repEventInfo.Event));
                     if ( !hasFilter )
                     {
-                        await _clientEvents.RawRepetierEventReceivedEvent.InvokeAsync(
+                        await _clientEvents.RawEventReceivedEvent.InvokeAsync(
                             new RawRepetierEventReceivedEventArgs(repEventInfo.Event, repEventInfo.Printer, bytes));
                     }
                 });
@@ -246,7 +246,7 @@ namespace RepetierSharp
         {
             Task.Run(async () =>
             {
-                var disconnectedArgs = new RepetierDisconnectedEventArgs(info);
+                var disconnectedArgs = new DisconnectedEventArgs(info);
                 await _clientEvents.DisconnectedEvent.InvokeAsync(disconnectedArgs);
             });
             _logger.LogWarning("[WebSocket] Connection closed: Reason={Reason}, Status={Status}, Desc={Desc}",
@@ -257,7 +257,7 @@ namespace RepetierSharp
         {
             if ( info.Type == ReconnectionType.Initial )
             {
-                Task.Run(async () => await _clientEvents.ConnectedEvent.InvokeAsync(new RepetierConnectedEventArgs(false)));
+                Task.Run(async () => await _clientEvents.ConnectedEvent.InvokeAsync(new ConnectedEventArgs(false)));
             }
             Task.Run(async () => await SendPing());
         }
@@ -512,11 +512,11 @@ namespace RepetierSharp
         private async Task ProcessResponse(IRepetierResponse response, int callbackId, string commandIdentifier)
         {
             var repetierResponseReceivedEventArgs =
-                new RepetierResponseReceivedEventArgs(callbackId, commandIdentifier, response);
+                new ResponseReceivedEventArgs(callbackId, commandIdentifier, response);
             var hasFilter = _commandFilters.Exists(pre => pre.Invoke(commandIdentifier));
             if ( !hasFilter )
             {
-                await _clientEvents.RepetierResponseReceivedEvent.InvokeAsync(repetierResponseReceivedEventArgs);
+                await _clientEvents.ResponseReceivedEvent.InvokeAsync(repetierResponseReceivedEventArgs);
             }
 
             switch ( commandIdentifier )
@@ -607,11 +607,11 @@ namespace RepetierSharp
                 _logger.LogTrace("[Event] Event={event}, Printer={Printer}, Data={}", repetierEvent.Event, repetierEvent.Printer, 
                     JsonSerializer.Serialize(repetierEvent.RepetierEvent, new JsonSerializerOptions{WriteIndented = true}));
             }
-            var repetierEventArgs = new RepetierEventReceivedEventArgs(repetierEvent.Event, repetierEvent.Printer,
+            var repetierEventArgs = new EventReceivedEventArgs(repetierEvent.Event, repetierEvent.Printer,
                 repetierEvent.RepetierEvent);
             if ( !hasFilter )
             {
-                await _clientEvents.RepetierEventReceivedEvent.InvokeAsync(repetierEventArgs);
+                await _clientEvents.EventReceivedEvent.InvokeAsync(repetierEventArgs);
             }
             switch ( repetierEvent.Event )
             {
@@ -821,7 +821,7 @@ namespace RepetierSharp
         ///     Fired when the connection with the server is established successfully for the first time. <br></br>
         ///     At this point, the sessionId should already be assigned to this RepetierConnection.
         /// </summary>
-        public event Func<RepetierConnectedEventArgs, Task> ConnectedAsync
+        public event Func<ConnectedEventArgs, Task> ConnectedAsync
         {
             add => _clientEvents.ConnectedEvent.AddHandler(value);
             remove => _clientEvents.ConnectedEvent.RemoveHandler(value);
@@ -831,7 +831,7 @@ namespace RepetierSharp
         ///     Fired when the connection with the server was closed. Either willingly or by other means. <br></br>
         ///     In case the disconnected client had the last connection open for this particular session, the session may be discarded by the server.
         /// </summary>
-        public event Func<RepetierDisconnectedEventArgs, Task> DisconnectedAsync
+        public event Func<DisconnectedEventArgs, Task> DisconnectedAsync
         {
             add => _clientEvents.DisconnectedEvent.AddHandler(value);
             remove => _clientEvents.DisconnectedEvent.RemoveHandler(value);
@@ -891,10 +891,10 @@ namespace RepetierSharp
         ///     <br></br>
         ///     They can be enabled by setting the appropriate properties.
         /// </summary>
-        public event Func<RepetierEventReceivedEventArgs, Task> EventReceivedAsync
+        public event Func<EventReceivedEventArgs, Task> EventReceivedAsync
         {
-            add => _clientEvents.RepetierEventReceivedEvent.AddHandler(value);
-            remove => _clientEvents.RepetierEventReceivedEvent.RemoveHandler(value);
+            add => _clientEvents.EventReceivedEvent.AddHandler(value);
+            remove => _clientEvents.EventReceivedEvent.RemoveHandler(value);
         }
 
         /// <summary>
@@ -907,17 +907,17 @@ namespace RepetierSharp
         /// </summary>
         public event Func<RawRepetierEventReceivedEventArgs, Task> RawRepetierEventReceivedAsync
         {
-            add => _clientEvents.RawRepetierEventReceivedEvent.AddHandler(value);
-            remove => _clientEvents.RawRepetierEventReceivedEvent.RemoveHandler(value);
+            add => _clientEvents.RawEventReceivedEvent.AddHandler(value);
+            remove => _clientEvents.RawEventReceivedEvent.RemoveHandler(value);
         }
 
         /// <summary>
         ///     Fired when a response from the server is received. This does not include the ping response.
         /// </summary>
-        public event Func<RepetierResponseReceivedEventArgs, Task> RepetierResponseReceivedAsync
+        public event Func<ResponseReceivedEventArgs, Task> RepetierResponseReceivedAsync
         {
-            add => _clientEvents.RepetierResponseReceivedEvent.AddHandler(value);
-            remove => _clientEvents.RepetierResponseReceivedEvent.RemoveHandler(value);
+            add => _clientEvents.ResponseReceivedEvent.AddHandler(value);
+            remove => _clientEvents.ResponseReceivedEvent.RemoveHandler(value);
         }
 
         /// <summary>
