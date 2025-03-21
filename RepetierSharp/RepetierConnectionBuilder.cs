@@ -279,9 +279,15 @@ namespace RepetierSharp
                 return this;
             }
 
-            public RepetierConnectionBuilder ScheduleCommand(RepetierTimer timer, IRepetierCommand command)
+            public RepetierConnectionBuilder ScheduleServerCommand(RepetierTimer timer, ICommandData command)
             {
-                _commandDispatcher.AddCommand(timer, command);
+                _commandDispatcher.AddServerCommand(timer, command);
+                return this;
+            }
+            
+            public RepetierConnectionBuilder SchedulePrinterCommand(RepetierTimer timer, ICommandData command, string printer)
+            {
+                _commandDispatcher.AddPrinterCommand(timer, command, printer);
                 return this;
             }
 

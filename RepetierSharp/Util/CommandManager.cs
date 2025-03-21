@@ -37,26 +37,36 @@ namespace RepetierSharp.Util
             return _callBackId;
         }
 
-        public RepetierBaseRequest CommandWithId(IRepetierCommand command, Type commandType, string printer = "")
+        public ServerCommand ServerCommandWithId(ICommandData command)
         {
-            var callbackId = Next();
-            while (!_callbackMap.TryAdd(callbackId, command.CommandIdentifier))
-            {
-                _logger.LogTrace("[CommandManager::CommandWithId1] Failed to add callbackId for command {callbackId} with id {CommandIdentifier}.", command.CommandIdentifier, callbackId);
-                callbackId = Next();
-            }
-            return new RepetierBaseRequest(command, printer, callbackId, commandType);
+            return ServerCommandWithId(command.Action, command);
         }
-
-        public RepetierBaseRequest CommandWithId(string command, string printer, Dictionary<string, object> data)
+        
+        public ServerCommand ServerCommandWithId(string action, ICommandData command)
         {
             var callbackId = Next();
-            while (!_callbackMap.TryAdd(callbackId, command))
+            while (!_callbackMap.TryAdd(callbackId, action))
             {
-                _logger.LogTrace("[CommandManager::CommandWithId2] Failed to add callbackId for command {callbackId} with id {CommandIdentifier}.", command, callbackId);
+                _logger.LogTrace("[CommandManager::ServerCommandWithId] Failed to add callbackId for command {callbackId} with id {CommandIdentifier}.", action, callbackId);
                 callbackId = Next();
             }
-            return new RepetierBaseRequest(data, command, printer, callbackId);
+            return new ServerCommand(action, command, callbackId);
+        }
+        
+        public PrinterCommand PrinterCommandWithId(ICommandData command, string printer)
+        {
+            return this.PrinterCommandWithId(command.Action, command, printer);
+        }
+        
+        public PrinterCommand PrinterCommandWithId(string action, ICommandData command, string printer)
+        {
+            var callbackId = Next();
+            while (!_callbackMap.TryAdd(callbackId, action))
+            {
+                _logger.LogTrace("[CommandManager::PrinterCommandWithId] Failed to add callbackId for command {callbackId} with id {CommandIdentifier}.", action, callbackId);
+                callbackId = Next();
+            }
+            return new PrinterCommand(action, command, printer, callbackId);
         }
 
         public void AcknowledgeCommand(int callbackId)

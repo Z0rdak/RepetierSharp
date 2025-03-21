@@ -264,12 +264,12 @@ namespace RepetierSharp
 
         private async Task<bool> SendPing()
         {
-            return await SendCommand(PingCommand.Instance, typeof(PingCommand));
+            return await SendServerCommand(PingCommand.Instance);
         }
 
         public async Task<bool> SendExtendPing(TimeSpan timeout)
         {
-            return await SendCommand(new ExtendPingCommand((uint)timeout.Seconds), typeof(ExtendPingCommand));
+            return await SendServerCommand(new ExtendPingCommand((uint)timeout.Seconds));
         }
 
         /// <summary>
@@ -533,7 +533,7 @@ namespace RepetierSharp
                         var loginMessage = (LoginResponse)response;
                         if ( string.IsNullOrEmpty(loginMessage.Error) )
                         {
-                            await this.QueryOpenMessages();
+                            await SendServerCommand(MessagesCommand.Instance);
                         }
 
                         await _clientEvents.LoginResultEvent.InvokeAsync(new LoginResultEventArgs(loginMessage));
@@ -654,7 +654,7 @@ namespace RepetierSharp
                     await _serverEvents.PrinterListChangedEvent.InvokeAsync(printerListChangedArgs);
                     break;
                 case EventConstants.MESSAGES_CHANGED:
-                    await SendCommand(MessagesCommand.Instance, repetierEvent.Printer);
+                    await SendServerCommand(MessagesCommand.Instance);
                     break;
                 case EventConstants.MOVE:
                     var moveEntry = (MoveEntry)repetierEvent.RepetierEvent;
@@ -729,70 +729,48 @@ namespace RepetierSharp
             }
         }
 
-        /// <summary>
-        ///     Send the given command to the server with the current active printer as argument.
-        /// </summary>
-        /// <param name="command"> The command to send to the server </param>
-        /// <returns></returns>
-        public async Task<bool> SendCommand(IRepetierCommand command)
+        public async Task<bool> SendPrinterCommand(ICommandData command, string printer)
         {
-            return await SendCommand(command, command.GetType(), SelectedPrinter);
+            var printerCommand = _commandManager.PrinterCommandWithId(command, printer);
+            return await SendCommand(printerCommand);
         }
-
-        private async Task<bool> SendCommand(IRepetierCommand command, string printer)
+        
+        public async Task<bool> SendServerCommand(ICommandData command)
         {
-            return await SendCommand(command, command.GetType(), printer);
+            var serverCommand = _commandManager.ServerCommandWithId(command);
+            return await SendCommand(serverCommand);
         }
-
-        protected async Task<bool> SendCommand(IRepetierCommand command, Type commandType)
-        {
-            return await SendCommand(command, commandType, SelectedPrinter);
-        }
-
-        protected async Task<bool> SendCommand(IRepetierCommand command, Type commandType, string printer)
+        
+        protected async Task<bool> SendCommand(BaseCommand command)
         {
             // Note: Commands which don't target a printer should have the value blanked
-            var baseCommand = _commandManager.CommandWithId(command, commandType, printer);
-            if ( command.CommandIdentifier != CommandConstants.PING )
+            if (command.Action != CommandConstants.PING )
             {
-                _logger.LogDebug("[Command] Id={}, Cmd={id}", baseCommand.CallbackId, command.CommandIdentifier);
-                _logger.LogTrace("[Command] Id={}, Cmd={id}, Data={cmd}", baseCommand.CallbackId, command.CommandIdentifier, JsonSerializer.Serialize(baseCommand));
+                _logger.LogDebug("[Command] Id={}, Cmd={id}", command.CallbackId, command.Action);
+                _logger.LogTrace("[Command] Id={}, Cmd={id}, Data={cmd}", command.CallbackId, command.Action, JsonSerializer.Serialize(command));
             }
             return await Task.Run(async () =>
             {
-                var isInQueue = WebSocketClient.Send(baseCommand.ToBytes());
-                var hasFilterCmd = _commandFilters.Exists(pre => pre.Invoke(command.CommandIdentifier));
+                var payload = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(command, _defaultOptions));
+                var isInQueue = WebSocketClient.Send(payload);
+                var hasFilterCmd = _commandFilters.Exists(pre => pre.Invoke(command.Action));
                 if ( isInQueue )
                 {
                     if ( !hasFilterCmd )
                     {
-                        await _clientEvents.RepetierRequestSendEvent.InvokeAsync(
-                            new RepetierRequestEventArgs(baseCommand));
+                        await _clientEvents.CommandSendEvent.InvokeAsync(new CommandEventArgs(command));
                     }
                 }
                 else
                 {
                     if ( !hasFilterCmd )
                     {
-                        await _clientEvents.RepetierRequestFailedEvent.InvokeAsync(
-                            new RepetierRequestEventArgs(baseCommand));
+                        await _clientEvents.CommandFailedEvent.InvokeAsync(new CommandEventArgs(command));
                     }
                 }
 
                 return isInQueue;
             });
-        }
-
-        /// <summary>
-        ///     Send a raw command to the server/given printer.
-        /// </summary>
-        /// <param name="command"> The identifier of the command </param>
-        /// <param name="printer"> The printer the command is issued to </param>
-        /// <param name="data"> The raw data as key-value pairs </param>
-        public async Task<bool> SendCommand(string command, string printer, Dictionary<string, object> data)
-        {
-            var baseCommand = _commandManager.CommandWithId(command, printer, data);
-            return await Task.Run(() => WebSocketClient.Send(baseCommand.ToBytes()));
         }
 
         /// <summary>
@@ -807,9 +785,8 @@ namespace RepetierSharp
                 if ( !string.IsNullOrEmpty(Session.DefaultLogin.LoginName) && !string.IsNullOrEmpty(Session.DefaultLogin.Password) )
                 {
                     await Login(Session.DefaultLogin);
-                } 
+                }
             }
-            
         }
 
         /// <summary>
@@ -820,23 +797,18 @@ namespace RepetierSharp
         /// <param name="user"> The user name for login </param>
         /// <param name="password"> The password in plaintext </param>
         /// <param name="longLivedSession"> Flag to indicate if the session should be long lived. Defaults to true </param>
-        public async Task Login(string user, string password, bool longLivedSession = true)
+        public async Task<bool> Login(string user, string password, bool longLivedSession = true)
         {
-            if ( !string.IsNullOrEmpty(Session.SessionId) )
-            {
-                var pw = CommandHelper.HashPassword(Session.SessionId, user, password);
-                await SendCommand(new LoginCommand(user, pw, longLivedSession), typeof(LoginCommand));
-            }
+            if ( string.IsNullOrEmpty(Session.SessionId) ) return false;
+            
+            var pw = CommandHelper.HashPassword(Session.SessionId, user, password);
+            var loginCommand = new LoginCommand(user, pw, longLivedSession);
+            return await SendServerCommand(loginCommand);
         }
         
-        
-        public async Task Login(RepetierAuthentication repAuth)
+        public async Task<bool> Login(RepetierAuthentication repAuth)
         {
-            if ( !string.IsNullOrEmpty(Session.SessionId) )
-            {
-                var pw = CommandHelper.HashPassword(Session.SessionId, repAuth.LoginName, repAuth.Password);
-                await SendCommand(new LoginCommand(repAuth.LoginName, pw, repAuth.LongLivedSession), typeof(LoginCommand));
-            }
+            return await this.Login(repAuth.LoginName, repAuth.Password, repAuth.LongLivedSession);
         }
 
         #region Events
@@ -1179,10 +1151,10 @@ namespace RepetierSharp
         ///     Fired for every command/request send to the repetier server. <br></br>
         ///     This is mainly useful for debugging purposes.
         /// </summary>
-        public event Func<RepetierRequestEventArgs, Task> RepetierRequestSendAsync
+        public event Func<CommandEventArgs, Task> RepetierRequestSendAsync
         {
-            add => _clientEvents.RepetierRequestSendEvent.AddHandler(value);
-            remove => _clientEvents.RepetierRequestSendEvent.RemoveHandler(value);
+            add => _clientEvents.CommandSendEvent.AddHandler(value);
+            remove => _clientEvents.CommandSendEvent.RemoveHandler(value);
         }
 
         /// <summary>
@@ -1190,10 +1162,10 @@ namespace RepetierSharp
         ///     This happens when the websocket client is unable to queue the request internally. <br></br>
         ///     To check if the server received the response either listen for the corresponding response.
         /// </summary>
-        public event Func<RepetierRequestEventArgs, Task> RepetierRequestFailedAsync
+        public event Func<CommandEventArgs, Task> RepetierRequestFailedAsync
         {
-            add => _clientEvents.RepetierRequestFailedEvent.AddHandler(value);
-            remove => _clientEvents.RepetierRequestFailedEvent.RemoveHandler(value);
+            add => _clientEvents.CommandFailedEvent.AddHandler(value);
+            remove => _clientEvents.CommandFailedEvent.RemoveHandler(value);
         }
 
         /// <summary>

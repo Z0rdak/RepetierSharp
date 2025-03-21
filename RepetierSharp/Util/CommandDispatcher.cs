@@ -1,52 +1,86 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
-using RepetierSharp.Models;
-using RepetierSharp.Models.Events;
 using RepetierSharp.Models.Commands;
 
-namespace RepetierSharp
+namespace RepetierSharp.Util
 {
+
+    public class ScheduledCmd(string id, BaseCommand cmd)
+    {
+        public string Id { get => id; }
+        public BaseCommand Cmd { get => cmd; }
+    }
+    
     public sealed class CommandDispatcher
     {
-        private Dictionary<RepetierTimer, List<IRepetierCommand>> TimerCommandMap { get; } = new();
-
-        public List<IRepetierCommand> GetCommands(RepetierTimer timer)
-        {
-            return TimerCommandMap.TryGetValue(timer, out var commandsForTimer)
-                ? commandsForTimer
-                : new List<IRepetierCommand>();
-        }
+        private Dictionary<RepetierTimer, List<ScheduledCmd>> PrinterCommandMap { get; } = new();
+        private Dictionary<RepetierTimer, List<ScheduledCmd>> ServerCommandMap { get; } = new();
         
         public Task DispatchCommands(RepetierTimer timer, RepetierConnection repetierCon)
         {
-            if (TimerCommandMap.TryGetValue(timer, out var commandsForTimer))
+            if (PrinterCommandMap.TryGetValue(timer, out var scheduledPrinterCmds))
             {
-                commandsForTimer.ForEach(async command =>
+                scheduledPrinterCmds.ForEach(async scheduledCmd =>
                 {
-                    await repetierCon.SendCommand(command);
+                    var printerCmd = (PrinterCommand)scheduledCmd.Cmd;
+                    await repetierCon.SendPrinterCommand(printerCmd.Data, printerCmd.Printer);
+                }); 
+            }
+            
+            if (ServerCommandMap.TryGetValue(timer, out var scheduledServerCmds))
+            {
+                scheduledServerCmds.ForEach(async scheduledCmd =>
+                {
+                    var serverCmd = (ServerCommand)scheduledCmd.Cmd;
+                    await repetierCon.SendServerCommand(serverCmd.Data);
                 }); 
             }
             return Task.CompletedTask;
         }
         
-        public void AddCommand(RepetierTimer timer, IRepetierCommand command)
+        public ScheduledCmd AddPrinterCommand(RepetierTimer timer, ICommandData command, string printer)
         {
-            if (TimerCommandMap.TryGetValue(timer, out var commandsForTimer))
-            {
-                commandsForTimer.Add(command);
-            }
+            var printerCmd = new PrinterCommand(command.Action, command, printer, -1);
+            var scheduledCmd = new ScheduledCmd(Guid.NewGuid().ToString(), printerCmd);
+            if (PrinterCommandMap.TryGetValue(timer, out var scheduledCmds)) 
+                scheduledCmds.Add(scheduledCmd);
             else
-            {
-                TimerCommandMap.Add(timer, new List<IRepetierCommand> { command });
-            }
+                PrinterCommandMap.Add(timer, new List<ScheduledCmd> { scheduledCmd });
+            return scheduledCmd;
         }
         
-        public void RemoveCommand(RepetierTimer timer, IRepetierCommand command)
+        public ScheduledCmd AddServerCommand(RepetierTimer timer, ICommandData command)
         {
-            if (TimerCommandMap.TryGetValue(timer, out var commandsForTimer))
-            {
-                commandsForTimer.Remove(command);
-            }
+            var serverCmd = new ServerCommand(command.Action, command, -1);
+            var scheduledCmd = new ScheduledCmd(Guid.NewGuid().ToString(), serverCmd);
+            if (ServerCommandMap.TryGetValue(timer, out var scheduledCmds)) 
+                scheduledCmds.Add(scheduledCmd);
+            else
+                ServerCommandMap.Add(timer, new List<ScheduledCmd> { scheduledCmd });
+            return scheduledCmd;
         }
+        
+        public void RemovePrinterCommand(RepetierTimer timer, string uuid)
+        {
+            if ( !PrinterCommandMap.TryGetValue(timer, out var scheduledCmds) )
+                return;
+            
+            var scheduledCmd = scheduledCmds.FirstOrDefault(e => e != null && e.Id == uuid, null);
+            if (scheduledCmd != null) 
+                scheduledCmds.Remove(scheduledCmd);
+        }
+        
+        public void RemoveServerCommand(RepetierTimer timer, string uuid)
+        {
+            if ( !ServerCommandMap.TryGetValue(timer, out var scheduledCmds) )
+                return;
+            
+            var scheduledCmd = scheduledCmds.FirstOrDefault(e => e != null && e.Id == uuid, null);
+            if (scheduledCmd != null) 
+                scheduledCmds.Remove(scheduledCmd);
+        }
+
     }
 }
