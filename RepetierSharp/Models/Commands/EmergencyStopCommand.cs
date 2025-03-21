@@ -3,12 +3,12 @@ using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Commands
 {
-    public class EmergencyStopCommand : IRepetierCommand
+    public class EmergencyStopCommand : ICommandData
     {
         private EmergencyStopCommand() { }
 
         public static EmergencyStopCommand Instance => new();
 
-        [JsonIgnore] public string CommandIdentifier => CommandConstants.EMERGENCY_STOP;
+        [JsonIgnore] public string Action => CommandConstants.EMERGENCY_STOP;
     }
 }

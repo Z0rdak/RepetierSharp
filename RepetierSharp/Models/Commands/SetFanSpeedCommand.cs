@@ -3,7 +3,7 @@ using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Commands
 {
-    public class SetFanSpeedCommand : IRepetierCommand
+    public class SetFanSpeedCommand : ICommandData
     {
         public const int MAX_THROTTLE = 255;
         public const int FAN_OFF = 0;
@@ -19,6 +19,6 @@ namespace RepetierSharp.Models.Commands
 
         [JsonPropertyName("fanId")] public int FanId { get; set; }
 
-        [JsonIgnore] public string CommandIdentifier => CommandConstants.SET_FAN_SPEED;
+        [JsonIgnore] public string Action => CommandConstants.SET_FAN_SPEED;
     }
 }

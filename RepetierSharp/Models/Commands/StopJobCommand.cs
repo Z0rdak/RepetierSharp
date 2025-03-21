@@ -3,12 +3,12 @@ using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Commands
 {
-    public class StopJobCommand : IRepetierCommand
+    public class StopJobCommand : ICommandData
     {
         private StopJobCommand() { }
 
         public static StopJobCommand Instance => new();
 
-        [JsonIgnore] public string CommandIdentifier => CommandConstants.STOP_JOB;
+        [JsonIgnore] public string Action => CommandConstants.STOP_JOB;
     }
 }

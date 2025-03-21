@@ -13,7 +13,7 @@ namespace RepetierSharp.Models.Commands
         [JsonPropertyName("temperature")] public int Temperature { get; set; }
     }
 
-    public class SetExtruderTempCommand : SetTemperatureRequest, IRepetierCommand
+    public class SetExtruderTempCommand : SetTemperatureRequest, ICommandData
     {
         public SetExtruderTempCommand(int temperature, int extruderNo) : base(temperature)
         {
@@ -22,10 +22,10 @@ namespace RepetierSharp.Models.Commands
 
         [JsonPropertyName("extruder")] public int ExtruderId { get; set; }
 
-        [JsonIgnore] public string CommandIdentifier => CommandConstants.SET_EXTRUDER_TEMPERATURE;
+        [JsonIgnore] public string Action => CommandConstants.SET_EXTRUDER_TEMPERATURE;
     }
 
-    public class SetHeatedBedTempCommand : SetTemperatureRequest, IRepetierCommand
+    public class SetHeatedBedTempCommand : SetTemperatureRequest, ICommandData
     {
         public SetHeatedBedTempCommand(int temperature, int heatedBedId) : base(temperature)
         {
@@ -34,10 +34,10 @@ namespace RepetierSharp.Models.Commands
 
         [JsonPropertyName("bedId")] public int HeatedBedId { get; set; }
 
-        [JsonIgnore] public string CommandIdentifier => CommandConstants.SET_BED_TEMPERATURE;
+        [JsonIgnore] public string Action => CommandConstants.SET_BED_TEMPERATURE;
     }
 
-    public class SetHeatedChamberTempCommand : SetTemperatureRequest, IRepetierCommand
+    public class SetHeatedChamberTempCommand : SetTemperatureRequest, ICommandData
     {
         public SetHeatedChamberTempCommand(int temperature, int heatedChamberId) : base(temperature)
         {
@@ -46,7 +46,7 @@ namespace RepetierSharp.Models.Commands
 
         [JsonPropertyName("chamberId")] public int HeatedChamberId { get; set; }
 
-        [JsonIgnore] public string CommandIdentifier => CommandConstants.SET_CHAMBER_TEMPERATURE;
+        [JsonIgnore] public string Action => CommandConstants.SET_CHAMBER_TEMPERATURE;
     }
 
 

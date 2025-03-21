@@ -3,12 +3,12 @@ using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Commands
 {
-    public class ListPrinterCommand : IRepetierCommand
+    public class ListPrinterCommand : ICommandData
     {
         private ListPrinterCommand() { }
 
         public static ListPrinterCommand Instance => new();
 
-        [JsonIgnore] public string CommandIdentifier => CommandConstants.LIST_PRINTER;
+        [JsonIgnore] public string Action => CommandConstants.LIST_PRINTER;
     }
 }

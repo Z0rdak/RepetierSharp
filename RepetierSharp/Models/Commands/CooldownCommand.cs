@@ -3,7 +3,7 @@ using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Commands
 {
-    public class CooldownCommand : IRepetierCommand
+    public class CooldownCommand : ICommandData
     {
         public CooldownCommand(int extruderNo, int heatedBedNo, int heatedChamberNo)
         {
@@ -16,6 +16,6 @@ namespace RepetierSharp.Models.Commands
         public int HeatedBedNo { get; set; }
         public int HeatedChamberNo { get; set; }
 
-        [JsonIgnore] public string CommandIdentifier => CommandConstants.COOLDOWN;
+        [JsonIgnore] public string Action => CommandConstants.COOLDOWN;
     }
 }

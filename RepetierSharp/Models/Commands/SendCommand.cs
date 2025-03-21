@@ -3,7 +3,7 @@ using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Commands
 {
-    public class SendCommand : IRepetierCommand
+    public class SendCommand : ICommandData
     {
         public SendCommand(string gcode)
         {
@@ -12,6 +12,6 @@ namespace RepetierSharp.Models.Commands
 
         [JsonPropertyName("cmd")] public string GCode { get; }
 
-        [JsonIgnore] public string CommandIdentifier => CommandConstants.SEND;
+        [JsonIgnore] public string Action => CommandConstants.SEND;
     }
 }

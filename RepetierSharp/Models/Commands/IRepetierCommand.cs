@@ -2,29 +2,17 @@ using System.Text.Json.Serialization;
 
 namespace RepetierSharp.Models.Commands
 {
-    public interface IRepetierCommand
-    {
-        [JsonIgnore] public string CommandIdentifier { get; }
-    }
-
     public interface ICommand { }
     
-    public abstract class BaseCommand : ICommand
+    public abstract class BaseCommand(string action, ICommandData data, string printer, int callbackId) : ICommand
     {
-        [JsonPropertyName("action")] public string Action { get; set; }
-        
-        [JsonPropertyName("data")] ICommandData Data { get; set; }
-
-        [JsonPropertyName("callback_id")] public int CallbackId { get; set; }
-    }
-    
-    public abstract class PrinterCommand : BaseCommand
-    {
-        [JsonPropertyName("printer")] public string Printer { get; set; }
+        [JsonPropertyName("action")] public string Action { get; set; } = action;
+        [JsonPropertyName("data")] public ICommandData Data { get; set; } = data;
+        [JsonPropertyName("printer")] public string Printer { get; set; } = printer;
+        [JsonPropertyName("callback_id")] public int CallbackId { get; set; } = callbackId;
     }
 
-    public abstract class ServerCommand : BaseCommand
-    {
-        [JsonPropertyName("printer")] public string Printer { get; } = "";
-    }
+    public class PrinterCommand(string action, ICommandData data, string printer, int callbackId) : BaseCommand(action, data, printer, callbackId);
+
+    public class ServerCommand(string action, ICommandData data, int callbackId) : BaseCommand(action, data, "", callbackId);
 }

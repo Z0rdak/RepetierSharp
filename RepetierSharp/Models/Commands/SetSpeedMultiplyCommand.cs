@@ -3,7 +3,7 @@ using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Commands
 {
-    public class SetSpeedMultiplyCommand : IRepetierCommand
+    public class SetSpeedMultiplyCommand : ICommandData
     {
         public SetSpeedMultiplyCommand(int speedMultiplier)
         {
@@ -12,6 +12,6 @@ namespace RepetierSharp.Models.Commands
 
         [JsonPropertyName("speed")] public int SpeedMultiplierInPercent { get; set; }
 
-        [JsonIgnore] public string CommandIdentifier => CommandConstants.SET_SPEED_MULTIPLY;
+        [JsonIgnore] public string Action => CommandConstants.SET_SPEED_MULTIPLY;
     }
 }

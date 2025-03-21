@@ -1,4 +1,9 @@
+using System.Text.Json.Serialization;
+
 namespace RepetierSharp.Models.Commands
 {
-    public interface ICommandData { }
+    public interface ICommandData
+    {
+        [JsonIgnore] public string Action { get; }
+    }
 }

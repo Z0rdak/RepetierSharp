@@ -3,7 +3,7 @@ using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Commands
 {
-    public class LoginCommand : IRepetierCommand
+    public class LoginCommand : ICommandData
     {
         public LoginCommand(string name, string password, bool longLived = false)
         {
@@ -19,6 +19,6 @@ namespace RepetierSharp.Models.Commands
 
         [JsonPropertyName("rememberMe")] public bool? LongLivedSession { get; private set; }
 
-        [JsonIgnore] public string CommandIdentifier => CommandConstants.LOGIN;
+        [JsonIgnore] public string Action => CommandConstants.LOGIN;
     }
 }

@@ -3,7 +3,7 @@ using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Commands
 {
-    public class CopyModelCommand : IRepetierCommand
+    public class CopyModelCommand : ICommandData
     {
         public CopyModelCommand(int modelId, bool autostart = true)
         {
@@ -15,6 +15,6 @@ namespace RepetierSharp.Models.Commands
 
         [JsonPropertyName("autostart")] public bool Autostart { get; }
 
-        [JsonIgnore] public string CommandIdentifier => CommandConstants.COPY_MODEL;
+        [JsonIgnore] public string Action => CommandConstants.COPY_MODEL;
     }
 }

@@ -3,7 +3,7 @@ using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Commands
 {
-    public class ModelInfoCommand : IRepetierCommand
+    public class ModelInfoCommand : ICommandData
     {
         public ModelInfoCommand(int modelId)
         {
@@ -12,6 +12,6 @@ namespace RepetierSharp.Models.Commands
 
         [JsonPropertyName("id")] public int Id { get; }
 
-        [JsonIgnore] public string CommandIdentifier => CommandConstants.MODEL_INFO;
+        [JsonIgnore] public string Action => CommandConstants.MODEL_INFO;
     }
 }

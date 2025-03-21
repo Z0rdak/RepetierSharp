@@ -3,7 +3,7 @@ using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Commands
 {
-    public class CreateUserCommand : IRepetierCommand
+    public class CreateUserCommand : ICommandData
     {
         public CreateUserCommand(string user, string password, int permission)
         {
@@ -18,6 +18,6 @@ namespace RepetierSharp.Models.Commands
 
         [JsonPropertyName("permission")] public int Permission { get; }
 
-        [JsonIgnore] public string CommandIdentifier => CommandConstants.CREATE_USER;
+        [JsonIgnore] public string Action => CommandConstants.CREATE_USER;
     }
 }

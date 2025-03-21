@@ -3,7 +3,7 @@ using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Commands
 {
-    public class RemoveJobCommand : IRepetierCommand
+    public class RemoveJobCommand : ICommandData
     {
         public RemoveJobCommand(int jobId)
         {
@@ -12,6 +12,6 @@ namespace RepetierSharp.Models.Commands
 
         [JsonPropertyName("id")] public int JobId { get; }
 
-        [JsonIgnore] public string CommandIdentifier => CommandConstants.REMOVE_JOB;
+        [JsonIgnore] public string Action => CommandConstants.REMOVE_JOB;
     }
 }

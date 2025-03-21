@@ -3,7 +3,7 @@ using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Commands
 {
-    public class ExtendPingCommand : IRepetierCommand
+    public class ExtendPingCommand : ICommandData
     {
         public ExtendPingCommand(uint timeout)
         {
@@ -12,6 +12,6 @@ namespace RepetierSharp.Models.Commands
 
         public uint Timeout { get; set; }
 
-        [JsonIgnore] public string CommandIdentifier => CommandConstants.PING;
+        [JsonIgnore] public string Action => CommandConstants.PING;
     }
 }

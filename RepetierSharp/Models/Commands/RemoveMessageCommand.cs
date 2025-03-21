@@ -3,7 +3,7 @@ using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Commands
 {
-    public class RemoveMessageCommand : IRepetierCommand
+    public class RemoveMessageCommand : ICommandData
     {
         public RemoveMessageCommand(int messageId, string a = "")
         {
@@ -15,6 +15,6 @@ namespace RepetierSharp.Models.Commands
 
         [JsonPropertyName("a")] public string A { get; } // empty or unpause ?
 
-        [JsonIgnore] public string CommandIdentifier => CommandConstants.REMOVE_MESSAGE;
+        [JsonIgnore] public string Action => CommandConstants.REMOVE_MESSAGE;
     }
 }

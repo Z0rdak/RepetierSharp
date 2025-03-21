@@ -3,7 +3,7 @@ using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Commands
 {
-    public class DeleteUserCommand : IRepetierCommand
+    public class DeleteUserCommand : ICommandData
     {
         public DeleteUserCommand(string user)
         {
@@ -12,6 +12,6 @@ namespace RepetierSharp.Models.Commands
 
         [JsonPropertyName("login")] public string User { get; }
 
-        [JsonIgnore] public string CommandIdentifier => CommandConstants.DELETE_USER;
+        [JsonIgnore] public string Action => CommandConstants.DELETE_USER;
     }
 }

@@ -3,10 +3,10 @@ using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Commands
 {
-    public class ListModelsCommand : IRepetierCommand
+    public class ListModelsCommand : ICommandData
     {
         public static ListModelsCommand Instance => new ListModelsCommand();
         private ListModelsCommand() { }
-        [JsonIgnore] public string CommandIdentifier => CommandConstants.LIST_MODELS;
+        [JsonIgnore] public string Action => CommandConstants.LIST_MODELS;
     }
 }

@@ -3,7 +3,7 @@ using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Commands
 {
-    public class ListJobsCommand : IRepetierCommand
+    public class ListJobsCommand : ICommandData
     {
         public static ListJobsCommand AllJobs => new(true);
         public static ListJobsCommand QueuedJobs => new(false);
@@ -15,6 +15,6 @@ namespace RepetierSharp.Models.Commands
         [JsonPropertyName("includeRunning")]
         public bool IncludeRunning { get; set; }
 
-        [JsonIgnore] public string CommandIdentifier => CommandConstants.LIST_JOBS;
+        [JsonIgnore] public string Action => CommandConstants.LIST_JOBS;
     }
 }

@@ -3,7 +3,7 @@ using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Commands
 {
-    public class StateListCommand : IRepetierCommand
+    public class StateListCommand : ICommandData
     {
         public StateListCommand(bool includeHistory = false)
         {
@@ -12,6 +12,6 @@ namespace RepetierSharp.Models.Commands
 
         [JsonPropertyName("includeHistory")] public bool IncludeHistory { get; }
 
-        [JsonIgnore] public string CommandIdentifier => CommandConstants.STATE_LIST;
+        [JsonIgnore] public string Action => CommandConstants.STATE_LIST;
     }
 }

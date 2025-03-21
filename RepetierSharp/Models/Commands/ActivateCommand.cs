@@ -3,7 +3,7 @@ using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Commands
 {
-    public class ActivateCommand : IRepetierCommand
+    public class ActivateCommand : ICommandData
     {
         public ActivateCommand(string printer)
         {
@@ -12,6 +12,6 @@ namespace RepetierSharp.Models.Commands
 
         [JsonPropertyName("printer")] public string PrinterSlug { get; }
 
-        [JsonIgnore] public string CommandIdentifier => CommandConstants.ACTIVATE;
+        [JsonIgnore] public string Action => CommandConstants.ACTIVATE;
     }
 }

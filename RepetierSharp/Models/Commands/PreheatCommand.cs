@@ -3,7 +3,7 @@ using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Commands
 {
-    public class PreheatCommand : IRepetierCommand
+    public class PreheatCommand : ICommandData
     {
         public PreheatCommand(int extruderNo, int heatedBedNo, int heatedChamberNo)
         {
@@ -12,12 +12,11 @@ namespace RepetierSharp.Models.Commands
             HeatedChamberNo = heatedChamberNo;
         }
 
-        // TODO:
         public int ExtruderNo { get; set; }
         public int HeatedBedNo { get; set; }
         public int HeatedChamberNo { get; set; }
 
-        [JsonIgnore] public string CommandIdentifier => CommandConstants.PREHEAT;
+        [JsonIgnore] public string Action => CommandConstants.PREHEAT;
     }
 
     public enum ExtruderConstants

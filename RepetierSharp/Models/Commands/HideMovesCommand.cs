@@ -3,10 +3,10 @@ using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Commands
 {
-    public class HideMovesCommand : IRepetierCommand
+    public class HideMovesCommand : ICommandData
     {
         public static HideMovesCommand Instance => new();
 
-        [JsonIgnore] public string CommandIdentifier => CommandConstants.HIDE_MOVES;
+        [JsonIgnore] public string Action => CommandConstants.HIDE_MOVES;
     }
 }
