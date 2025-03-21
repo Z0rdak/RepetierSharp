@@ -729,6 +729,12 @@ namespace RepetierSharp
             }
         }
 
+        public IRemotePrinter GetRemotePrinter(string printer)
+        {
+            //TODO: Validation of printer
+            return new RemoteRepetierPrinter(this, printer);
+        }
+
         public async Task<bool> SendPrinterCommand(ICommandData command, string printer)
         {
             var printerCommand = _commandManager.PrinterCommandWithId(command, printer);
@@ -1190,21 +1196,5 @@ namespace RepetierSharp
         private long _lastPingTimestamp;
         private List<Predicate<string>> _commandFilters = new();
         private List<Predicate<string>> _eventFilters = new();
-        public string SelectedPrinter { get; set; }
-
-        public void SelectPrinter(PrinterInfo printer)
-        {
-            SelectPrinter(printer.Slug);
-        }
-
-        public void SelectPrinter(Printer printer)
-        {
-            SelectPrinter(printer.PrinterSlug);
-        }
-
-        public void SelectPrinter(string printerSlug)
-        {
-            SelectedPrinter = printerSlug;
-        }
     }
 }

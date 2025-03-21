@@ -17,7 +17,6 @@ namespace RepetierSharp
             private IRestClient? _restClient;
             private string? _webSocketHost;
             private string? _restHost;
-            private string? _selectedPrinter;
             private ILogger<RepetierConnection>? _logger;
             private RepetierSession _session = new();
             private RestClientOptions? _restClientOptions = new();
@@ -89,10 +88,8 @@ namespace RepetierSharp
                 }
 
                 var con = new RepetierConnection(_restClient, _websocketClient, _session, _logger);
-                // TODO: move to constructor?
                 con._eventFilters = _eventFilters;
                 con._commandFilters = _commandFilters;
-                con.SelectedPrinter = _selectedPrinter ?? string.Empty;
                 con._commandDispatcher = _commandDispatcher;
                 return con;
             }
@@ -246,12 +243,6 @@ namespace RepetierSharp
                     _commandFilters.Add(eventId => eventId == "ping");
                 }
 
-                return this;
-            }
-
-            public RepetierConnectionBuilder SelectPrinter(string printerSlug)
-            {
-                _selectedPrinter = printerSlug;
                 return this;
             }
 

@@ -1,6 +1,6 @@
 # [0.3.0] - Unreleased
 
-## Added
+## Planned
 
 * Managed RepetierClient which keeps track of printer state to allow to fire events for stats not provided out of the box. 
 * Managed RepetierClient manages 
@@ -31,6 +31,7 @@
   This gives more flexibility to the end user and makes it easier to set up a correct ``RepetierConnection``. Please refer
   to the readme for code examples.
 * Split commands into PrinterCommand and ServerCommand. PrinterCommands require a printer slug to address the proper printer.
+* Extract PrinterCommands into its own abstraction
 * Messages are now called Responses
 * Updated System.Text.Json to 9.0.3
 * Updated Microsoft.Extensions.* to 9.0.3
@@ -177,15 +178,3 @@
 * Update RestSharp to 106.15.0 due to potential vulnerability
 
 # 0.1.0 - Initial release
-
-* TBD
-
-
-* Reprint/copy/store last prints.
-* Keep alive test for TCP connections to detect offline printers.
-    * Improved user management with new privileges.
-* New server command: @sendToPrinter
-    * Start/stop timelapse in webcam during print.
-    * Added possibility to reorder the print queue.
-* Option to disable print queues per printer.
-    * Added possibility to upload multiple gcode and project files at once.
