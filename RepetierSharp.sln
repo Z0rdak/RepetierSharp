@@ -12,7 +12,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RepetierSharpTester", "Repe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RepetierSharp", "RepetierSharp\RepetierSharp.csproj", "{22AEC1E8-DA37-493B-B28A-AE3CEA7E525A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RepetierSharpTests", "RepetierSharpTests\RepetierSharpTests.csproj", "{FA053663-D635-4C09-A4CD-129735ACB62F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RepetierSharp.Tests", "RepetierSharp.Tests\RepetierSharp.Tests.csproj", "{FA053663-D635-4C09-A4CD-129735ACB62F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -21,7 +21,6 @@ namespace RepetierSharpTester
                 var logger = factory.CreateLogger<RepetierConnection>();
                 var builder = new RepetierConnection.RepetierConnectionBuilder()
                     .WithLogger(logger )
-                    .SelectPrinter("EVOlizer")
                 //.WithCommandFilter("ping")
                 //.WithEventFilter("temp")
                     .WithCommandFilter("ping")
@@ -60,13 +59,13 @@ namespace RepetierSharpTester
             repetierConn.RepetierRequestSendAsync += eventArgs =>
             {
                 Console.WriteLine(
-                    $" ===> {eventArgs.RepetierBaseRequest.CallbackId} {eventArgs.RepetierBaseRequest.Action} {eventArgs.RepetierBaseRequest.Printer}");
+                    $" ===> {eventArgs.Command.CallbackId} {eventArgs.Command.Action} {eventArgs.Command.Printer}");
                 return Task.CompletedTask;
             };
 
             repetierConn.RepetierRequestFailedAsync += eventArgs =>
             {
-                Console.WriteLine($" =X=> {eventArgs.RepetierBaseRequest.CallbackId} {eventArgs.RepetierBaseRequest.Action} {eventArgs.RepetierBaseRequest.Printer}");
+                Console.WriteLine($" =X=> {eventArgs.Command.CallbackId} {eventArgs.Command.Action} {eventArgs.Command.Printer}");
                 return Task.CompletedTask;
             };
 

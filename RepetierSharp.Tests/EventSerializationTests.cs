@@ -6,9 +6,8 @@ using RepetierSharp.Models.Config;
 using RepetierSharp.Models.Events;
 using RepetierSharp.Models.Messages;
 using RepetierSharp.Util;
-using Xunit;
 
-namespace RepetierSharpTester
+namespace RepetierSharp.Tests
 {
     /// <summary>
     ///  Write tests for serialization tests for every type in RepetierSharp.Models.Events
