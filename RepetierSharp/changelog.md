@@ -1,11 +1,22 @@
-# [0.2.0] - YYYY-MM-DD
+# [0.3.0] - Unreleased
 
 ## Added
 
+* Managed RepetierClient which keeps track of printer state to allow to fire events for stats not provided out of the box. 
+* Managed RepetierClient manages 
+  * print job queue
+  * ...
+
+# [0.2.0] - 2025-03-21
+
+## Added
+
+* Add Commands and Events up until Repetier Server 1.5
 * Add proper logging support for the RepetierConnection instead of using Console.WriteLine. You can supply your own logger when using the RepetierConnectionBuilder or use a default console logger.
 * Add a whole array of new events which are triggered for the repetier server events and other client related events.
-* Add a filter for events and commands (and their responses) for the RepetierConnectionBuilder. This filters these events so they don't get fired in the first place.
 * Add more dedicated events and event handlers for print job related events
+* Add a filter for events and commands (and their responses) for the RepetierConnectionBuilder. This filters events so they don't get fired in the first place.
+* Add separate .snupkg for debugging symbols
 
 ## Changed
 
@@ -19,17 +30,22 @@
   a ``WebsocketClient`` instance directly.
   This gives more flexibility to the end user and makes it easier to set up a correct ``RepetierConnection``. Please refer
   to the readme for code examples.
+* Split commands into PrinterCommand and ServerCommand. PrinterCommands require a printer slug to address the proper printer.
 * Messages are now called Responses
-* Updated System.Text.Json to 8.0.4
+* Updated System.Text.Json to 9.0.3
+* Updated Microsoft.Extensions.* to 9.0.3
+* Updated RestSharp to 112.1.0
 * Rename the ``RepetierConnectionBuilder`` method ``WithCyclicCommand`` to ``ScheduleCommand``
 * Rename ``GetRepetierServerInfoAsync`` to ``GetRepetierServerInfo``
 * PingInterval is now called `KeepAlivePing`, is a TimeSpan and moved in ``RepetierSession``
 * Move some properties from the `RepetierSession` to type ``RepetierAuthentication``. This includes only the info which needs to be supplied whenever a `loginRequired` event is fired. When supplied with the `RepetierConnectionBuilder` this is automatically used for authentication.
 * Implement custom JsonSerializer for repetier server events to streamline to process of deserializing the events. It is possible to add custom event entries to a dictionary in the `RepetierEventConverter` alongside with a type which is used for deserialization.
-* A lot of internal refactoring
+* A **lot** of internal refactoring
 
 ## Removed
 
+* Drop support for .net6.0
+* SelectedPrinter property from RepetierConnection
 * Various overloads and confusing methods for building a RepetierConnection instance when using the builder.
 * Helper methods for the ``RepetierConnectionBuilder`` which could be used to schedule querying the printer state and printer list. That's now all covered by the `ScheduleCommand` method. 
 

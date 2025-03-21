@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <OutputType>Library</OutputType>
-        <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
+        <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
         <Title>RepetierSharp</Title>
         <AssemblyName>RepetierSharp</AssemblyName>
         <RootNamespace>RepetierSharp</RootNamespace>
@@ -17,23 +17,25 @@
         <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
         <PackageProjectUrl>https://www.nuget.org/packages/RepetierSharp/</PackageProjectUrl>
         <RepositoryUrl>https://github.com/Z0rdak/RepetierSharp</RepositoryUrl>
-        <AssemblyVersion>1.0.0.0</AssemblyVersion>
-        <FileVersion>1.0.0.0</FileVersion>
-        <NeutralLanguage>en</NeutralLanguage>
-        <PackageTags>Repetier-Server, 3D-Printing, Websocket, API-Client</PackageTags>
+        <AssemblyVersion>0.2.0.0</AssemblyVersion>
+        <FileVersion>0.2.0.0</FileVersion>
         <Version>0.2.0</Version>
+        <PackageVersion>0.2.0</PackageVersion>
+        <NeutralLanguage>en</NeutralLanguage>
+        <PackageTags>Repetier-Server, 3D-Printing, Websocket, API-Client</PackageTags>   
         <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
         <SignAssembly>false</SignAssembly>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <RepositoryType>git</RepositoryType>
         <Nullable>enable</Nullable>
+        <!-- Disable  Warning CS8618 globally. 99% occourance of this is in POCOs where it does not matter at all -->
+        <NoWarn>CS8618</NoWarn> 
+        <!-- https://learn.microsoft.com/en-us/nuget/create-packages/symbol-packages-snupkg -->
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>        
+        <!-- Include symbol files (*.pdb) in the built .nupkg -->
+        <!-- <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder> -->
     </PropertyGroup>
-
-    <ItemGroup>
-        <Compile Remove="Properties\**"/>
-        <EmbeddedResource Remove="Properties\**"/>
-        <None Remove="Properties\**"/>
-    </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.3" />
@@ -43,12 +45,10 @@
         <PackageReference Include="System.Text.Json" Version="9.0.3" />
         <PackageReference Include="Websocket.Client" Version="5.1.2"/>
     </ItemGroup>
-
     <ItemGroup>
-        <None Include="RepetierSharp/.editorconfig"/>
         <None Include="LICENSE.txt">
             <Pack>True</Pack>
-            <PackagePath>../</PackagePath>
+            <PackagePath>/</PackagePath>
         </None>
     </ItemGroup>
 
@@ -58,15 +58,4 @@
             <PackagePath>/</PackagePath>
         </None>
     </ItemGroup>
-
-    <ProjectExtensions>
-        <VisualStudio>
-            <UserProperties/>
-        </VisualStudio>
-    </ProjectExtensions>
-
-    <ItemGroup>
-        <EditorConfigFiles Remove="C:\Users\Marcel Bartholet\Source\Repos\Z0rdak\RepetierSharp\.editorconfig"/>
-    </ItemGroup>
-
 </Project>

@@ -6,7 +6,7 @@
 
 ## Introduction
 
-![RepetierSharp](./RepetierSharp-wide.png)
+<!-- ![RepetierSharp](./RepetierSharp-wide.png) -->
 
 RepetierSharp is a simple, asynchronous, event-driven client designed to manage Repetier Servers. It seamlessly integrates both the WebSocket and REST APIs of Repetier Server software into a single streamlined library.
 
@@ -29,7 +29,7 @@ See the [changelog](Changelog.md) for a more detailed overview off added/changed
 
 ### Framework support
 
-RepetierSharp version 0.2.0+ supports .NET 6 and .NET 8.
+RepetierSharp version 0.2.0+ supports and .NET 8 and .NET 9.
 
 ## Documentation
 
