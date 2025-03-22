@@ -26,15 +26,11 @@ namespace RepetierSharp
 
             public RepetierConnection Build()
             {
-                if ( string.IsNullOrEmpty(_webSocketHost) && _websocketClient == null )
-                {
+                if ( string.IsNullOrEmpty(_webSocketHost) && _websocketClient == null ) 
                     throw new InvalidOperationException("Websocket host must be set.");
-                }
 
                 if ( string.IsNullOrEmpty(_restHost) && _restClient == null )
-                {
                     throw new InvalidOperationException("Http host must be set.");
-                }
 
                 // Create default clients if not provided
                 if ( _websocketClient == null && !string.IsNullOrEmpty(_webSocketHost) )
@@ -42,44 +38,26 @@ namespace RepetierSharp
                     var uri = new Uri(_webSocketHost);
                     var uriBuilder = new UriBuilder(uri);
                     var queryParameters = HttpUtility.ParseQueryString(uri.Query);
-                    if ( _session.ApiKey != null )
-                    {
-                        queryParameters["apiKey"] = _session.ApiKey;
-                    }
-
-                    if ( _session.SessionId != null )
-                    {
+                    if ( _session.DefaultLogin is ApiKeyAuth apiKeyAuth ) 
+                        queryParameters["apiKey"] = apiKeyAuth.ApiKey;
+                    
+                    if ( _session.SessionId != null ) 
                         queryParameters["sess"] = _session.SessionId;
-                    }
-
+                    
                     uriBuilder.Query = queryParameters.ToString();
                     _websocketClient = new WebsocketClient(uriBuilder.Uri);
                 }
 
                 if ( _restClient == null && !string.IsNullOrEmpty(_restHost) )
                 {
-                    if ( _restClientOptions != null )
-                    {
-                        _restClientOptions.BaseUrl = new Uri(_restHost);
-                        if ( _session.ApiKey != null )
-                        {
-                            _restClientOptions.Authenticator =
-                                new RepetierApiKeyRequestHeaderAuthenticator(_session.ApiKey);
-                        }
-
-                        _restClient = new RestClient(_restClientOptions);
-                    }
-                    else
-                    {
+                    if ( _restClientOptions == null ) 
                         _restClientOptions = new RestClientOptions(_restHost);
-                        if ( _session.ApiKey != null )
-                        {
-                            _restClientOptions.Authenticator =
-                                new RepetierApiKeyRequestHeaderAuthenticator(_session.ApiKey);
-                        }
 
-                        _restClient = new RestClient(_restClientOptions);
+                    if ( _session.DefaultLogin is ApiKeyAuth apiKeyAuth )
+                    {
+                        _restClientOptions.Authenticator = new RequestHeaderApiKeyAuth(apiKeyAuth.ApiKey);
                     }
+                    _restClient = new RestClient(_restClientOptions);
                 }
 
                 if ( _restClient == null || _websocketClient == null )
@@ -100,7 +78,7 @@ namespace RepetierSharp
                 return this;
             }
             
-            public RepetierConnectionBuilder WithDefaultLogger()
+            public RepetierConnectionBuilder UseDefaultLogger()
             {
                 using var factory = LoggerFactory.Create(builder =>
                 {
@@ -170,18 +148,23 @@ namespace RepetierSharp
                 return this;
             }
 
-            public RepetierConnectionBuilder WithSession(string sessionId)
-            {
-                _session.SessionId = sessionId;
-                return this;
-            }
-
-            public RepetierConnectionBuilder WithSession(RepetierSession session)
+            public RepetierConnectionBuilder UseSession(RepetierSession session)
             {
                 _session = session;
                 return this;
             }
-
+            
+            public RepetierConnectionBuilder UseSession(string sessionId)
+            {
+                _session.SessionId = sessionId;
+                return this;
+            }
+            public RepetierConnectionBuilder RememberSession(bool remember = true)
+            {
+                _session.LongLivedSession = remember;
+                return this;
+            }
+            
             /// <summary>
             ///     Keep alive interval for the websocket connection.
             /// </summary>
@@ -206,41 +189,37 @@ namespace RepetierSharp
 
             #endregion
 
-            public RepetierConnectionBuilder WithWebsocketAuth(string login, string password,
-                bool rememberSession = false)
+            public RepetierConnectionBuilder WithWebsocketAuth(string login, string password)
             {
-                _session.DefaultLogin = new RepetierAuthentication(login, password, rememberSession);
-                _session.AuthType = AuthenticationType.Credentials;
+                _session.DefaultLogin = new CredentialAuth(login, password);
                 return this;
             }
 
-            public RepetierConnectionBuilder WithWebsocketAuth(RepetierAuthentication repAuth)
+            public RepetierConnectionBuilder WithWebsocketAuth(CredentialAuth repAuth)
             {
                 _session.DefaultLogin = repAuth;
-                _session.AuthType = AuthenticationType.Credentials;
                 return this;
             }
 
             public RepetierConnectionBuilder WithApiKey(string apiKey)
             {
-                _session.ApiKey = apiKey;
-                _session.AuthType = AuthenticationType.ApiKey;
+                _session.DefaultLogin = new ApiKeyAuth(apiKey);
                 if ( _restClientOptions == null )
                 {
                     _restClientOptions = new RestClientOptions();
                 }
 
-                _restClientOptions.Authenticator = new RepetierApiKeyRequestHeaderAuthenticator(apiKey);
+                _restClientOptions.Authenticator = new RequestHeaderApiKeyAuth(apiKey);
                 return this;
             }
 
             #region Commands and Events
 
-            public RepetierConnectionBuilder ExcludePing(bool exclude = true)
+            public RepetierConnectionBuilder WithPingFilter(bool exclude = true)
             {
                 if ( exclude )
                 {
-                    _commandFilters.Add(eventId => eventId == "ping");
+                    _commandFilters.Add(eventId => eventId == CommandConstants.PING);
                 }
 
                 return this;

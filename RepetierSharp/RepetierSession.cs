@@ -2,31 +2,38 @@
 
 namespace RepetierSharp
 {
-    public class RepetierSession
-    {
-        public string? ApiKey { get; set; }
-        public AuthenticationType AuthType { get; set; } = AuthenticationType.None;
-        public string? SessionId { get; set; }
+    public class RepetierSession(IRepetierAuthentication? defaultLogin = null, int keepAliveInS = 5, 
+        string? sessionId = null, bool longLivedSession = true)
+    { 
+        public string? SessionId { get; set; } = sessionId;
 
         /// <summary>
         ///     If supplied, will be used when login is required.
         /// </summary>
-        public RepetierAuthentication? DefaultLogin { get; set; }
+        public IRepetierAuthentication? DefaultLogin { get; set; } = defaultLogin;
 
-        public TimeSpan KeepAlivePing { get; set; } = TimeSpan.FromSeconds(5);
+        public TimeSpan KeepAlivePing { get; set; } = TimeSpan.FromSeconds(keepAliveInS);
+
+        public bool LongLivedSession { get; set; } = longLivedSession;
+
     }
 
-    public class RepetierAuthentication
+    public interface IRepetierAuthentication
     {
-        public bool LongLivedSession { get; set; } = true;
-        public string LoginName { get; set; }
-        public string Password { get; set; }
+        public AuthenticationType AuthType { get;  }
+    }
 
-        public RepetierAuthentication(string loginName, string password, bool longLivedSession = true)
-        {
-            this.LoginName = loginName;
-            this.Password = password;
-            this.LongLivedSession = longLivedSession;
-        }
+    public class ApiKeyAuth(string apiKey) : IRepetierAuthentication
+    {
+        public AuthenticationType AuthType { get => AuthenticationType.ApiKey; }
+        public string ApiKey { get; set; } = apiKey;
+    }
+
+    public class CredentialAuth(string loginName, string password) : IRepetierAuthentication
+    {
+        public AuthenticationType AuthType { get => AuthenticationType.Credentials; }
+        public string LoginName { get; set; } = loginName;
+        public string Password { get; set; } = password;
+
     }
 }
