@@ -36,7 +36,6 @@ namespace RepetierSharp
             _logger = logger ?? NullLogger<RepetierConnection>.Instance;
             _commandDispatcher = new CommandDispatcher();
             _commandManager = new CommandManager(_logger);
-
         }
 
         private RepetierConnection(IRestClient restClient, IWebsocketClient websocket, RepetierSession? session = null, ILogger<RepetierConnection>? logger = null) : this(logger)
@@ -44,6 +43,11 @@ namespace RepetierSharp
             Session = session ?? new RepetierSession();
             RestClient = restClient;
             WebSocketClient = websocket;
+            ConnectedAsync += async (connectedArgs) =>
+            {
+                if (!connectedArgs.Reconnect) 
+                    await SendExtendPing(Session.KeepAlivePing);
+            };
         }
 
         /// <summary>
@@ -786,11 +790,12 @@ namespace RepetierSharp
         /// </summary>
         private async Task Login()
         {
-            if ( Session.DefaultLogin != null )
+            if ( Session.DefaultLogin is CredentialAuth credentialAuth )
             {
-                if ( !string.IsNullOrEmpty(Session.DefaultLogin.LoginName) && !string.IsNullOrEmpty(Session.DefaultLogin.Password) )
+                
+                if ( !string.IsNullOrEmpty(credentialAuth.LoginName) && !string.IsNullOrEmpty(credentialAuth.Password) )
                 {
-                    await Login(Session.DefaultLogin);
+                    await Login(credentialAuth);
                 }
             }
         }
@@ -806,15 +811,15 @@ namespace RepetierSharp
         public async Task<bool> Login(string user, string password, bool longLivedSession = true)
         {
             if ( string.IsNullOrEmpty(Session.SessionId) ) return false;
-            
+            // TODO: Set session stuff and auth
             var pw = CommandHelper.HashPassword(Session.SessionId, user, password);
             var loginCommand = new LoginCommand(user, pw, longLivedSession);
             return await SendServerCommand(loginCommand);
         }
         
-        public async Task<bool> Login(RepetierAuthentication repAuth)
+        public async Task<bool> Login(CredentialAuth repAuth)
         {
-            return await this.Login(repAuth.LoginName, repAuth.Password, repAuth.LongLivedSession);
+            return await this.Login(repAuth.LoginName, repAuth.Password, Session.LongLivedSession);
         }
 
         #region Events
