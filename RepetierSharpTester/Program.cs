@@ -26,10 +26,10 @@ namespace RepetierSharpTester
                     .WithCommandFilter("ping")
                     .WithEventFilter("temp")
                     // .WithEventFilter("ping")
-                    .WithSession("e630a6e6-b745-4a2f-b002-4b04034840bc")
+                    .UseSession("e630a6e6-b745-4a2f-b002-4b04034840bc")
                     .WithApiKey("lFajzG5d7wHlgP2wh4UI6IUKAbbdd49g")
                 .WithWebsocketHost("ws://10.197.45.104/socket/?sess=lFajzG5d7wHlgP2wh4UI6IUKAbbdd49g&lang=de&apiKey=e630a6e6-b745-4a2f-b002-4b04034840bc")
-                .WithWebsocketAuth("Repetier-Admin", "sfm_2020", true)
+                .WithWebsocketAuth("Repetier-Admin", "sfm_2020")
                     //.UseWebSocketClient(new WebsocketClient(new Uri("ws://10.197.45.104/socket/?sess=1234542135462354&lang=de&apiKey=e630a6e6-b745-4a2f-b002-4b04034840bc")))
                 .UseRestClient(new RestClient("http://10.197.45.104"));
 
