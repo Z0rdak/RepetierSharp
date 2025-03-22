@@ -170,7 +170,7 @@ namespace RepetierSharp
             /// </summary>
             /// <param name="seconds"></param>
             /// <returns></returns>
-            public RepetierConnectionBuilder WithTimeout(int seconds = 5)
+            public RepetierConnectionBuilder WithTimeout(int seconds = 10)
             {
                 _session.KeepAlivePing = TimeSpan.FromSeconds(seconds);
                 return this;
