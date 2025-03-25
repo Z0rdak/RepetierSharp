@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
 using RepetierSharp.Models.Commands;
 
-namespace RepetierSharp.Util
+namespace RepetierSharp.Control
 {
     public static class RepetierConnectionExtensions
     {

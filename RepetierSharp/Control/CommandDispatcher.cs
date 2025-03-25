@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using RepetierSharp.Models.Commands;
+using RepetierSharp.Models.Communication;
 
-namespace RepetierSharp.Util
+namespace RepetierSharp.Control
 {
 
     public class ScheduledCmd(string id, BaseCommand cmd)

@@ -1,40 +1,39 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
 using System.Threading;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using RepetierSharp.Models;
 using RepetierSharp.Models.Commands;
+using RepetierSharp.Models.Communication;
 
-namespace RepetierSharp.Util
+namespace RepetierSharp.Control
 {
     /// <summary>
     ///     CommandManager manages the commands that are sent to the Repetier-Server.
     ///     It is used to generate unique callback ids for each command.
     ///     The callback id is used to identify the command that is being sent to the server.
     /// </summary>
-    internal class CommandManager
+    internal class CommandManager(ILogger<RepetierConnection>? logger = null)
     {
         // CallbackId -> Command
         private readonly ConcurrentDictionary<int, string> _callbackMap = new();
-        private readonly ILogger<RepetierConnection> _logger;
+        private readonly ILogger<RepetierConnection> _logger = logger ?? NullLogger<RepetierConnection>.Instance;
         private volatile int _callBackId;
+        private readonly object _lockObj = new object();
 
-        public CommandManager(ILogger<RepetierConnection>? logger = null)
+        private int Next()
         {
-            _logger = logger ?? NullLogger<RepetierConnection>.Instance;
-        }
-        
-        public int Next()
-        {
-            if ( _callBackId == int.MaxValue )
+            int res;
+            lock (_lockObj)
             {
-                _callBackId = 1;
-                return _callBackId;
+                if ( _callBackId == int.MaxValue )
+                {
+                    _callBackId = 1;
+                    return _callBackId;
+                }
+                _callBackId = Interlocked.Increment(ref _callBackId);
+                res = _callBackId;
             }
-            Interlocked.Add(ref _callBackId, 1);
-            return _callBackId;
+            return res;
         }
 
         public ServerCommand ServerCommandWithId(ICommandData command)
@@ -47,7 +46,7 @@ namespace RepetierSharp.Util
             var callbackId = Next();
             while (!_callbackMap.TryAdd(callbackId, action))
             {
-                _logger.LogTrace("[CommandManager::ServerCommandWithId] Failed to add callbackId for command {callbackId} with id {CommandIdentifier}.", action, callbackId);
+                _logger.LogWarning("[CommandManager::ServerCommandWithId] Failed to add callbackId for command {callbackId} with id {CommandIdentifier}.", action, callbackId);
                 callbackId = Next();
             }
             return new ServerCommand(action, command, callbackId);
@@ -63,7 +62,7 @@ namespace RepetierSharp.Util
             var callbackId = Next();
             while (!_callbackMap.TryAdd(callbackId, action))
             {
-                _logger.LogTrace("[CommandManager::PrinterCommandWithId] Failed to add callbackId for command {callbackId} with id {CommandIdentifier}.", action, callbackId);
+                _logger.LogWarning("[CommandManager::PrinterCommandWithId] Failed to add callbackId for command {callbackId} with id {CommandIdentifier}.", action, callbackId);
                 callbackId = Next();
             }
             return new PrinterCommand(action, command, printer, callbackId);
@@ -74,7 +73,10 @@ namespace RepetierSharp.Util
             if (!_callbackMap.ContainsKey(callbackId)) return;
             if (_callbackMap.TryRemove(callbackId, out var command) )
             {
-                _logger.LogTrace("[CommandManager] Removed command='{command}' with Id={callbackId}.", command, callbackId);
+                _logger.LogDebug("[CommandManager] Removed command='{command}' with Id={callbackId}.", command, callbackId);
+            } else 
+            {
+                _logger.LogWarning("Failed to remove command with {id}", callbackId);
             }
         }
         
