@@ -215,7 +215,7 @@ namespace RepetierSharp
             await ProcessResponse(response);
         }
 
-        private bool isFiltered(string eventName, List<Predicate<string>> filterList)
+        private bool IsFiltered(string eventName, List<Predicate<string>> filterList)
         {
             return filterList.Exists(pre => pre.Invoke(eventName));
         }
