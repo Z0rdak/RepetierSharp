@@ -8,11 +8,13 @@ namespace RepetierSharp.Models
     /// </summary>
     public class RepetierServerInformation
     {
-        [JsonPropertyName("apikey")] public string ApiKey { get; set; }
+        [JsonPropertyName("apikey")] public string? ApiKey { get; set; }
 
         [JsonPropertyName("name")] public string Name { get; set; }
 
         [JsonPropertyName("version")] public string Version { get; set; }
+        [JsonPropertyName("variant")] public string Variant { get; set; }
+        [JsonPropertyName("software")] public string Software { get; set; }
 
         [JsonPropertyName("printers")] public List<PrinterInfo> Printers { get; set; }
 
