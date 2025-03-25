@@ -37,7 +37,7 @@ namespace RepetierSharp
             WebSocketClient = websocket;
             ConnectedAsync += async (connectedArgs) =>
             {
-                if (!connectedArgs.Reconnect) 
+                if (!connectedArgs.Reconnect && Session.KeepAlivePing.Seconds > 10)
                     await SendExtendPing(Session.KeepAlivePing);
             };
         }
