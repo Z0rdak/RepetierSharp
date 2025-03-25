@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Web;
 using Microsoft.Extensions.Logging;
+using RepetierSharp.Control;
 using RepetierSharp.Models.Commands;
+using RepetierSharp.Models.Communication;
 using RepetierSharp.Util;
 using RestSharp;
 using Websocket.Client;
@@ -50,13 +52,12 @@ namespace RepetierSharp
 
                 if ( _restClient == null && !string.IsNullOrEmpty(_restHost) )
                 {
-                    if ( _restClientOptions == null ) 
-                        _restClientOptions = new RestClientOptions(_restHost);
-
-                    if ( _session.DefaultLogin is ApiKeyAuth apiKeyAuth )
+                    _restClientOptions = new();
+                    _restClientOptions.BaseUrl = new Uri(_restHost);
+                    if ( _session.DefaultLogin is ApiKeyAuth apiKeyAuth ) 
                     {
                         _restClientOptions.Authenticator = new RequestHeaderApiKeyAuth(apiKeyAuth.ApiKey);
-                    }
+                    } 
                     _restClient = new RestClient(_restClientOptions);
                 }
 
