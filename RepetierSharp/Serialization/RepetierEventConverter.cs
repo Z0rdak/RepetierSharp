@@ -6,19 +6,21 @@ using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 using RepetierSharp.Config;
 using RepetierSharp.Models;
+using RepetierSharp.Models.Communication;
 using RepetierSharp.Models.Config;
 using RepetierSharp.Models.Events;
+using RepetierSharp.Util;
 
-namespace RepetierSharp.Util
+namespace RepetierSharp.Serialization
 {
-    public class RepetierBaseEventConverter : JsonConverter<RepetierBaseEvent>
+    public class RepetierBaseEventConverter : JsonConverter<IRepetierEvent>
     {
         private static readonly Dictionary<string, Type> s_extendableEventTypes = new();
         private static readonly ILogger<RepetierBaseEventConverter> _logger = LoggerFactory.Create(builder =>
         {
             builder.AddConsole();
         }).CreateLogger<RepetierBaseEventConverter>();
-        
+
         public static ImmutableDictionary<string, Type> GetExtendableEventTypes()
         {
             return s_extendableEventTypes.ToImmutableDictionary();
@@ -28,26 +30,27 @@ namespace RepetierSharp.Util
         (new[]
             {
                 /* core event types */
-                KeyValuePair.Create("loginRequired", typeof(LoginRequired)),
-                KeyValuePair.Create("logout", typeof(EmptyEvent)),
-                KeyValuePair.Create("userCredentials", typeof(UserCredentials)),
-                KeyValuePair.Create("printerListChanged", typeof(PrinterListChanged)),
+                KeyValuePair.Create("loginRequired", typeof(ServerEventData)),
+                KeyValuePair.Create("logout", typeof(ServerEventData)),
+                KeyValuePair.Create("userCredentials", typeof(ServerEventData)),
+                KeyValuePair.Create(EventConstants.PRINTER_LIST_CHANGED, typeof(List<Printer>)),
+                KeyValuePair.Create(EventConstants.LICENSE_CHANGED, typeof(EmptyEventData)),
                 KeyValuePair.Create("messagesChanged", typeof(MessagesChanged)),
                 KeyValuePair.Create("move", typeof(MoveEntry)),
                 KeyValuePair.Create("log", typeof(LogEntry)),
                 KeyValuePair.Create("gcodeInfoUpdated", typeof(GcodeInfo)),
                 KeyValuePair.Create("gcodeAnalysisFinished", typeof(GcodeInfo)),
-                KeyValuePair.Create("jobsChanged", typeof(PrinterEvent)), // TODO: Event
-                KeyValuePair.Create("printJobAdded", typeof(EmptyEvent)), // TODO: Event
+                KeyValuePair.Create("jobsChanged", typeof(PrinterEventData)), // TODO: Event
+                KeyValuePair.Create("printJobAdded", typeof(EmptyEventData)), // TODO: Event
                 KeyValuePair.Create("jobFinished", typeof(JobState)),
                 KeyValuePair.Create("jobKilled", typeof(JobState)),
                 KeyValuePair.Create("jobDeactivated", typeof(JobState)),
                 KeyValuePair.Create("jobStarted", typeof(JobStarted)),
                 KeyValuePair.Create("printerConditionChanged", typeof(PrinterConditionChanged)),
-                KeyValuePair.Create("printqueueChanged", typeof(PrinterEvent)),
-                KeyValuePair.Create("lastPrintsChanged", typeof(EmptyEvent)),
-                KeyValuePair.Create("foldersChanged", typeof(EmptyEvent)),
-                KeyValuePair.Create("eepromClear", typeof(EmptyEvent)),
+                KeyValuePair.Create("printqueueChanged", typeof(PrinterEventData)),
+                KeyValuePair.Create("lastPrintsChanged", typeof(EmptyEventData)),
+                KeyValuePair.Create("foldersChanged", typeof(EmptyEventData)),
+                KeyValuePair.Create("eepromClear", typeof(EmptyEventData)),
                 KeyValuePair.Create("eepromData", typeof(EepromData)),
                 KeyValuePair.Create("state", typeof(PrinterState)),
                 KeyValuePair.Create("config", typeof(PrinterConfig)),
@@ -61,32 +64,32 @@ namespace RepetierSharp.Util
                 KeyValuePair.Create("temp", typeof(TempEntry)),
                 KeyValuePair.Create("settingChanged", typeof(SettingChanged)),
                 KeyValuePair.Create("printerSettingChanged", typeof(PrinterSettingChanged)),
-                KeyValuePair.Create("modelGroupListChanged", typeof(EmptyEvent)),
-                KeyValuePair.Create("prepareJob", typeof(EmptyEvent)),
-                KeyValuePair.Create("prepareJobFinished", typeof(EmptyEvent)),
-                KeyValuePair.Create("changeFilamentRequested", typeof(EmptyEvent)),
-                KeyValuePair.Create("remoteServersChanged", typeof(EmptyEvent)),
+                KeyValuePair.Create("modelGroupListChanged", typeof(EmptyEventData)),
+                KeyValuePair.Create("prepareJob", typeof(EmptyEventData)),
+                KeyValuePair.Create("prepareJobFinished", typeof(EmptyEventData)),
+                KeyValuePair.Create("changeFilamentRequested", typeof(EmptyEventData)),
+                KeyValuePair.Create("remoteServersChanged", typeof(EmptyEventData)),
                 KeyValuePair.Create("timelapseChanged", typeof(TimelapseChanged)),
                 KeyValuePair.Create("gpioPinChanged", typeof(GpioPinChanged)),
-                KeyValuePair.Create("gpioListChanged", typeof(EmptyEvent)),
-                KeyValuePair.Create("externalLinksChanged", typeof(EmptyEvent)),
-                KeyValuePair.Create("autoupdateStarted", typeof(EmptyEvent)),
-                KeyValuePair.Create("pong", typeof(EmptyEvent)),
-                KeyValuePair.Create("timer30", typeof(EmptyEvent)),
-                KeyValuePair.Create("timer60", typeof(EmptyEvent)),
-                KeyValuePair.Create("timer300", typeof(EmptyEvent)),
-                KeyValuePair.Create("timer1800", typeof(EmptyEvent)),
-                KeyValuePair.Create("timer3600", typeof(EmptyEvent)),
+                KeyValuePair.Create("gpioListChanged", typeof(EmptyEventData)),
+                KeyValuePair.Create("externalLinksChanged", typeof(EmptyEventData)),
+                KeyValuePair.Create("autoupdateStarted", typeof(EmptyEventData)),
+                KeyValuePair.Create("pong", typeof(EmptyEventData)),
+                KeyValuePair.Create("timer30", typeof(EmptyEventData)),
+                KeyValuePair.Create("timer60", typeof(EmptyEventData)),
+                KeyValuePair.Create("timer300", typeof(EmptyEventData)),
+                KeyValuePair.Create("timer1800", typeof(EmptyEventData)),
+                KeyValuePair.Create("timer3600", typeof(EmptyEventData)),
                 KeyValuePair.Create("duetDialogOpened", typeof(DuetDialogOpened)),
                 /* project event types */
                 KeyValuePair.Create("projectChanged", typeof(ProjectStateChanged)),
                 KeyValuePair.Create("projectDeleted", typeof(ProjectStateChanged)),
                 KeyValuePair.Create("projectFolderChanged", typeof(ProjectFolderChanged)),
-                KeyValuePair.Create("globalErrorsChanged", typeof(EmptyEvent)),
-                KeyValuePair.Create("reloadKlipper", typeof(EmptyEvent)),
+                KeyValuePair.Create("globalErrorsChanged", typeof(EmptyEventData)),
+                KeyValuePair.Create("reloadKlipper", typeof(EmptyEventData)),
                 /* not listed / custom event types */
                 KeyValuePair.Create("layerChanged", typeof(LayerChanged)),
-                KeyValuePair.Create("updatePrinterState", typeof(PrinterState))
+                KeyValuePair.Create(EventConstants.UPDATE_PRINTER_STATE, typeof(PrinterState))
             }
         );
 
@@ -101,7 +104,7 @@ namespace RepetierSharp.Util
             return !s_eventTypes.ContainsKey(eventType) && s_extendableEventTypes.TryAdd(eventType, type);
         }
 
-        public override RepetierBaseEvent Read(ref Utf8JsonReader reader, Type typeToConvert,
+        public override IRepetierEvent Read(ref Utf8JsonReader reader, Type typeToConvert,
             JsonSerializerOptions options)
         {
             if ( reader.TokenType != JsonTokenType.StartObject )
@@ -113,14 +116,14 @@ namespace RepetierSharp.Util
             var jsonObject = document.RootElement;
             string? eventDiscriminator = null;
             string? printer = null;
-            IRepetierEvent? repetierEvent = null;
+            IEventData? repetierEvent = null;
 
-            if (jsonObject.TryGetProperty("event", out var eventJsonElement)) 
+            if ( jsonObject.TryGetProperty("event", out var eventJsonElement) )
                 eventDiscriminator = eventJsonElement.GetString();
 
             if ( string.IsNullOrEmpty(eventDiscriminator) )
             {
-                _logger.LogWarning("Missing event discriminator"); 
+                _logger.LogWarning("Missing event discriminator");
                 throw new JsonException("Missing event discriminator.");
             }
 
@@ -128,49 +131,58 @@ namespace RepetierSharp.Util
             {
                 printer = printerJsonElement.GetString();
             }
-            
-            if (jsonObject.TryGetProperty("data", out var dataJsonElement))
+
+            if ( jsonObject.TryGetProperty("data", out var dataJsonElement) )
             {
                 var isInCustomEventType = s_extendableEventTypes.TryGetValue(eventDiscriminator, out var extendableType);
-                if (isInCustomEventType)
+                if ( isInCustomEventType )
                 {
                     var res = JsonSerializer.Deserialize(dataJsonElement.GetRawText(), extendableType, options);
                     if ( res == null )
                     {
-                        _logger.LogWarning("Unable to deserialize event with type: {}",eventDiscriminator); 
+                        _logger.LogWarning("Unable to deserialize event with type: {}", eventDiscriminator);
                         throw new JsonException($"Unable to deserialize event with type: {eventDiscriminator}");
                     }
-                    repetierEvent = (IRepetierEvent)res;
+                    repetierEvent = (IEventData)res;
                 }
 
                 var isInEventTypes = s_eventTypes.TryGetValue(eventDiscriminator, out var eventType);
-                if (isInEventTypes)
+                if ( isInEventTypes )
                 {
-                    var res = JsonSerializer.Deserialize(dataJsonElement.GetRawText(), eventType, options);
-                    if ( res == null )
+                    switch ( eventDiscriminator )
                     {
-                        _logger.LogWarning("Unable to deserialize event with type: {}",eventDiscriminator); 
-                        throw new JsonException($"Unable to deserialize event with type: {eventDiscriminator}");
+                        case EventConstants.PRINTER_LIST_CHANGED:
+                            var printerList = JsonSerializer.Deserialize<List<Printer>>(dataJsonElement.GetRawText(), options);
+                            repetierEvent = new PrinterListChanged() {Printers = printerList ?? new List<Printer>()} ;
+                            break;
+                        default:
+                            {
+                                var res = JsonSerializer.Deserialize(dataJsonElement.GetRawText(), eventType, options);
+                                if ( res == null )
+                                {
+                                    _logger.LogWarning("Unable to deserialize event with type: {}", eventDiscriminator);
+                                    throw new JsonException($"Unable to deserialize event with type: {eventDiscriminator}");
+                                }
+
+                                repetierEvent = (IEventData)res;
+                                break;
+                            }
                     }
-                  
-                    repetierEvent = (IRepetierEvent)res;
                 }
-                if (!isInCustomEventType && !isInEventTypes)
+                if ( !isInCustomEventType && !isInEventTypes )
                 {
-                    _logger.LogWarning("No type defined for event: {}",eventDiscriminator); 
+                    _logger.LogWarning("No type defined for event: {}", eventDiscriminator);
                     throw new JsonException($"No type defined for event: {eventDiscriminator}.");
                 }
             }
-           
-            return new RepetierBaseEvent
+
+            return new IRepetierEvent
             {
-                Event = eventDiscriminator,
-                Printer = printer,
-                RepetierEvent = repetierEvent
+                Event = eventDiscriminator, Printer = printer, EventData = repetierEvent
             };
         }
 
-        public override void Write(Utf8JsonWriter writer, RepetierBaseEvent value, JsonSerializerOptions options)
+        public override void Write(Utf8JsonWriter writer, IRepetierEvent value, JsonSerializerOptions options)
         {
             JsonSerializer.Serialize(writer, value, value.GetType(), options);
         }
