@@ -9,7 +9,7 @@ namespace RepetierSharp.Models.Responses
     /// </summary>
     public class ModelInfo : IResponseData
     {
-        [JsonPropertyName("analysed")] public int Analysed { get; set; }
+        [JsonPropertyName("analysed")] public PrintJobAnalyzed Analysed { get; set; }
         [JsonPropertyName("created")] public long Created { get; set; }
         [JsonPropertyName("filamentTotal")] public double FilamentTotal { get; set; }
         [JsonPropertyName("fits")] public bool Fits { get; set; }
