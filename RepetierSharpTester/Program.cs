@@ -71,7 +71,7 @@ namespace RepetierSharpTester
 
             repetierConn.RepetierResponseReceivedAsync += eventArgs =>
             {
-                Console.WriteLine($" <=== {eventArgs.CallbackId} {eventArgs.Command}");
+                Console.WriteLine($" <=== {eventArgs.Response.CallBackId} {eventArgs.Response.CommandId}");
                 return Task.CompletedTask;
             };
 
