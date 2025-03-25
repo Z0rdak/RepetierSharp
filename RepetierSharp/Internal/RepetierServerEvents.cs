@@ -1,7 +1,7 @@
 using System;
 using RepetierSharp.Models.Events;
-using RepetierSharp.Models.Messages;
-using RepetierSharp.Models.Commands;
+using RepetierSharp.Models.Communication;
+using RepetierSharp.Models.Responses;
 
 namespace RepetierSharp.Internal
 {
@@ -12,43 +12,27 @@ namespace RepetierSharp.Internal
         public AsyncEvent<MessagesChangedEventArgs> MessagesChangedEvent { get; } = new();
     }
     
-    public sealed class PrinterListChangedEventArgs : EventArgs
+    public sealed class PrinterListChangedEventArgs(PrinterListChanged printerList) : EventArgs
     {
-        public PrinterListChangedEventArgs(PrinterListChanged printerList)
-        {
-            PrinterListChanged = printerList;
-        }
 
-        public PrinterListChanged PrinterListChanged { get; }
+        public PrinterListChanged PrinterListChanged { get; } = printerList;
     }
 
-    public sealed class MessagesChangedEventArgs : EventArgs
+    public sealed class MessagesChangedEventArgs(Message? message) : EventArgs
     {
-        public MessagesChangedEventArgs(Message? message)
-        {
-            Message = message;
-        }
 
-        public Message? Message { get; }
+        public Message? Message { get; } = message;
     }
 
-    public sealed class CommandEventArgs : EventArgs
+    public sealed class CommandEventArgs(BaseCommand command) : EventArgs
     {
-        public CommandEventArgs(BaseCommand command)
-        {
-            Command = command;
-        }
 
-        public BaseCommand Command { get; }
+        public BaseCommand Command { get; } = command;
     }
 
-    public sealed class LogEntryEventArgs : EventArgs
+    public sealed class LogEntryEventArgs(LogEntry logEntry) : EventArgs
     {
-        public LogEntryEventArgs(LogEntry logEntry)
-        {
-            LogEntry = logEntry;
-        }
 
-        public LogEntry LogEntry { get; }
+        public LogEntry LogEntry { get; } = logEntry;
     }
 }
