@@ -49,14 +49,22 @@ namespace RepetierSharp
         /// </summary>
         public async Task<RepetierServerInformation?> GetRepetierServerInfo()
         {
-            var response = await RestClient.ExecuteAsync(new RestRequest("/printer/info"));
-            if ( response is { StatusCode: HttpStatusCode.OK, Content: not null } )
+            var restRequest = new RestRequest("/printer/info");
+            try
             {
-                return JsonSerializer.Deserialize<RepetierServerInformation>(response.Content);
+                var response = await RestClient.ExecuteAsync(restRequest);
+                if ( response is { StatusCode: HttpStatusCode.OK, Content: not null } )
+                {
+                    return JsonSerializer.Deserialize<RepetierServerInformation>(response.Content);
+                }
+                await _clientEvents.HttpRequestFailedEvent.InvokeAsync(new HttpContextEventArgs(response.Request,
+                    response));
             }
-
-            await _clientEvents.HttpRequestFailedEvent.InvokeAsync(new HttpContextEventArgs(response.Request,
-                response));
+            catch ( Exception e )
+            {
+                var httpContext = new HttpContextEventArgs(restRequest, null);
+                await _clientEvents.HttpRequestFailedEvent.InvokeAsync(httpContext);
+            }
             return null;
         }
 
