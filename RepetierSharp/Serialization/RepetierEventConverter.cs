@@ -80,7 +80,6 @@ namespace RepetierSharp.Serialization
                 KeyValuePair.Create(EXTERNAL_LINKS_CHANGED, typeof(EmptyEventData)),
                 KeyValuePair.Create(AUTO_UPDATE_STARTED, typeof(EmptyEventData)),
                 KeyValuePair.Create(PONG, typeof(EmptyEventData)),
-                KeyValuePair.Create("ping", typeof(EmptyEventData)),
                 KeyValuePair.Create(TIMER_30, typeof(EmptyEventData)),
                 KeyValuePair.Create(TIMER_60, typeof(EmptyEventData)),
                 KeyValuePair.Create(TIMER_300, typeof(EmptyEventData)),
