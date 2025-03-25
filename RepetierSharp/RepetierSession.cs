@@ -3,7 +3,7 @@ using System.Text;
 
 namespace RepetierSharp
 {
-    public class RepetierSession(IRepetierAuthentication? defaultLogin = null, int keepAliveInS = 5, 
+    public class RepetierSession(IRepetierAuthentication? defaultLogin = null, int keepAliveInS = 10, 
         string? sessionId = null, bool longLivedSession = true)
     { 
         public string? SessionId { get; set; } = sessionId;
