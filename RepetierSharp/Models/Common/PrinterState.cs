@@ -1,9 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using RepetierSharp.Models.Common;
+using RepetierSharp.Models.Communication;
 
 namespace RepetierSharp.Models
 {
-    public class PrinterState : IRepetierEvent
+    public class PrinterState : IEventData
     {
         [JsonPropertyName("activeExtruder")] public int ActiveExtruder { get; set; }
 

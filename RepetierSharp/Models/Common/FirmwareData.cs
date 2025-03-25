@@ -1,9 +1,13 @@
 ﻿using System.Text.Json.Serialization;
-using RepetierSharp.Models.Events;
+using RepetierSharp.Internal;
+using RepetierSharp.Models.Communication;
+using RepetierSharp.Util;
 
-namespace RepetierSharp.Models.Config
+namespace RepetierSharp.Models.Events
 {
-    public class FirmwareData : IRepetierEvent
+    [EventId(EventConstants.FIRMWARE_CHANGED)]
+    [CommandId(CommandConstants.GET_FIRMWARE_DATA)]
+    public class FirmwareData : IEventData, IResponseData
     {
         [JsonPropertyName("firmware")] public FirmwareInfo Firmware { get; set; }
     }

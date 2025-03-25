@@ -1,19 +1,21 @@
 ﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
-using RepetierSharp.Models;
+using RepetierSharp.Config;
+using RepetierSharp.Internal;
+using RepetierSharp.Models.Communication;
 using RepetierSharp.Models.Config;
-using RepetierSharp.Models.Events;
+using RepetierSharp.Util;
 
-namespace RepetierSharp.Config
+namespace RepetierSharp.Models.Events
 {
-    public class PrinterConfig : IRepetierEvent
+    [EventId(EventConstants.CONFIG)]
+    [CommandId(CommandConstants.GET_PRINTER_CONFIG)]
+    public class PrinterConfig : IEventData, IResponseData
     {
         [JsonPropertyName("general")] public General General { get; set; }
-        [JsonPropertyName("connection")] public Connection Connection { get; set; }
-        
+        [JsonPropertyName("connection")] public RepetierSharp.Config.Connection Connection { get; set; }
         
         [JsonPropertyName("movement")] public Movement Movement { get; set; }
-        
         
         [JsonPropertyName("buttonCommands")] public List<ButtonCommand> ButtonCommands { get; set; }
         [JsonPropertyName("quickCommands")] public List<QuickCommand> QuickCommands { get; set; }

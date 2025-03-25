@@ -6,7 +6,7 @@ namespace RepetierSharp.Models
     {
         [JsonPropertyName("active")] public bool IsActive { get; set; }
 
-        [JsonPropertyName("analysed")] public int Analysed { get; set; }
+        [JsonPropertyName("analysed")] public PrintJobAnalyzed Analysed { get; set; }
 
         [JsonPropertyName("done")] public double Progress { get; set; }
 
@@ -41,5 +41,12 @@ namespace RepetierSharp.Models
         [JsonPropertyName("jobstate")] public string JobState { get; set; }
 
         [JsonPropertyName("totalLines")] public long TotalLines { get; set; }
+    }
+
+    public enum PrintJobAnalyzed
+    {
+        No = 0,
+        Yes = 1,
+        NoGcodeFile = 2
     }
 }

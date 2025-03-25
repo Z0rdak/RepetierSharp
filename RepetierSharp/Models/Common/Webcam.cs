@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace RepetierSharp.Models
+namespace RepetierSharp.Models.Common
 {
     public class WebcamState
     {
