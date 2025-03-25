@@ -1,11 +1,11 @@
 ﻿using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
-using RepetierSharp.Models.Events;
+using RepetierSharp.Models.Communication;
 
-namespace RepetierSharp.Models.Messages
+namespace RepetierSharp.Models.Responses
 {
-    public class LoginResponse : IRepetierResponse
+    public class LoginResponse : IResponseData
     {
         [JsonPropertyName("ok")] public bool Authenticated { get; set; }
 

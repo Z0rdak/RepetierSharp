@@ -1,9 +1,9 @@
 ﻿using System.Text.Json.Serialization;
-using RepetierSharp.Models.Events;
+using RepetierSharp.Models.Communication;
 
-namespace RepetierSharp.Models.Messages
+namespace RepetierSharp.Models.Responses
 {
-    public class StatusResponse : IRepetierResponse
+    public class StatusResponse : IResponseData
     {
         [JsonPropertyName("success")] public bool Success { get; set; }
     }

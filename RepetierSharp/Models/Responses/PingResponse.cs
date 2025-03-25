@@ -1,11 +1,10 @@
 ﻿using System.Text.Json.Serialization;
-using RepetierSharp.Models.Events;
+using RepetierSharp.Models.Communication;
 
-namespace RepetierSharp.Models.Messages
+namespace RepetierSharp.Models.Responses
 {
-    public class PingResponse : IRepetierResponse
+    public class PingResponse : IResponseData
     {
-        [JsonPropertyName("source")] // "source": "gui"
-        public string Source { get; set; }
+        [JsonPropertyName("source")] public string Source { get; set; }
     }
 }

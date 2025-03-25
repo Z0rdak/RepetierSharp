@@ -1,10 +1,9 @@
 ﻿using System.Collections.Generic;
-using System.Text.Json.Serialization;
-using RepetierSharp.Models.Events;
+using RepetierSharp.Models.Communication;
 
-namespace RepetierSharp.Models.Messages
+namespace RepetierSharp.Models.Responses
 {
-    public class StateListResponse : IRepetierResponse
+    public class StateListResponse : IResponseData
     {
         public Dictionary<string, PrinterState> PrinterStates { get; set; } = new();
     }

@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
-using RepetierSharp.Models.Events;
+using RepetierSharp.Models.Communication;
 
-namespace RepetierSharp.Models.Messages
+namespace RepetierSharp.Models.Responses
 {
-    public class ListPrinterResponse : IRepetierResponse
+    public class ListPrinterResponse : IResponseData
     {
         public List<Printer> Printers { get; set; } = new();
     }

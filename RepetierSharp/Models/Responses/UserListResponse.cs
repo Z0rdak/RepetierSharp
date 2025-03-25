@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
-using RepetierSharp.Models.Events;
+using RepetierSharp.Models.Communication;
 
-namespace RepetierSharp.Models.Messages
+namespace RepetierSharp.Models.Responses
 {
-    public class UserListResponse : IRepetierResponse
+    public class UserListResponse : IResponseData
     {
         [JsonPropertyName("data")] public UserListContainer UserListContainer { get; set; }
     }

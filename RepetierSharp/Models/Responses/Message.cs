@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
-using RepetierSharp.Models.Events;
+using RepetierSharp.Models.Communication;
 
-namespace RepetierSharp.Models.Messages
+namespace RepetierSharp.Models.Responses
 {
-    public class Message : IRepetierResponse
+    public class Message : IResponseData
     {
         [JsonPropertyName("id")] public int Id { get; set; }
 
@@ -20,7 +20,7 @@ namespace RepetierSharp.Models.Messages
         [JsonPropertyName("pause")] public bool IsPaused { get; set; }
     }
 
-    public class MessageList : IRepetierResponse
+    public class MessageList : IResponseData
     {
         public List<Message> Messages { get; set; } = new();
     }
