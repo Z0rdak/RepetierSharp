@@ -50,6 +50,10 @@
 * Various overloads and confusing methods for building a RepetierConnection instance when using the builder.
 * Helper methods for the ``RepetierConnectionBuilder`` which could be used to schedule querying the printer state and printer list. That's now all covered by the `ScheduleCommand` method.
 
+## Fixed
+
+* Too many bugs to track
+
 # [0.1.9.1] - 2024-06-27
 
 ## Added
