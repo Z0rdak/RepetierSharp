@@ -23,13 +23,6 @@ namespace RepetierSharp
 {
     public partial class RepetierConnection : Disposable
     {
-        private static readonly JsonSerializerOptions _defaultOptions = new()
-        {
-            AllowTrailingCommas = true,
-            UnknownTypeHandling = JsonUnknownTypeHandling.JsonElement,
-            WriteIndented = true,
-            Converters = { new RepetierBaseEventConverter() }
-        };
 
         private RepetierConnection(ILogger<RepetierConnection>? logger = null)
         {
