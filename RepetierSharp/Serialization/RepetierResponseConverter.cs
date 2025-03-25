@@ -36,6 +36,9 @@ namespace RepetierSharp.Serialization
                 KeyValuePair.Create(CommandConstants.DELETE_USER, typeof(StatusResponse)),
                 KeyValuePair.Create(CommandConstants.USER_LIST, typeof(UserListResponse)),
                 KeyValuePair.Create(CommandConstants.CONTINUE_JOB, typeof(EmptyResponse)),
+                KeyValuePair.Create(CommandConstants.SET_MQTT_CONFIG, typeof(MqttConfigResponse)),
+                KeyValuePair.Create(CommandConstants.GET_MQTT_CONFIG, typeof(MqttConfigResponse)),
+                KeyValuePair.Create(CommandConstants.GET_MQTT_STATE, typeof(MqttStateResponse)),
             }
         );
         public override RepetierResponse? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)

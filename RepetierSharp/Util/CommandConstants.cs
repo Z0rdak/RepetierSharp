@@ -81,6 +81,9 @@
         public const string PREHEAT = "preheat";
         public const string BABY_STEP = "babystep";
         public const string SEND_QUICK_COMMAND = "sendQuickCommand";
+        public const string GET_MQTT_CONFIG = "getMQTTConfig";
+        public const string GET_MQTT_STATE = "getMQTTState";
+        public const string SET_MQTT_CONFIG = "setMQTTConfig";
 
         /* undocumented commands */
 

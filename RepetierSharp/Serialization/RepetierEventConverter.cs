@@ -9,7 +9,7 @@ using RepetierSharp.Models;
 using RepetierSharp.Models.Communication;
 using RepetierSharp.Models.Config;
 using RepetierSharp.Models.Events;
-using RepetierSharp.Util;
+using static RepetierSharp.Util.EventConstants;
 
 namespace RepetierSharp.Serialization
 {
@@ -30,66 +30,73 @@ namespace RepetierSharp.Serialization
         (new[]
             {
                 /* core event types */
-                KeyValuePair.Create("loginRequired", typeof(ServerEventData)),
-                KeyValuePair.Create("logout", typeof(ServerEventData)),
-                KeyValuePair.Create("userCredentials", typeof(ServerEventData)),
-                KeyValuePair.Create(EventConstants.PRINTER_LIST_CHANGED, typeof(List<Printer>)),
-                KeyValuePair.Create(EventConstants.LICENSE_CHANGED, typeof(EmptyEventData)),
-                KeyValuePair.Create("messagesChanged", typeof(MessagesChanged)),
-                KeyValuePair.Create("move", typeof(MoveEntry)),
-                KeyValuePair.Create("log", typeof(LogEntry)),
-                KeyValuePair.Create("gcodeInfoUpdated", typeof(GcodeInfo)),
-                KeyValuePair.Create("gcodeAnalysisFinished", typeof(GcodeInfo)),
-                KeyValuePair.Create("jobsChanged", typeof(PrinterEventData)), // TODO: Event
-                KeyValuePair.Create("printJobAdded", typeof(EmptyEventData)), // TODO: Event
-                KeyValuePair.Create("jobFinished", typeof(JobState)),
-                KeyValuePair.Create("jobKilled", typeof(JobState)),
-                KeyValuePair.Create("jobDeactivated", typeof(JobState)),
-                KeyValuePair.Create("jobStarted", typeof(JobStarted)),
-                KeyValuePair.Create("printerConditionChanged", typeof(PrinterConditionChanged)),
-                KeyValuePair.Create("printqueueChanged", typeof(PrinterEventData)),
-                KeyValuePair.Create("lastPrintsChanged", typeof(EmptyEventData)),
-                KeyValuePair.Create("foldersChanged", typeof(EmptyEventData)),
-                KeyValuePair.Create("eepromClear", typeof(EmptyEventData)),
-                KeyValuePair.Create("eepromData", typeof(EepromData)),
-                KeyValuePair.Create("state", typeof(PrinterState)),
-                KeyValuePair.Create("config", typeof(PrinterConfig)),
-                KeyValuePair.Create("firmwareChanged", typeof(FirmwareData)),
-                KeyValuePair.Create("wifiChanged", typeof(WifiChanged)),
-                KeyValuePair.Create("recoverChanged", typeof(RecoverChanged)),
-                KeyValuePair.Create("hardwareInfo", typeof(HardwareInfo)),
-                KeyValuePair.Create("dispatcherCount", typeof(DispatcherCount)),
-                KeyValuePair.Create("workerFinished", typeof(WorkerFinished)),
-                KeyValuePair.Create("newRenderImage", typeof(NewRenderImage)),
-                KeyValuePair.Create("temp", typeof(TempEntry)),
-                KeyValuePair.Create("settingChanged", typeof(SettingChanged)),
-                KeyValuePair.Create("printerSettingChanged", typeof(PrinterSettingChanged)),
-                KeyValuePair.Create("modelGroupListChanged", typeof(EmptyEventData)),
-                KeyValuePair.Create("prepareJob", typeof(EmptyEventData)),
-                KeyValuePair.Create("prepareJobFinished", typeof(EmptyEventData)),
-                KeyValuePair.Create("changeFilamentRequested", typeof(EmptyEventData)),
-                KeyValuePair.Create("remoteServersChanged", typeof(EmptyEventData)),
-                KeyValuePair.Create("timelapseChanged", typeof(TimelapseChanged)),
-                KeyValuePair.Create("gpioPinChanged", typeof(GpioPinChanged)),
-                KeyValuePair.Create("gpioListChanged", typeof(EmptyEventData)),
-                KeyValuePair.Create("externalLinksChanged", typeof(EmptyEventData)),
-                KeyValuePair.Create("autoupdateStarted", typeof(EmptyEventData)),
-                KeyValuePair.Create("pong", typeof(EmptyEventData)),
-                KeyValuePair.Create("timer30", typeof(EmptyEventData)),
-                KeyValuePair.Create("timer60", typeof(EmptyEventData)),
-                KeyValuePair.Create("timer300", typeof(EmptyEventData)),
-                KeyValuePair.Create("timer1800", typeof(EmptyEventData)),
-                KeyValuePair.Create("timer3600", typeof(EmptyEventData)),
-                KeyValuePair.Create("duetDialogOpened", typeof(DuetDialogOpened)),
+       
+                // TODO: Check for own events
+                KeyValuePair.Create(PRINTER_LIST_CHANGED, typeof(List<Printer>)),
+                KeyValuePair.Create(LICENSE_CHANGED, typeof(EmptyEventData)),
+                KeyValuePair.Create(MQTT_STATE_CHANGED, typeof(MqttStateChanged)), 
+                KeyValuePair.Create(JOBS_CHANGED, typeof(PrinterEventData)), 
+                KeyValuePair.Create(PRINT_JOB_ADDED, typeof(EmptyEventData)), 
+                // KeyValuePair.Create("emergencyStop", typeof(EmptyEventData)), // TODO: Event 
+                KeyValuePair.Create(CHANGE_FILAMENT_REQUESTED, typeof(EmptyEventData)), 
+                KeyValuePair.Create(LOGIN_REQUIRED, typeof(ServerEventData)), 
+                KeyValuePair.Create(JOB_FINISHED, typeof(JobState)),
+                KeyValuePair.Create(JOB_KILLED, typeof(JobState)),
+                KeyValuePair.Create(JOB_DEACTIVATED, typeof(JobState)),
+                KeyValuePair.Create(JOB_STARTED, typeof(JobStarted)),
+                KeyValuePair.Create(PRINTER_CONDITION_CHANGED, typeof(PrinterConditionChanged)),
+                KeyValuePair.Create(PRINT_QUEUE_CHANGED, typeof(PrinterEventData)),
+                KeyValuePair.Create(LAST_PRINTS_CHANGED, typeof(EmptyEventData)),
+                
+                KeyValuePair.Create(LOGOUT, typeof(ServerEventData)),
+                KeyValuePair.Create(USER_CREDENTIALS, typeof(ServerEventData)),
+                KeyValuePair.Create(MESSAGES_CHANGED, typeof(MessagesChanged)),
+                KeyValuePair.Create(MOVE, typeof(MoveEntry)),
+                KeyValuePair.Create(LOG, typeof(LogEntry)),
+                KeyValuePair.Create(GCODE_INFO_UPDATED, typeof(GcodeInfo)),
+                KeyValuePair.Create(GCODE_ANALYSIS_FINISHED, typeof(GcodeInfo)),
+                KeyValuePair.Create(FOLDERS_CHANGED, typeof(EmptyEventData)),
+                KeyValuePair.Create(EEPROM_CLEAR, typeof(EmptyEventData)),
+                KeyValuePair.Create(EEPROM_DATA, typeof(EepromData)),
+                KeyValuePair.Create(STATE, typeof(PrinterState)),
+                KeyValuePair.Create(CONFIG, typeof(PrinterConfig)),
+                KeyValuePair.Create(FIRMWARE_CHANGED, typeof(FirmwareData)),
+                KeyValuePair.Create(WIFI_CHANGED, typeof(WifiChanged)),
+                KeyValuePair.Create(RECOVER_CHANGED, typeof(RecoverChanged)),
+                KeyValuePair.Create(HARDWARE_INFO, typeof(HardwareInfo)),
+                KeyValuePair.Create(DISPATCHER_COUNT, typeof(DispatcherCount)),
+                KeyValuePair.Create(WORKER_FINISHED, typeof(WorkerFinished)),
+                KeyValuePair.Create(NEW_RENDER_IMAGE, typeof(NewRenderImage)),
+                KeyValuePair.Create(TEMP, typeof(TempEntry)),
+                KeyValuePair.Create(SETTING_CHANGED, typeof(SettingChanged)),
+                KeyValuePair.Create(PRINTER_SETTING_CHANGED, typeof(PrinterSettingChanged)),
+                KeyValuePair.Create(MODEL_GROUPLIST_CHANGED, typeof(EmptyEventData)),
+                KeyValuePair.Create(PREPARE_JOB, typeof(EmptyEventData)),
+                KeyValuePair.Create(PREPARE_JOB_FINIHSED, typeof(EmptyEventData)),
+                KeyValuePair.Create(REMOTE_SERVERS_CHANGED, typeof(EmptyEventData)),
+                KeyValuePair.Create(TIMELAPSE_CHANGED, typeof(TimelapseChanged)),
+                KeyValuePair.Create(GPIO_PIN_CHANGED, typeof(GpioPinChanged)),
+                KeyValuePair.Create(GPIO_LIST_CHANGED, typeof(EmptyEventData)),
+                KeyValuePair.Create(EXTERNAL_LINKS_CHANGED, typeof(EmptyEventData)),
+                KeyValuePair.Create(AUTO_UPDATE_STARTED, typeof(EmptyEventData)),
+                KeyValuePair.Create(PONG, typeof(EmptyEventData)),
+                KeyValuePair.Create("ping", typeof(EmptyEventData)),
+                KeyValuePair.Create(TIMER_30, typeof(EmptyEventData)),
+                KeyValuePair.Create(TIMER_60, typeof(EmptyEventData)),
+                KeyValuePair.Create(TIMER_300, typeof(EmptyEventData)),
+                KeyValuePair.Create(TIMER_1800, typeof(EmptyEventData)),
+                KeyValuePair.Create(TIMER_3600, typeof(EmptyEventData)),
+                KeyValuePair.Create(DUET_DIALOG_OPENED, typeof(DuetDialogOpened)),
                 /* project event types */
-                KeyValuePair.Create("projectChanged", typeof(ProjectStateChanged)),
-                KeyValuePair.Create("projectDeleted", typeof(ProjectStateChanged)),
-                KeyValuePair.Create("projectFolderChanged", typeof(ProjectFolderChanged)),
-                KeyValuePair.Create("globalErrorsChanged", typeof(EmptyEventData)),
-                KeyValuePair.Create("reloadKlipper", typeof(EmptyEventData)),
-                /* not listed / custom event types */
-                KeyValuePair.Create("layerChanged", typeof(LayerChanged)),
-                KeyValuePair.Create(EventConstants.UPDATE_PRINTER_STATE, typeof(PrinterState))
+                KeyValuePair.Create(PROJECT_CHANGED, typeof(ProjectStateChanged)),
+                KeyValuePair.Create(PROJECT_DELETED, typeof(ProjectStateChanged)),
+                KeyValuePair.Create(PROJECT_FOLDER_CHANGED, typeof(ProjectFolderChanged)),
+                KeyValuePair.Create(GLOBAL_ERRORS_CHANGED, typeof(EmptyEventData)),
+                KeyValuePair.Create(RELOAD_KLIPPER, typeof(EmptyEventData)),
+                /* not listed in docs -> reverse engineered through web-gui */
+                KeyValuePair.Create(LAYER_CHANGED, typeof(LayerChanged)),
+                KeyValuePair.Create(UPDATE_PRINTER_STATE, typeof(PrinterState)),
+                KeyValuePair.Create(MQTT_STATE_CHANGED, typeof(MqttStateChanged))
             }
         );
 
@@ -151,7 +158,7 @@ namespace RepetierSharp.Serialization
                 {
                     switch ( eventDiscriminator )
                     {
-                        case EventConstants.PRINTER_LIST_CHANGED:
+                        case PRINTER_LIST_CHANGED:
                             var printerList = JsonSerializer.Deserialize<List<Printer>>(dataJsonElement.GetRawText(), options);
                             repetierEvent = new PrinterListChanged() {Printers = printerList ?? new List<Printer>()} ;
                             break;
