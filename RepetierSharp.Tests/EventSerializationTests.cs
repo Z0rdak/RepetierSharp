@@ -2,9 +2,11 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using RepetierSharp.Config;
 using RepetierSharp.Models;
+using RepetierSharp.Models.Common;
 using RepetierSharp.Models.Config;
 using RepetierSharp.Models.Events;
-using RepetierSharp.Models.Messages;
+using RepetierSharp.Models.Responses;
+using RepetierSharp.Serialization;
 using RepetierSharp.Util;
 
 namespace RepetierSharp.Tests
@@ -235,7 +237,7 @@ namespace RepetierSharp.Tests
         {
             
             // Arrange
-            var obj = new MoveEntry { X = 1, Y = 2, Z = 3, Exruder = 4, Speed = 5, RelativeMove = true };
+            var obj = new MoveEntry { X = 1, Y = 2, Z = 3, Extruder = 4, Speed = 5, RelativeMove = true };
 
             // Act
             var json =  JsonSerializer.Serialize(obj);
@@ -248,7 +250,7 @@ namespace RepetierSharp.Tests
             Assert.Equal(obj.X, result.X);
             Assert.Equal(obj.Y, result.Y);
             Assert.Equal(obj.Z, result.Z);
-            Assert.Equal(obj.Exruder, result.Exruder);
+            Assert.Equal(obj.Extruder, result.Extruder);
             Assert.Equal(obj.Speed, result.Speed);
             Assert.Equal(obj.RelativeMove, result.RelativeMove);
         }
