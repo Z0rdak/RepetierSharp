@@ -6,8 +6,6 @@
 
 ## Introduction
 
-<!-- ![RepetierSharp](./RepetierSharp-wide.png) -->
-
 RepetierSharp is a simple, asynchronous, event-driven client designed to manage Repetier Servers. It seamlessly integrates both the WebSocket and REST APIs of Repetier Server software into a single streamlined library.
 
 *Disclaimer: This project is not affiliated with Repetier Server or Hot-World GmbH & Co. KG.*
