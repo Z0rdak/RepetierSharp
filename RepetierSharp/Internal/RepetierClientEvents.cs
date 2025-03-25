@@ -1,7 +1,8 @@
 using System;
 using RepetierSharp.Models;
+using RepetierSharp.Models.Communication;
 using RepetierSharp.Models.Events;
-using RepetierSharp.Models.Messages;
+using RepetierSharp.Models.Responses;
 using RestSharp;
 using Websocket.Client;
 
@@ -18,78 +19,52 @@ namespace RepetierSharp.Internal
         public AsyncEvent<UserCredentialsReceivedEventArgs> CredentialsReceivedEvent { get; } = new();
         public AsyncEvent<EventReceivedEventArgs> EventReceivedEvent { get; } = new();
         public AsyncEvent<ResponseReceivedEventArgs> ResponseReceivedEvent { get; } = new();
-        public AsyncEvent<RawRepetierEventReceivedEventArgs> RawEventReceivedEvent { get; } = new();
+        public AsyncEvent<RawEventReceivedEventArgs> RawEventReceivedEvent { get; } = new();
         public AsyncEvent<RawResponseReceivedEventArgs> RawResponseReceivedEvent { get; } = new();
         public AsyncEvent<CommandEventArgs> CommandSendEvent { get; } = new();
         public AsyncEvent<HttpContextEventArgs> HttpRequestFailedEvent { get; } = new();
         public AsyncEvent<CommandEventArgs> CommandFailedEvent { get; } = new();
     }
     
-    public sealed class HttpContextEventArgs : EventArgs
+    public sealed class HttpContextEventArgs(RestRequest request, RestResponse? response) : EventArgs
     {
-        public HttpContextEventArgs(RestRequest request, RestResponse response)
-        {
-            Request = request;
-            Response = response;
-        }
-        public RestRequest Request { get; }
-        public RestResponse Response { get; }
+        public RestRequest Request { get; } = request;
+        public RestResponse? Response { get; } = response;
     }
 
-    public sealed class UserCredentialsReceivedEventArgs : EventArgs
+    public sealed class UserCredentialsReceivedEventArgs(UserCredentials userCredentials) : EventArgs
     {
-        public UserCredentialsReceivedEventArgs(UserCredentials userCredentials)
-        {
-            UserCredentials = userCredentials;
-        }
-
-        public UserCredentials UserCredentials { get; }
+        public UserCredentials UserCredentials { get; } = userCredentials;
     }
     
     
-    public sealed class SessionIdReceivedEventArgs : EventArgs
+    public sealed class SessionIdReceivedEventArgs(string sessionId) : EventArgs
     {
-        public SessionIdReceivedEventArgs(string sessionId)
-        {
-            SessionId = sessionId;
-        }
-
-        public string SessionId { get; }
+        public string SessionId { get; } = sessionId;
     }
 
 
-    public sealed class PermissionDeniedEventArgs : EventArgs
+    public sealed class PermissionDeniedEventArgs(int callbackId, string commandId) : EventArgs
     {
-        public PermissionDeniedEventArgs(int commandId)
-        {
-            CommandId = commandId;
-        }
-
-        public int CommandId { get; }
+        public int CallbackId { get; } = callbackId;
+        public string CommandId { get; } = commandId;
     }
 
-    public sealed class EventReceivedEventArgs : EventArgs
+    public sealed class EventReceivedEventArgs(string eventName, string printer, IEventData? repetierEvent) : EventArgs
     {
-        public EventReceivedEventArgs(string eventName, string printer, IRepetierEvent? repetierEvent)
-        {
-            EventName = eventName;
-            Printer = printer;
-            RepetierEvent = repetierEvent;
-        }
-
-        public IRepetierEvent? RepetierEvent { get; }
-        public string EventName { get; }
-        public string Printer { get; }
+        public IEventData? RepetierEvent { get; } = repetierEvent;
+        public string EventName { get; } = eventName;
+        public string Printer { get; } = printer;
     }
 
-    public sealed class RawRepetierEventReceivedEventArgs : EventArgs
+    public sealed class RawEventReceivedEventArgs : EventArgs
     {
         /// <summary>
         /// </summary>
         /// <param name="eventName"> Name of the received event </param>
         /// <param name="printer"> Printer associated with the event or empty if global </param>
         /// <param name="eventPayload"> Event payload as byte array </param>
-        public RawRepetierEventReceivedEventArgs(string eventName, string printer, byte[] eventPayload)
+        public RawEventReceivedEventArgs(string eventName, string printer, byte[] eventPayload)
         {
             EventName = eventName;
             Printer = printer;
@@ -101,18 +76,9 @@ namespace RepetierSharp.Internal
         public string Printer { get; }
     }
 
-    public sealed class ResponseReceivedEventArgs : EventArgs
+    public sealed class ResponseReceivedEventArgs(RepetierResponse response) : EventArgs
     {
-        public ResponseReceivedEventArgs(int callbackId, string command, IRepetierMessage? message)
-        {
-            CallbackId = callbackId;
-            Command = command;
-            Message = message;
-        }
-
-        public string Command { get; }
-        public int CallbackId { get; }
-        public IRepetierMessage? Message { get; }
+        public RepetierResponse Response { get; } = response;
     }
 
     public sealed class RawResponseReceivedEventArgs : EventArgs
@@ -135,36 +101,25 @@ namespace RepetierSharp.Internal
     }
 
 
-    public sealed class LoginResultEventArgs : EventArgs
+    public sealed class LoginResultEventArgs(LoginResponse loginResult) : EventArgs
     {
-        public LoginResultEventArgs(LoginResponse loginResult)
-        {
-            LoginResult = loginResult;
-        }
 
-        public LoginResponse LoginResult { get; }
+        public LoginResponse LoginResult { get; } = loginResult;
     }
 
     public sealed class LoginRequiredEventArgs : EventArgs
     {
     }
 
-    public sealed class DisconnectedEventArgs : EventArgs
+    public sealed class DisconnectedEventArgs(DisconnectionInfo info) : EventArgs
     {
-        public DisconnectedEventArgs(DisconnectionInfo info)
-        {
-            Info = info;
-        }
-        public DisconnectionInfo Info { get; }
+        public DisconnectionInfo Info { get; } = info;
     }
 
-    public sealed class ConnectedEventArgs : EventArgs
+    public sealed class ConnectedEventArgs(Uri url, bool reconnect = false) : EventArgs
     {
-        public ConnectedEventArgs(bool reconnect = false)
-        {
-            Reconnect = reconnect;
-        }
-        public bool Reconnect { get; }
-        
+        public Uri Url { get; } = url;
+        public bool Reconnect { get; } = reconnect;
+
     }
 }
