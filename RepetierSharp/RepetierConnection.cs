@@ -547,21 +547,13 @@ namespace RepetierSharp
             _commandManager.AcknowledgeCommand(response.CallBackId);
         }
 
-        private async Task HandleEvent(RepetierBaseEvent repetierEvent)
+        private async Task HandleEvent(IRepetierEvent repetierEvent)
         {
-            var hasFilter = _eventFilters.Exists(pre => pre.Invoke(repetierEvent.Event));
-            if (!hasFilter)
-            {
-                _logger.LogDebug("[Event] Event={event}, Printer={Printer}", repetierEvent.Event, repetierEvent.Printer);
-                _logger.LogTrace("[Event] Event={event}, Printer={Printer}, Data={}", repetierEvent.Event, repetierEvent.Printer, 
-                    JsonSerializer.Serialize(repetierEvent.RepetierEvent, new JsonSerializerOptions{WriteIndented = true}));
-            }
-            var repetierEventArgs = new EventReceivedEventArgs(repetierEvent.Event, repetierEvent.Printer,
-                repetierEvent.RepetierEvent);
-            if ( !hasFilter )
-            {
-                await _clientEvents.EventReceivedEvent.InvokeAsync(repetierEventArgs);
-            }
+            var eventJson = JsonSerializer.Serialize(repetierEvent.EventData, new JsonSerializerOptions{WriteIndented = true});
+            _logger.LogDebug("[Event] Event={event}, Printer={Printer}", repetierEvent.Event, repetierEvent.Printer);
+            _logger.LogTrace("[Event] Event={event}, Printer={Printer}, Data={}", repetierEvent.Event, repetierEvent.Printer, eventJson);
+ 
+            
             switch ( repetierEvent.Event )
             {
                 case EventConstants.JOBS_CHANGED:
