@@ -1,11 +1,14 @@
 ﻿using System.Text.Json.Serialization;
+using RepetierSharp.Models.Communication;
+using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Events
 {
-    [EventId("layerChanged")]
-    public class LayerChanged : IRepetierEvent
+    [EventId(EventConstants.LAYER_CHANGED)]
+    public class LayerChanged : IEventData
     {
         [JsonPropertyName("layer")] public int Layer { get; set; }
+        
         [JsonPropertyName("maxLayer")] public int MaxLayer { get; set; }
     }
 }

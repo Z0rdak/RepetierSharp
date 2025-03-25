@@ -1,11 +1,12 @@
 using System.Text.Json.Serialization;
+using RepetierSharp.Models.Communication;
+using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Events
 {
-    [EventId("dispatcherCount")]
-    public class DispatcherCount : IRepetierEvent
+    [EventId(EventConstants.DISPATCHER_COUNT)]
+    public class DispatcherCount : IEventData
     {
-        [JsonPropertyName("count")]
-        public int Count { get; set; }
+        [JsonPropertyName("count")] public int Count { get; set; }
     }
 }

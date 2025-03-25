@@ -1,9 +1,11 @@
 ﻿using System.Text.Json.Serialization;
+using RepetierSharp.Models.Communication;
+using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Events
 {
-    [EventId("move")]
-    public class MoveEntry : IRepetierEvent
+    [EventId(EventConstants.MOVE)]
+    public class MoveEntry : IEventData
     {
         [JsonPropertyName("x")] public float X { get; set; }
 
@@ -11,7 +13,7 @@ namespace RepetierSharp.Models.Events
 
         [JsonPropertyName("z")] public float Z { get; set; }
 
-        [JsonPropertyName("e")] public float Exruder { get; set; }
+        [JsonPropertyName("e")] public float Extruder { get; set; }
 
         /// <summary>
         ///     mm/s

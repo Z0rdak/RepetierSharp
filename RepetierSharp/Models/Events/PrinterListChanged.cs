@@ -1,12 +1,16 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel;
 using System.Text.Json.Serialization;
+using RepetierSharp.Models.Communication;
+using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Events
 {
-    [EventId("printerListChanged")]
-    public class PrinterListChanged : IRepetierEvent
+    [EventId(EventConstants.PRINTER_LIST_CHANGED)]
+    public class PrinterListChanged : IEventData
     {
-        [JsonPropertyName("data")] public List<Printer> Printers { get; set; } = new();
-        // Payload: List of printers like in listPrinters response.
+        [JsonPropertyName("data")] 
+        public List<Printer> Printers { get; set; } = new();
     }
+
 }

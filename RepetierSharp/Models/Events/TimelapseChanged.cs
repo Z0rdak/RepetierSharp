@@ -1,9 +1,12 @@
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using RepetierSharp.Models.Communication;
+using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Events
 {
-    public class TimelapseChanged : IRepetierEvent
+    [EventId(EventConstants.TIMELAPSE_CHANGED)]
+    public class TimelapseChanged : IEventData
     {
         [JsonPropertyName("running")] 
         public bool Running { get; set; }

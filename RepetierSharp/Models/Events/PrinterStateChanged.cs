@@ -1,7 +1,10 @@
-﻿namespace RepetierSharp.Models.Events
+﻿using RepetierSharp.Models.Communication;
+using RepetierSharp.Util;
+
+namespace RepetierSharp.Models.Events
 {
-    [EventId("state")]
-    public class PrinterStateChanged : IRepetierEvent
+    [EventId(EventConstants.STATE)]
+    public class PrinterStateChanged : IEventData
     {
         public PrinterState PrinterState { get; set; }
     }

@@ -1,9 +1,11 @@
 ﻿using System.Text.Json.Serialization;
+using RepetierSharp.Models.Communication;
+using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Events
 {
-    [EventId("log")]
-    public class LogEntry : IRepetierEvent
+    [EventId(EventConstants.LOG)]
+    public class LogEntry : IEventData
     {
         [JsonPropertyName("id")] public int Id { get; set; }
 

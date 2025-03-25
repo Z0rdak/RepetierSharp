@@ -1,8 +1,11 @@
 using System.Text.Json.Serialization;
+using RepetierSharp.Models.Communication;
+using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Events
 {
-    public class DuetDialogOpened : IRepetierEvent
+    [EventId(EventConstants.DUET_DIALOG_OPENED)]
+    public class DuetDialogOpened : IEventData
     {
         [JsonPropertyName("message")] public string Message { get; set; }
         [JsonPropertyName("mode")] public int Mode { get; set; }

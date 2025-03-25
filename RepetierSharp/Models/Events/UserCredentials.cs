@@ -1,9 +1,11 @@
 ﻿using System.Text.Json.Serialization;
+using RepetierSharp.Models.Communication;
+using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Events
 {
-    [EventId("userCredentials")]
-    public class UserCredentials : IRepetierEvent
+    [EventId(EventConstants.USER_CREDENTIALS)]
+    public class UserCredentials : IEventData
     {
         [JsonPropertyName("login")] public string LoginName { get; set; }
 

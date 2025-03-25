@@ -1,9 +1,11 @@
 ﻿using System.Text.Json.Serialization;
+using RepetierSharp.Models.Communication;
+using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Events
 {
-    [EventId("printerSettingChanged")]
-    public class PrinterSettingChanged : IRepetierEvent
+    [EventId(EventConstants.PRINTER_SETTING_CHANGED)]
+    public class PrinterSettingChanged : IEventData
     {
         [JsonPropertyName("key")] public string Key { get; set; }
 

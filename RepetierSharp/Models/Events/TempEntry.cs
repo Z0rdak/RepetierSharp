@@ -1,9 +1,11 @@
 ﻿using System.Text.Json.Serialization;
+using RepetierSharp.Models.Communication;
+using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Events
 {
-    [EventId("temp")]
-    public class TempEntry : IRepetierEvent
+    [EventId(EventConstants.TEMP)]
+    public class TempEntry : IEventData
     {
         [JsonPropertyName("O")] public double Output { get; set; }
 

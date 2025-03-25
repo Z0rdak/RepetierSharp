@@ -1,8 +1,67 @@
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using RepetierSharp.Models.Communication;
+using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Events
 {
+    [EventId(EventConstants.WIFI_CHANGED)]
+    public class WifiChanged : IEventData
+    {
+        [JsonPropertyName("activeRouter")]
+        public bool ActiveRouter { get; set; }
+
+        [JsonPropertyName("routerList")]
+        public List<RouterList> RouterList { get; set; }
+
+        [JsonPropertyName("connections")]
+        public List<Connection> Connections { get; set; }
+
+        [JsonPropertyName("channels")]
+        public List<int> Channels { get; set; }
+
+        [JsonPropertyName("manageable")]
+        public bool Manageable { get; set; }
+
+        [JsonPropertyName("manualWifi")]
+        public bool ManualWifi { get; set; }
+
+        [JsonPropertyName("supportAP")]
+        public bool SupportAP { get; set; }
+
+        [JsonPropertyName("apSSID")]
+        public string ApSSID { get; set; }
+
+        [JsonPropertyName("country")]
+        public string Country { get; set; }
+
+        [JsonPropertyName("channel")]
+        public int Channel { get; set; }
+
+        [JsonPropertyName("mode")]
+        public int Mode { get; set; }
+
+        [JsonPropertyName("hostname")]
+        public string Hostname { get; set; }
+
+        [JsonPropertyName("apMode")]
+        public int ApMode { get; set; }
+
+        [JsonPropertyName("version")]
+        public int Version { get; set; }
+
+        [JsonPropertyName("screensaver")]
+        public bool Screensaver { get; set; }
+
+        [JsonPropertyName("activeSSID")]
+        public string ActiveSSID { get; set; }
+
+        [JsonPropertyName("timezone")]
+        public string Timezone { get; set; }
+
+        [JsonPropertyName("ethernet")]
+        public Ethernet Ethernet { get; set; }
+    }
 
      public class Connection
     {
@@ -92,64 +151,6 @@ namespace RepetierSharp.Models.Events
 
         [JsonPropertyName("ipv6_dns")]
         public string Ipv6Dns { get; set; }
-    }
-
-    [EventId("wifiChanged")]
-    public class WifiChanged : IRepetierEvent
-    {
-        [JsonPropertyName("activeRouter")]
-        public bool ActiveRouter { get; set; }
-
-        [JsonPropertyName("routerList")]
-        public List<RouterList> RouterList { get; set; }
-
-        [JsonPropertyName("connections")]
-        public List<Connection> Connections { get; set; }
-
-        [JsonPropertyName("channels")]
-        public List<int> Channels { get; set; }
-
-        [JsonPropertyName("manageable")]
-        public bool Manageable { get; set; }
-
-        [JsonPropertyName("manualWifi")]
-        public bool ManualWifi { get; set; }
-
-        [JsonPropertyName("supportAP")]
-        public bool SupportAP { get; set; }
-
-        [JsonPropertyName("apSSID")]
-        public string ApSSID { get; set; }
-
-        [JsonPropertyName("country")]
-        public string Country { get; set; }
-
-        [JsonPropertyName("channel")]
-        public int Channel { get; set; }
-
-        [JsonPropertyName("mode")]
-        public int Mode { get; set; }
-
-        [JsonPropertyName("hostname")]
-        public string Hostname { get; set; }
-
-        [JsonPropertyName("apMode")]
-        public int ApMode { get; set; }
-
-        [JsonPropertyName("version")]
-        public int Version { get; set; }
-
-        [JsonPropertyName("screensaver")]
-        public bool Screensaver { get; set; }
-
-        [JsonPropertyName("activeSSID")]
-        public string ActiveSSID { get; set; }
-
-        [JsonPropertyName("timezone")]
-        public string Timezone { get; set; }
-
-        [JsonPropertyName("ethernet")]
-        public Ethernet Ethernet { get; set; }
     }
 
     public class RouterList
