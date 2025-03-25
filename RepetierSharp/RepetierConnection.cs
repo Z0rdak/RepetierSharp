@@ -5,15 +5,19 @@ using System.Net;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using RepetierSharp.Control;
 using RepetierSharp.Internal;
 using RepetierSharp.Models;
 using RepetierSharp.Models.Commands;
+using RepetierSharp.Models.Communication;
 using RepetierSharp.Models.Events;
-using RepetierSharp.Models.Messages;
+using RepetierSharp.Models.Responses;
+using RepetierSharp.Serialization;
 using RepetierSharp.Util;
 using RestSharp;
 using Websocket.Client;
@@ -90,86 +94,96 @@ namespace RepetierSharp
         private void OnMsgReceived(ResponseMessage msg)
         {
             // Each message send to and from the Repetier Server is a valid JSON message
-            if ( msg.MessageType != WebSocketMessageType.Text || string.IsNullOrEmpty(msg.Text) )
+            if ( msg.MessageType != WebSocketMessageType.Text || string.IsNullOrEmpty(msg.Text))
+                return;
+            var msgJson = JsonSerializer.Deserialize<JsonDocument>(msg.Text);
+            if ( msgJson == null )
             {
+                _logger.LogWarning("Received message is not a valid JSON and won't be processed: '{Msg}'",
+                    msg.Text);
                 return;
             }
-
+            
             try
             {
-                // Send ping if interval is elapsed
-                var timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-                if ( _lastPingTimestamp + Session.KeepAlivePing.Seconds < DateTimeOffset.Now.ToUnixTimeSeconds() )
+                Task.Run(async () => await HandlePing());
+                
+                var repetierMsgHeader = msgJson.Deserialize<RepetierMessageHeader>(SerializationOptions.DefaultOptions);
+                if ( repetierMsgHeader == null )
                 {
-                    _lastPingTimestamp = timestamp;
-                    Task.Run(async () => await SendPing());
-                }
-
-                // handle command response or event
-                var msgBytes = Encoding.UTF8.GetBytes(msg.Text);
-
-                var repetierMessage = JsonSerializer.Deserialize<RepetierBaseMessageInfo>(msgBytes);
-                if ( repetierMessage == null )
-                {
-                    _logger.LogWarning(
-                        "Unable to serialize received message. It is not a valid Repetier message and won't be processed: '{Msg}'",
-                        msg.Text);
+                    _logger.LogWarning("Unable to serialize repetier message header: '{Msg}'", msg.Text);
                     return;
                 }
 
-                // ensures setting session ID after first ping reply back from the server
-                // when no login is required this is the first instance to require a session ID
-                if ( string.IsNullOrEmpty(Session.SessionId) && !string.IsNullOrEmpty(repetierMessage.SessionId) )
+                // Ensures setting session ID after first ping reply back from the server.
+                // When no login is required this is the first instance to require a session ID
+                if ( string.IsNullOrEmpty(Session.SessionId) && !string.IsNullOrEmpty(repetierMsgHeader.SessionId) )
                 {
-                    Session.SessionId = repetierMessage.SessionId;
                     Task.Run(async () =>
                     {
+                        Session.SessionId = repetierMsgHeader.SessionId;
                         var sessionIdArgs = new SessionIdReceivedEventArgs(Session.SessionId);
                         await _clientEvents.SessionIdReceivedEvent.InvokeAsync(sessionIdArgs);
                     });
                 }
 
-                var msgJson = JsonSerializer.Deserialize<JsonDocument>(msgBytes);
-                if ( msgJson == null )
+                var msgDataJson = msgJson.RootElement.GetProperty("data");
+              
+                if ( repetierMsgHeader.IsEventList ) 
                 {
-                    _logger.LogWarning("Received message is not a valid JSON and won't be processed: '{Msg}'",
-                        msg.Text);
-                    return;
-                }
-
-                var dataElement = msgJson.RootElement.GetProperty("data");
-
-                var containsEvent = repetierMessage.HasEvents is true || repetierMessage.CallBackId == -1;
-                if ( containsEvent )
-                {
-                    PublishRawEventInfo(dataElement);
-                    // process events
-                    var repetierBaseEvents = JsonSerializer.Deserialize<List<RepetierBaseEvent>>(dataElement.GetRawText(), _defaultOptions);
-                    if ( repetierBaseEvents == null )
+                    PublishRawEventInfo(msgDataJson);
+                    var repetierEventList = JsonSerializer.Deserialize<RepetierEventList>(msg.Text, SerializationOptions.DefaultOptions);
+                    if ( repetierEventList == null )
                     {
-                        _logger.LogWarning("Unable to deserialize events: '{Event}'", msg.Text);
+                        _logger.LogWarning("Unable to serialize repetier event list: '{Msg}'", msg.Text);
                         return;
                     }
-
-                    repetierBaseEvents.ForEach(repetierEvent =>
+                    repetierEventList.Data.ForEach(repEvent =>
+                    {
+                        if ( !isFiltered(repEvent.Event, _eventFilters) )
+                        {
+                            Task.Run(async () =>
+                            {
+                                var repetierEventArgs = new EventReceivedEventArgs(repEvent.Event, repEvent.Printer, repEvent.EventData);
+                                await _clientEvents.EventReceivedEvent.InvokeAsync(repetierEventArgs);
+                                await HandleEvent(repEvent);
+                            });
+                        }
+                    });
+                }
+                else // handle response
+                {
+                    var cmdIdentifier = _commandManager.CommandIdentifierFor(repetierMsgHeader.CallBackId);
+                    var repetierResponse = msgJson.Deserialize<RepetierResponse>(SerializationOptions.ResponseConverter(cmdIdentifier));
+                    if ( repetierResponse == null )
+                    {
+                        _logger.LogWarning("Unable to serialize repetier event list: '{Msg}'", msg.Text);
+                        return;
+                    }
+                    if (msgDataJson.GetRawText().Contains("permissionDenied") )
+                    {
+                        var permissionDeniedArgs = new PermissionDeniedEventArgs(repetierResponse.CallBackId, repetierResponse.CommandId);
+                        Task.Run(async () => await _clientEvents.PermissionDeniedEvent.InvokeAsync(permissionDeniedArgs));
+                        return;
+                    }
+               
+                    if ( cmdIdentifier == string.Empty )
+                    {
+                        _logger.LogWarning(
+                            "Received message with Id='{CallbackId}' not found in cache. Not serializing message: '{Response}'",
+                            repetierResponse.CallBackId, msgDataJson.GetRawText());
+                        return;
+                    }
+                    
+                    if ( !isFiltered(cmdIdentifier, _commandFilters) )
                     {
                         Task.Run(async () =>
                         {
-                            await HandleEvent(repetierEvent);
+                            var rawResponsePayload = Encoding.UTF8.GetBytes(msgDataJson.GetRawText());
+                            var rawResponseArgs = new RawResponseReceivedEventArgs(repetierResponse.CallBackId, repetierResponse.CommandId, rawResponsePayload);
+                            await _clientEvents.RawResponseReceivedEvent.InvokeAsync(rawResponseArgs);
+                            await HandleResponse(repetierResponse, msgDataJson);
                         });
-                    });
-                }
-                else
-                {
-                    if ( msg.Text.Contains("permissionDenied") )
-                    {
-                        var permissionDeniedArgs = new PermissionDeniedEventArgs(repetierMessage.CallBackId);
-                        Task.Run(
-                            async () => await _clientEvents.PermissionDeniedEvent.InvokeAsync(permissionDeniedArgs));
-                    }
-                    else
-                    {
-                        Task.Run(async () => await HandleResponse(repetierMessage, dataElement.GetProperty("data")));
                     }
                 }
             }
@@ -179,49 +193,33 @@ namespace RepetierSharp
                 _logger.LogError(ex, errorMsg, msg.Text, ex.Message);
             }
         }
-
-        private async Task HandleResponse(RepetierBaseMessageInfo message, JsonElement dataElement)
+        
+        private async Task HandlePing()
         {
-            var commandData = Encoding.UTF8.GetBytes(dataElement.GetRawText());
-            var commandIdentifier = _commandManager.CommandIdentifierFor(message.CallBackId);
-            if ( commandIdentifier != CommandConstants.PING )
+            // Send ping if interval is elapsed
+            var timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+            if ( _lastPingTimestamp + Session.KeepAlivePing.Seconds < DateTimeOffset.Now.ToUnixTimeSeconds() )
             {
-                _logger.LogDebug("[Response] Id={}, Cmd={}", message.CallBackId, commandIdentifier);
-                _logger.LogTrace("[Response] Id={}, Cmd={}, Data={}", message.CallBackId, commandIdentifier, JsonSerializer.Serialize(dataElement));
-            }
-            if ( commandIdentifier == string.Empty )
-            {
-                _logger.LogWarning(
-                    "Received message callbackId '{CallbackId}' could not be found in cache. Not serializing message: '{Response}'",
-                    message.CallBackId, JsonSerializer.Serialize(commandData, new JsonSerializerOptions(){WriteIndented = true}) /*dataElement.GetRawText()*/);
-                return;
-            }
-           
-            await ProcessRawResponse(commandData, message.CallBackId, commandIdentifier);
-            
-            var repetierResponse =
-                RepetierJsonSerializer.DeserializeResponse(message.CallBackId, commandIdentifier, commandData, _defaultOptions);
-            if ( repetierResponse == null )
-            {
-                _logger.LogWarning(
-                    "Unable to deserialize response for CommandIdentifier='{Command}' with Id='{CallbackId}': '{Response}'",
-                    commandIdentifier, message.CallBackId, dataElement.GetRawText());
-                return;
-            }
-
-            await ProcessResponse(repetierResponse, message.CallBackId, commandIdentifier);
-        }
-
-        private async Task ProcessRawResponse(byte[] commandData, int callbackId, string cmdIdentifier)
-        {
-            var rawResponseArgs = new RawResponseReceivedEventArgs(callbackId, cmdIdentifier, commandData);
-            var hasFilter = _commandFilters.Exists(pre => pre.Invoke(cmdIdentifier));
-            if (!hasFilter)
-            {
-                await _clientEvents.RawResponseReceivedEvent.InvokeAsync(rawResponseArgs);
+                _lastPingTimestamp = timestamp;
+                await SendPing();
             }
         }
 
+        private async Task HandleResponse(RepetierResponse response, JsonElement dataElement)
+        { 
+            var responseDataJson = JsonSerializer.Serialize(dataElement, new JsonSerializerOptions { WriteIndented = true });
+            _logger.LogDebug("[Response] Id={}, Cmd={}", response.CallBackId, response.CommandId);
+            _logger.LogTrace("[Response] Id={}, Cmd={}, Data={}", response.CallBackId, response.CommandId, responseDataJson);
+         
+            await _clientEvents.ResponseReceivedEvent.InvokeAsync(new ResponseReceivedEventArgs(response));
+            await ProcessResponse(response);
+        }
+
+        private bool isFiltered(string eventName, List<Predicate<string>> filterList)
+        {
+            return filterList.Exists(pre => pre.Invoke(eventName));
+        }
+        
         private void PublishRawEventInfo(JsonElement dataElement)
         {
             foreach ( var eventData in dataElement.EnumerateArray() )
@@ -236,12 +234,11 @@ namespace RepetierSharp
 
                 Task.Run(async () =>
                 {
-                    var bytes = Encoding.UTF8.GetBytes(eventData.GetRawText());
-                    var hasFilter = _eventFilters.Exists(pre => pre.Invoke(repEventInfo.Event));
-                    if ( !hasFilter )
+                    if ( !isFiltered(repEventInfo.Event, _eventFilters) )
                     {
-                        await _clientEvents.RawEventReceivedEvent.InvokeAsync(
-                            new RawRepetierEventReceivedEventArgs(repEventInfo.Event, repEventInfo.Printer, bytes));
+                        var eventArgs = new RawEventReceivedEventArgs(
+                            repEventInfo.Event, repEventInfo.Printer, Encoding.UTF8.GetBytes(rawText));
+                        await _clientEvents.RawEventReceivedEvent.InvokeAsync(eventArgs);
                     }
                 });
             }
@@ -512,17 +509,9 @@ namespace RepetierSharp
 
         #endregion
 
-        private async Task ProcessResponse(IRepetierResponse response, int callbackId, string commandIdentifier)
+        private async Task ProcessResponse(RepetierResponse response)
         {
-            var repetierResponseReceivedEventArgs =
-                new ResponseReceivedEventArgs(callbackId, commandIdentifier, response);
-            var hasFilter = _commandFilters.Exists(pre => pre.Invoke(commandIdentifier));
-            if ( !hasFilter )
-            {
-                await _clientEvents.ResponseReceivedEvent.InvokeAsync(repetierResponseReceivedEventArgs);
-            }
-
-            switch ( commandIdentifier )
+            switch ( response.CommandId )
             {
                 case CommandConstants.PING:
                     await Task.Delay(TimeSpan.FromSeconds(Math.Min(3, Session.KeepAlivePing.Seconds / 2)))
@@ -533,12 +522,11 @@ namespace RepetierSharp
                     break;
                 case CommandConstants.LOGIN:
                     {
-                        var loginMessage = (LoginResponse)response;
+                        var loginMessage = (LoginResponse)response.Data;
                         if ( string.IsNullOrEmpty(loginMessage.Error) )
                         {
                             await SendServerCommand(MessagesCommand.Instance);
                         }
-
                         await _clientEvents.LoginResultEvent.InvokeAsync(new LoginResultEventArgs(loginMessage));
                         if ( loginMessage.Authenticated )
                         {
@@ -547,58 +535,16 @@ namespace RepetierSharp
                         }
                     }
                     break;
-                case CommandConstants.LIST_PRINTER:
-                    var printerMsg = (ListPrinterResponse)response;
-                    break;
                 case CommandConstants.STATE_LIST:
-                    var stateMsg = (StateListResponse)response;
+                    var stateMsg = (StateListResponse)response.Data;
                     foreach ( var printerState in stateMsg.PrinterStates )
                     {
                         var printerStateChange = new StateChangedEventArgs(printerState.Key, printerState.Value);
                         await _printerEvents.StateChangedEvent.InvokeAsync(printerStateChange);
                     }
                     break;
-                case CommandConstants.MESSAGES:
-                    var messagesMessage = (MessageList)response;
-                    break;
-                case CommandConstants.REMOVE_JOB:
-                case CommandConstants.SEND:
-                case CommandConstants.COPY_MODEL:
-                case CommandConstants.EMERGENCY_STOP:
-                case CommandConstants.ACTIVATE:
-                case CommandConstants.DEACTIVATE:
-                case CommandConstants.UPDATE_USER:
-                case CommandConstants.START_JOB:
-                case CommandConstants.STOP_JOB:
-                case CommandConstants.CONTINUE_JOB:
-                case CommandConstants.LOGOUT:
-                    /* no payload */
-                    break;
-                /* vvv not yet implemented vvv */
-                case CommandConstants.LIST_MODELS:
-                    var modelList = (ModelInfoList)response;
-                    break;
-                case CommandConstants.LIST_JOBS:
-                    var jobList = (ModelInfoList)response;
-                    break;
-                case CommandConstants.MODEL_INFO:
-                    var modelInfo = (ModelInfo)response;
-                    break;
-                case CommandConstants.JOB_INFO:
-                    var jobInfo = (ModelInfo)response;
-                    break;
-                case CommandConstants.CREATE_USER:
-                    var createStatusMessage = (StatusResponse)response;
-                    break;
-                case CommandConstants.DELETE_USER:
-                    var deleteStatusMessage = (StatusResponse)response;
-                    break;
-                case CommandConstants.USER_LIST:
-                    var userList = (UserListResponse)response;
-                    break;
             }
-
-            _commandManager.AcknowledgeCommand(callbackId);
+            _commandManager.AcknowledgeCommand(response.CallBackId);
         }
 
         private async Task HandleEvent(RepetierBaseEvent repetierEvent)
@@ -635,7 +581,7 @@ namespace RepetierSharp
 
                     break;
                 case EventConstants.LOGIN_REQUIRED:
-                    var loginRequiredEvent = (LoginRequired)repetierEvent.RepetierEvent;
+                    var loginRequiredEvent = (LoginRequired)repetierEvent.EventData;
                     if ( !string.IsNullOrEmpty(Session.SessionId) )
                     {
                         Session.SessionId = loginRequiredEvent.SessionId;
@@ -647,67 +593,67 @@ namespace RepetierSharp
                     }
                     break;
                 case EventConstants.USER_CREDENTIALS:
-                    var userCredentialsEvent = (UserCredentials)repetierEvent.RepetierEvent;
+                    var userCredentialsEvent = (UserCredentials)repetierEvent.EventData;
                     var userCredentialsArgs = new UserCredentialsReceivedEventArgs(userCredentialsEvent);
                     await _clientEvents.CredentialsReceivedEvent.InvokeAsync(userCredentialsArgs);
                     break;
                 case EventConstants.PRINTER_LIST_CHANGED:
-                    var printerListChangedEvent = (PrinterListChanged)repetierEvent.RepetierEvent;
-                    var printerListChangedArgs = new PrinterListChangedEventArgs(printerListChangedEvent);
+                    var printerListChangedEvent = (List<Printer>)repetierEvent.EventData;
+                    var printerListChangedArgs = new PrinterListChangedEventArgs(new PrinterListChanged(){Printers = printerListChangedEvent});
                     await _serverEvents.PrinterListChangedEvent.InvokeAsync(printerListChangedArgs);
                     break;
                 case EventConstants.MESSAGES_CHANGED:
                     await SendServerCommand(MessagesCommand.Instance);
                     break;
                 case EventConstants.MOVE:
-                    var moveEntry = (MoveEntry)repetierEvent.RepetierEvent;
+                    var moveEntry = (MoveEntry)repetierEvent.EventData;
                     var moveEntryArgs = new MovedEventArgs(repetierEvent.Printer, moveEntry);
                     await _printerEvents.MovedEvent.InvokeAsync(moveEntryArgs);
                     break;
                 case EventConstants.LOG:
-                    var logEntry = (LogEntry)repetierEvent.RepetierEvent;
+                    var logEntry = (LogEntry)repetierEvent.EventData;
                     var logEntryArgs = new LogEntryEventArgs(logEntry);
                     await _serverEvents.LogEntryEvent.InvokeAsync(logEntryArgs);
                     break;
                 case EventConstants.JOB_FINISHED:
-                    var jobFinishedState = (JobState)repetierEvent.RepetierEvent;
+                    var jobFinishedState = (JobState)repetierEvent.EventData;
                     var jobFinishedStateArgs = new PrintJobFinishedEventArgs(repetierEvent.Printer, jobFinishedState);
                     await _printJobEvents.PrintFinishedEvent.InvokeAsync(jobFinishedStateArgs);
                     break;
                 case EventConstants.JOB_KILLED:
-                    var jobKilledState = (JobState)repetierEvent.RepetierEvent;
+                    var jobKilledState = (JobState)repetierEvent.EventData;
                     var jobKilledStateArgs = new PrintJobKilledEventArgs(repetierEvent.Printer, jobKilledState);
                     await _printJobEvents.PrintKilledEvent.InvokeAsync(jobKilledStateArgs);
                     break;
                 case EventConstants.JOB_STARTED:
-                    var jobStartedInfo = (JobStarted)repetierEvent.RepetierEvent;
+                    var jobStartedInfo = (JobStarted)repetierEvent.EventData;
                     var jobStartedArgs = new PrintJobStartedEventArgs(repetierEvent.Printer, jobStartedInfo);
                     await _printJobEvents.PrintStartedEvent.InvokeAsync(jobStartedArgs);
                     break;
                 case EventConstants.STATE:
-                    var printerStateChange = (PrinterStateChanged)repetierEvent.RepetierEvent;
+                    var printerStateChange = (PrinterStateChanged)repetierEvent.EventData;
                     var printerStateChangedArgs =
                         new StateChangedEventArgs(repetierEvent.Printer, printerStateChange.PrinterState);
                     await _printerEvents.StateChangedEvent.InvokeAsync(printerStateChangedArgs);
                     break;
                 case EventConstants.TEMP:
-                    var tempEntry = (TempEntry)repetierEvent.RepetierEvent;
+                    var tempEntry = (TempEntry)repetierEvent.EventData;
                     var tempChangeArgs = new TemperatureChangedEventArgs(repetierEvent.Printer, tempEntry);
                     await _printerEvents.TemperatureChangedEvent.InvokeAsync(tempChangeArgs);
                     break;
                 case EventConstants.PRINTER_SETTING_CHANGED:
-                    var printerSetting = (PrinterSettingChanged)repetierEvent.RepetierEvent;
+                    var printerSetting = (PrinterSettingChanged)repetierEvent.EventData;
                     var settingChangedArgs = new SettingChangedEventArgs(repetierEvent.Printer, printerSetting);
                     await _printerEvents.SettingChangedEvent.InvokeAsync(settingChangedArgs);
                     break;
                 case EventConstants.PRINTER_CONDITION_CHANGED:
-                    var printerConditionChange = (PrinterConditionChanged)repetierEvent.RepetierEvent;
+                    var printerConditionChange = (PrinterConditionChanged)repetierEvent.EventData;
                     var conditionChangedArgs =
                         new ConditionChangedEventArgs(repetierEvent.Printer, printerConditionChange);
                     await _printerEvents.ConditionChangedEvent.InvokeAsync(conditionChangedArgs);
                     break;
                 case EventConstants.LAYER_CHANGED:
-                    var layerChangedEventArgs = new LayerChangedEventArgs(repetierEvent.Printer, (LayerChanged)repetierEvent.RepetierEvent);
+                    var layerChangedEventArgs = new LayerChangedEventArgs(repetierEvent.Printer, (LayerChanged)repetierEvent.EventData);
                     await _printerEvents.LayerChangedEvent.InvokeAsync(layerChangedEventArgs);
                     break;
                 case EventConstants.CHANGE_FILAMENT_REQUESTED:
@@ -760,7 +706,7 @@ namespace RepetierSharp
             }
             return await Task.Run(async () =>
             {
-                var payload = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(command, _defaultOptions));
+                var payload = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(command, SerializationOptions.DefaultOptions));
                 var isInQueue = WebSocketClient.Send(payload);
                 var hasFilterCmd = _commandFilters.Exists(pre => pre.Invoke(command.Action));
                 if ( isInQueue )
@@ -915,7 +861,7 @@ namespace RepetierSharp
         ///     <br></br>
         ///     which are not yet implemented by RepetierSharp.
         /// </summary>
-        public event Func<RawRepetierEventReceivedEventArgs, Task> RawRepetierEventReceivedAsync
+        public event Func<RawEventReceivedEventArgs, Task> RawRepetierEventReceivedAsync
         {
             add => _clientEvents.RawEventReceivedEvent.AddHandler(value);
             remove => _clientEvents.RawEventReceivedEvent.RemoveHandler(value);
