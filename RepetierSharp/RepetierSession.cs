@@ -34,6 +34,12 @@ namespace RepetierSharp
         public AuthenticationType AuthType { get => AuthenticationType.Credentials; }
         public string LoginName { get; set; } = loginName;
         public string Password { get; set; } = password;
-
+    }
+    
+    public enum AuthenticationType
+    {
+        None = 0,
+        Credentials = 1,
+        ApiKey = 2
     }
 }
