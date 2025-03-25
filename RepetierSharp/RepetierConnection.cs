@@ -260,10 +260,8 @@ namespace RepetierSharp
 
         private void OnReconnect(ReconnectionInfo info)
         {
-            if ( info.Type == ReconnectionType.Initial )
-            {
-                Task.Run(async () => await _clientEvents.ConnectedEvent.InvokeAsync(new ConnectedEventArgs(false)));
-            }
+            var isReconnect = info.Type != ReconnectionType.Initial;
+            Task.Run(async () => await _clientEvents.ConnectedEvent.InvokeAsync(new ConnectedEventArgs(this.WebSocketClient.Url, isReconnect)));
             Task.Run(async () => await SendPing());
         }
 
