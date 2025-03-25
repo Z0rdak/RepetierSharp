@@ -23,6 +23,7 @@ namespace RepetierSharp.Serialization
             {
                 KeyValuePair.Create(CommandConstants.LOGIN, typeof(LoginResponse)),
                 KeyValuePair.Create(CommandConstants.PING, typeof(PingResponse)),
+                KeyValuePair.Create(CommandConstants.EXTEND_PING, typeof(OkResponse)),
                 KeyValuePair.Create(CommandConstants.LIST_PRINTER, typeof(PrinterListResponse)),
                 KeyValuePair.Create(CommandConstants.STATE_LIST, typeof(StateListResponse)),
                 KeyValuePair.Create(CommandConstants.MESSAGES, typeof(MessageList)),
@@ -110,8 +111,8 @@ namespace RepetierSharp.Serialization
                 }
                 if (!isInResponseTypes)
                 {
-                    _logger.LogWarning("No type defined for event: {}",callbackId); 
-                    throw new JsonException($"No type defined for event: {callbackId}.");
+                    _logger.LogWarning("No type defined for command: {}", commandId); 
+                    throw new JsonException($"No type defined for command: {commandId}.");
                 }
             }
             
