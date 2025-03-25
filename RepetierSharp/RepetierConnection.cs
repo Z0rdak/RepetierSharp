@@ -53,7 +53,7 @@ namespace RepetierSharp
             WebSocketClient.MessageReceived.Subscribe(OnMsgReceived);
             try
             {
-                await WebSocketClient.StartOrFail().ContinueWith(_ => SendPing());
+                await WebSocketClient.StartOrFail();
             }
             catch ( Exception e )
             {
@@ -167,10 +167,13 @@ namespace RepetierSharp
         private async Task HandlePing()
         {
             // Send ping if interval is elapsed
-            var timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-            if ( _lastPingTimestamp + Session.KeepAlivePing.Seconds < DateTimeOffset.Now.ToUnixTimeSeconds() )
+            var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            var elapsedTime = timestamp - _lastPingTimestamp;
+            if ( elapsedTime >= (Session.KeepAlivePing.Seconds) )
             {
                 _lastPingTimestamp = timestamp;
+                _logger.LogTrace("[Ping@{nowt}]\n\t- Now: \t{now}\n\t- Last:\t{last}\n\t- Interval: {interval}\n\t- Difference: {}", 
+                    DateTimeOffset.UtcNow, timestamp, _lastPingTimestamp, Session.KeepAlivePing.Seconds, elapsedTime);
                 await SendPing();
             }
         }
@@ -229,7 +232,6 @@ namespace RepetierSharp
         {
             var isReconnect = info.Type != ReconnectionType.Initial;
             Task.Run(async () => await _clientEvents.ConnectedEvent.InvokeAsync(new ConnectedEventArgs(this.WebSocketClient.Url, isReconnect)));
-            Task.Run(async () => await SendPing());
         }
 
         private async Task<bool> SendPing()
@@ -256,7 +258,7 @@ namespace RepetierSharp
             switch ( response.CommandId )
             {
                 case CommandConstants.PING:
-                    await Task.Delay(TimeSpan.FromSeconds(Math.Min(3, Session.KeepAlivePing.Seconds / 2)))
+                    await Task.Delay(TimeSpan.FromSeconds(Session.KeepAlivePing.Seconds))
                         .ContinueWith(async _ =>
                         {
                             await SendPing();
@@ -299,6 +301,9 @@ namespace RepetierSharp
             {
                 case EventConstants.JOBS_CHANGED:
                     await _printerEvents.JobsChangedEvent.InvokeAsync(new JobsChangedEventArgs(repetierEvent.Printer));
+                    break;
+                case EventConstants.PONG:
+                    await SendPing();
                     break;
                 case EventConstants.TIMER_30:
                 case EventConstants.TIMER_60:
@@ -447,7 +452,6 @@ namespace RepetierSharp
         
         protected async Task<bool> SendCommand(BaseCommand command)
         {
-            // Note: Commands which don't target a printer should have the value blanked
             if (command.Action != CommandConstants.PING )
             {
                 _logger.LogDebug("[Command] Id={}, Cmd={id}", command.CallbackId, command.Action);
