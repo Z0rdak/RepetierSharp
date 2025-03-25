@@ -216,16 +216,6 @@ namespace RepetierSharp
 
             #region Commands and Events
 
-            public RepetierConnectionBuilder WithPingFilter(bool exclude = true)
-            {
-                if ( exclude )
-                {
-                    _commandFilters.Add(eventId => eventId == CommandConstants.PING);
-                }
-
-                return this;
-            }
-
             public RepetierConnectionBuilder WithEventFilter(Predicate<string> eventFilter)
             {
                 _eventFilters.Add(eventFilter);
