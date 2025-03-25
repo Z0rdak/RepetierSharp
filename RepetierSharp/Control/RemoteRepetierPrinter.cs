@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using RepetierSharp.Models.Commands;
 
-namespace RepetierSharp.Util
+namespace RepetierSharp.Control
 {
     public class RemoteRepetierPrinter(RepetierConnection repetierConnection, string printer) : IRemotePrinter
     {
