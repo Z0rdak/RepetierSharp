@@ -812,7 +812,7 @@ namespace RepetierSharp
         {
             if ( string.IsNullOrEmpty(Session.SessionId) ) return false;
             // TODO: Set session stuff and auth
-            var pw = CommandHelper.HashPassword(Session.SessionId, user, password);
+            var pw = CredentialAuth.HashPassword(Session.SessionId, user, password);
             var loginCommand = new LoginCommand(user, pw, longLivedSession);
             return await SendServerCommand(loginCommand);
         }
