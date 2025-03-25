@@ -17,4 +17,6 @@ namespace RepetierSharp.Models.Events
 
         public List<string> EventNames { get; } = new();
     }
+
+
 }
