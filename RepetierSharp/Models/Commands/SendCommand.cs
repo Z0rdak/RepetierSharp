@@ -1,16 +1,14 @@
 ﻿using System.Text.Json.Serialization;
+using RepetierSharp.Internal;
+using RepetierSharp.Models.Communication;
 using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Commands
 {
-    public class SendCommand : ICommandData
+    [CommandId(CommandConstants.SEND)]
+    public class SendCommand(string gcode) : ICommandData
     {
-        public SendCommand(string gcode)
-        {
-            GCode = gcode;
-        }
-
-        [JsonPropertyName("cmd")] public string GCode { get; }
+        [JsonPropertyName("cmd")] public string GCode { get; } = gcode;
 
         [JsonIgnore] public string Action => CommandConstants.SEND;
     }

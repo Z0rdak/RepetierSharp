@@ -1,16 +1,14 @@
 ﻿using System.Text.Json.Serialization;
+using RepetierSharp.Internal;
+using RepetierSharp.Models.Communication;
 using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Commands
 {
-    public class StateListCommand : ICommandData
+    [CommandId(CommandConstants.STATE_LIST)]
+    public class StateListCommand(bool includeHistory = false) : ICommandData
     {
-        public StateListCommand(bool includeHistory = false)
-        {
-            IncludeHistory = includeHistory;
-        }
-
-        [JsonPropertyName("includeHistory")] public bool IncludeHistory { get; }
+        [JsonPropertyName("includeHistory")] public bool IncludeHistory { get; } = includeHistory;
 
         [JsonIgnore] public string Action => CommandConstants.STATE_LIST;
     }

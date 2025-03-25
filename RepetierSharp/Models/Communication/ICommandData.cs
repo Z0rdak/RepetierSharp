@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace RepetierSharp.Models.Commands
+namespace RepetierSharp.Models.Communication
 {
     public interface ICommandData
     {

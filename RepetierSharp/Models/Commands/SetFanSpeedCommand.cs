@@ -1,8 +1,11 @@
 ﻿using System.Text.Json.Serialization;
+using RepetierSharp.Internal;
+using RepetierSharp.Models.Communication;
 using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Commands
 {
+    [CommandId(CommandConstants.SET_FAN_SPEED)]
     public class SetFanSpeedCommand : ICommandData
     {
         public const int MAX_THROTTLE = 255;

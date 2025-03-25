@@ -1,19 +1,16 @@
 ﻿using System.Text.Json.Serialization;
+using RepetierSharp.Internal;
+using RepetierSharp.Models.Communication;
 using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Commands
 {
-    public class CopyModelCommand : ICommandData
+    [CommandId(CommandConstants.COPY_MODEL)]
+    public class CopyModelCommand(int modelId, bool autostart = true) : ICommandData
     {
-        public CopyModelCommand(int modelId, bool autostart = true)
-        {
-            Id = modelId;
-            Autostart = autostart;
-        }
+        [JsonPropertyName("id")] public int Id { get; } = modelId;
 
-        [JsonPropertyName("id")] public int Id { get; }
-
-        [JsonPropertyName("autostart")] public bool Autostart { get; }
+        [JsonPropertyName("autostart")] public bool Autostart { get; } = autostart;
 
         [JsonIgnore] public string Action => CommandConstants.COPY_MODEL;
     }

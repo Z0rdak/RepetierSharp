@@ -1,17 +1,15 @@
 ﻿using System.Text.Json.Serialization;
+using RepetierSharp.Internal;
+using RepetierSharp.Models.Communication;
 using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Commands
 {
-    public class ExtendPingCommand : ICommandData
+    [CommandId(CommandConstants.EXTEND_PING)]
+    public class ExtendPingCommand(uint timeout) : ICommandData
     {
-        public ExtendPingCommand(uint timeout)
-        {
-            Timeout = timeout;
-        }
+        public uint Timeout { get; set; } = timeout;
 
-        public uint Timeout { get; set; }
-
-        [JsonIgnore] public string Action => CommandConstants.PING;
+        [JsonIgnore] public string Action => CommandConstants.EXTEND_PING;
     }
 }

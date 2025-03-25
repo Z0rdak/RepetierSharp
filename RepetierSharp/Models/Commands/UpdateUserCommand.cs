@@ -1,22 +1,18 @@
 ﻿using System.Text.Json.Serialization;
+using RepetierSharp.Internal;
+using RepetierSharp.Models.Communication;
 using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Commands
 {
-    public class UpdateUserCommand : ICommandData
+    [CommandId(CommandConstants.UPDATE_USER)]
+    public class UpdateUserCommand(string user, int permission, string password = "") : ICommandData
     {
-        public UpdateUserCommand(string user, int permission, string password = "")
-        {
-            User = user;
-            Password = password;
-            Permission = permission;
-        }
+        [JsonPropertyName("login")] public string User { get; } = user;
 
-        [JsonPropertyName("login")] public string User { get; }
+        [JsonPropertyName("password")] public string Password { get; } = password;
 
-        [JsonPropertyName("password")] public string Password { get; }
-
-        [JsonPropertyName("permission")] public int Permission { get; }
+        [JsonPropertyName("permission")] public int Permission { get; } = permission;
 
         [JsonIgnore] public string Action => CommandConstants.UPDATE_USER;
     }

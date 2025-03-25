@@ -1,19 +1,16 @@
 ﻿using System.Text.Json.Serialization;
+using RepetierSharp.Internal;
+using RepetierSharp.Models.Communication;
 using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Commands
 {
-    public class RemoveMessageCommand : ICommandData
+    [CommandId(CommandConstants.REMOVE_MESSAGE)]
+    public class RemoveMessageCommand(int messageId, string a = "") : ICommandData
     {
-        public RemoveMessageCommand(int messageId, string a = "")
-        {
-            Id = messageId;
-            A = a;
-        }
+        [JsonPropertyName("id")] public int Id { get; } = messageId;
 
-        [JsonPropertyName("id")] public int Id { get; }
-
-        [JsonPropertyName("a")] public string A { get; } // empty or unpause ?
+        [JsonPropertyName("a")] public string A { get; } = a; // empty or unpause ?
 
         [JsonIgnore] public string Action => CommandConstants.REMOVE_MESSAGE;
     }

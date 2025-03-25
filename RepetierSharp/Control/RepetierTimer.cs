@@ -1,4 +1,4 @@
-﻿namespace RepetierSharp.Models.Commands
+﻿namespace RepetierSharp.Control
 {
     public enum RepetierTimer
     {

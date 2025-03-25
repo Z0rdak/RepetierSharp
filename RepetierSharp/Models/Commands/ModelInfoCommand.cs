@@ -1,16 +1,14 @@
 ﻿using System.Text.Json.Serialization;
+using RepetierSharp.Internal;
+using RepetierSharp.Models.Communication;
 using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Commands
 {
-    public class ModelInfoCommand : ICommandData
+    [CommandId(CommandConstants.MODEL_INFO)]
+    public class ModelInfoCommand(int modelId) : ICommandData
     {
-        public ModelInfoCommand(int modelId)
-        {
-            Id = modelId;
-        }
-
-        [JsonPropertyName("id")] public int Id { get; }
+        [JsonPropertyName("id")] public int Id { get; } = modelId;
 
         [JsonIgnore] public string Action => CommandConstants.MODEL_INFO;
     }

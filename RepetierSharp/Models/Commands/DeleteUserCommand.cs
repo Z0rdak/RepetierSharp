@@ -1,16 +1,14 @@
 ﻿using System.Text.Json.Serialization;
+using RepetierSharp.Internal;
+using RepetierSharp.Models.Communication;
 using RepetierSharp.Util;
 
 namespace RepetierSharp.Models.Commands
 {
-    public class DeleteUserCommand : ICommandData
+    [CommandId(CommandConstants.DELETE_USER)]
+    public class DeleteUserCommand(string user) : ICommandData
     {
-        public DeleteUserCommand(string user)
-        {
-            User = user;
-        }
-
-        [JsonPropertyName("login")] public string User { get; }
+        [JsonPropertyName("login")] public string User { get; } = user;
 
         [JsonIgnore] public string Action => CommandConstants.DELETE_USER;
     }
