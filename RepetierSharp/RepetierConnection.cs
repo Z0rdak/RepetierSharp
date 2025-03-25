@@ -1,12 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Net;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -21,7 +17,6 @@ using RepetierSharp.Serialization;
 using RepetierSharp.Util;
 using RestSharp;
 using Websocket.Client;
-using static RepetierSharp.Internal.Constants;
 
 namespace RepetierSharp
 {
@@ -45,31 +40,6 @@ namespace RepetierSharp
                 if (!connectedArgs.Reconnect) 
                     await SendExtendPing(Session.KeepAlivePing);
             };
-        }
-
-        /// <summary>
-        ///     Retrieve printer name or API-key (or both) via REST-API
-        ///     If ApiKey or PrinterSlug are not empty, they will not be overwritten by the retrieved information.
-        /// </summary>
-        public async Task<RepetierServerInformation?> GetRepetierServerInfo()
-        {
-            var restRequest = new RestRequest("/printer/info");
-            try
-            {
-                var response = await RestClient.ExecuteAsync(restRequest);
-                if ( response is { StatusCode: HttpStatusCode.OK, Content: not null } )
-                {
-                    return JsonSerializer.Deserialize<RepetierServerInformation>(response.Content);
-                }
-                await _clientEvents.HttpRequestFailedEvent.InvokeAsync(new HttpContextEventArgs(response.Request,
-                    response));
-            }
-            catch ( Exception e )
-            {
-                var httpContext = new HttpContextEventArgs(restRequest, null);
-                await _clientEvents.HttpRequestFailedEvent.InvokeAsync(httpContext);
-            }
-            return null;
         }
 
         /// <summary>
@@ -140,7 +110,7 @@ namespace RepetierSharp
                     }
                     repetierEventList.Data.ForEach(repEvent =>
                     {
-                        if ( !isFiltered(repEvent.Event, _eventFilters) )
+                        if ( !IsFiltered(repEvent.Event, _eventFilters) )
                         {
                             Task.Run(async () =>
                             {
@@ -175,7 +145,7 @@ namespace RepetierSharp
                         return;
                     }
                     
-                    if ( !isFiltered(cmdIdentifier, _commandFilters) )
+                    if ( !IsFiltered(cmdIdentifier, _commandFilters) )
                     {
                         Task.Run(async () =>
                         {
@@ -234,7 +204,7 @@ namespace RepetierSharp
 
                 Task.Run(async () =>
                 {
-                    if ( !isFiltered(repEventInfo.Event, _eventFilters) )
+                    if ( !IsFiltered(repEventInfo.Event, _eventFilters) )
                     {
                         var eventArgs = new RawEventReceivedEventArgs(
                             repEventInfo.Event, repEventInfo.Printer, Encoding.UTF8.GetBytes(rawText));
@@ -281,234 +251,6 @@ namespace RepetierSharp
             WebSocketClient.Dispose();
         }
 
-        #region REST calls
-
-        private RestRequest StartPrintRequest(string gcodeFilePath, string printerName,
-            StartBehavior autostart = StartBehavior.Autostart)
-        {
-            var gcodeFileName = Path.GetFileNameWithoutExtension(gcodeFilePath);
-            var request = new RestRequest($"/printer/job/{printerName}", Method.Post)
-                .AddFile(FilenameParam, gcodeFilePath)
-                .AddHeader(KnownHeaders.ContentType, MultiPartFormData)
-                .AddParameter(ActionParam, UploadAction)
-                .AddParameter(AutostartParam, $"{(int)autostart}")
-                .AddParameter(NameParam, gcodeFileName);
-
-            if ( !string.IsNullOrEmpty(Session.SessionId) )
-            {
-                request = request.AddParameter(SessionParam, Session.SessionId);
-            }
-
-            return request;
-        }
-
-        private RestRequest StartPrintRequest(string fileName, byte[] data, string printerName,
-            StartBehavior autostart = StartBehavior.Autostart)
-        {
-            var request = new RestRequest($"/printer/job/{printerName}", Method.Post)
-                .AddFile(FilenameParam, data, fileName)
-                .AddHeader(KnownHeaders.ContentType, MultiPartFormData)
-                .AddParameter(ActionParam, UploadAction)
-                .AddParameter(AutostartParam, $"{(int)autostart}")
-                .AddParameter(NameParam, fileName);
-
-            if ( !string.IsNullOrEmpty(Session.SessionId) )
-            {
-                request = request.AddParameter(SessionParam, Session.SessionId);
-            }
-
-            return request;
-        }
-
-        /// <summary>
-        ///     Create a REST request for uploading a gcode file
-        /// </summary>
-        /// <param name="gcodeFilePath"> The path of the file to upload (/path/file.gcode) </param>
-        /// <param name="printer"> Printer slug to upload to </param>
-        /// <param name="group"> Group to add gcode to </param>
-        /// <param name="overwrite"> Flag to overwrite existing file with the same name </param>
-        /// <returns></returns>
-        private RestRequest UploadModel(string gcodeFilePath, string printer, string group, bool overwrite = false)
-        {
-            var gcodeFileName = Path.GetFileNameWithoutExtension(gcodeFilePath);
-            var request = new RestRequest($"/printer/model/{printer}", Method.Post)
-                .AddFile(FilenameParam, gcodeFilePath)
-                .AddHeader(KnownHeaders.ContentType, MultiPartFormData)
-                .AddParameter(ActionParam, UploadAction)
-                .AddParameter("group", group)
-                .AddParameter("overwrite", $"{overwrite}")
-                .AddParameter(NameParam, gcodeFileName);
-
-            if ( !string.IsNullOrEmpty(Session.SessionId) )
-            {
-                request = request.AddParameter(SessionParam, Session.SessionId);
-            }
-
-            return request;
-        }
-
-        /// <summary>
-        ///     Create a REST request for uploading a gcode file.
-        /// </summary>
-        /// <param name="fileName">  The name of the file to upload (file.gcode) </param>
-        /// <param name="file"> The content of the actual gcode file </param>
-        /// <param name="printer"> Printer slug to upload to </param>
-        /// <param name="group"> Group to add gcode to </param>
-        /// <param name="overwrite"> Flag to overwrite existing file with the same name </param>
-        /// <returns></returns>
-        private RestRequest UploadModel(string fileName, byte[] file, string printer, string group,
-            bool overwrite = false)
-        {
-            var request = new RestRequest($"/printer/model/{printer}", Method.Post)
-                .AddFile(FilenameParam, file, fileName)
-                .AddHeader(KnownHeaders.ContentType, MultiPartFormData)
-                .AddParameter(ActionParam, UploadAction)
-                .AddParameter("group", group)
-                .AddParameter("overwrite", $"{overwrite}")
-                .AddParameter(NameParam, fileName);
-
-            if ( !string.IsNullOrEmpty(Session.SessionId) )
-            {
-                request = request.AddParameter(SessionParam, Session.SessionId);
-            }
-
-            return request;
-        }
-
-        /// <summary>
-        ///     Upload a gcode file via REST API
-        /// </summary>
-        /// <param name="gcodeFilePath"> The path of the file to upload (/path/file.gcode) </param>
-        /// <param name="printer"> Printer slug to upload to </param>
-        /// <param name="group"> Group to upload gcode to </param>
-        /// <param name="overwrite"> Flag to overwrite existing file with the same name. Defaults to false </param>
-        public async Task<bool> UploadGCode(string gcodeFilePath, string printer, string group, bool overwrite = false)
-        {
-            try
-            {
-                var request = UploadModel(gcodeFilePath, printer, group, overwrite);
-                var response = await RestClient.ExecuteAsync(request);
-                if ( response.StatusCode != HttpStatusCode.OK )
-                {
-                    await _clientEvents.HttpRequestFailedEvent.InvokeAsync(new HttpContextEventArgs(request, response));
-                    return false;
-                }
-
-                if ( response.ErrorException != null )
-                {
-                    throw response.ErrorException;
-                }
-            }
-            catch ( Exception ex )
-            {
-                _logger.LogError(ex, "Error while uploading gcode file: {Error}", ex.Message);
-            }
-
-            return await Task.FromResult(true);
-        }
-
-        /// <summary>
-        ///     Upload a gcode file via REST API
-        /// </summary>
-        /// <param name="fileName"> The name of the file to upload (file.gcode) </param>
-        /// <param name="file"> The content of the actual gcode file </param>
-        /// <param name="printer"> Printer slug to upload to </param>
-        /// <param name="group"> Group to upload gcode to </param>
-        /// <param name="overwrite"> Flag to overwrite existing file with the same name. Defaults to false </param>
-        public async Task<bool> UploadGCode(string fileName, byte[] file, string printer, string group,
-            bool overwrite = false)
-        {
-            try
-            {
-                var request = UploadModel(fileName, file, printer, group, overwrite);
-                var response = await RestClient.ExecuteAsync(request);
-                if ( response.StatusCode != HttpStatusCode.OK )
-                {
-                    await _clientEvents.HttpRequestFailedEvent.InvokeAsync(new HttpContextEventArgs(request, response));
-                    return false;
-                }
-
-                if ( response.ErrorException != null )
-                {
-                    throw response.ErrorException;
-                }
-            }
-            catch ( Exception ex )
-            {
-                _logger.LogError(ex, "Error while uploading gcode file: {Error}", ex.Message);
-            }
-
-            return await Task.FromResult(true);
-        }
-
-        /// <summary>
-        ///     Upload given gcode and start the printing process via REST-API.
-        /// </summary>
-        /// <param name="gcodeFilePath"> The path of the file to upload (/path/file.gcode) </param>
-        /// <param name="printer"> Printer slug to upload to </param>
-        /// <param name="autostart"> Flag to indicate the start behavior when uploading gcode. Defaults to autostart </param>
-        public async Task<bool> UploadAndStartPrint(string gcodeFilePath, string printer,
-            StartBehavior autostart = StartBehavior.Autostart)
-        {
-            try
-            {
-                var request = StartPrintRequest(gcodeFilePath, printer, autostart);
-                var response = await RestClient.ExecuteAsync(request);
-                if ( response.StatusCode != HttpStatusCode.OK )
-                {
-                    await _clientEvents.HttpRequestFailedEvent.InvokeAsync(new HttpContextEventArgs(request, response));
-                    await _printJobEvents.PrintStartFailedEvent.InvokeAsync(new PrintJobStartFailedEventArgs(printer, response));
-                    return false;
-                }
-
-                if ( response.ErrorException != null )
-                {
-                    throw response.ErrorException;
-                }
-            }
-            catch ( Exception ex )
-            {
-                _logger.LogError(ex, "Error while uploading and starting print: {Error}", ex.Message);
-            }
-
-            return await Task.FromResult(true);
-        }
-
-        /// <summary>
-        ///     Upload given gcode and start the printing process via REST-API.
-        /// </summary>
-        /// <param name="fileName"> The name of the file to upload (file.gcode) </param>
-        /// <param name="file"> The content of the actual gcode file </param>
-        /// <param name="printer"> Printer slug to upload to </param>
-        /// <param name="autostart"> Flag to indicate the start behavior when uploading gcode. Defaults to autostart </param>
-        public async Task<bool> UploadAndStartPrint(string fileName, byte[] file, string printer,
-            StartBehavior autostart = StartBehavior.Autostart)
-        {
-            try
-            {
-                var request = StartPrintRequest(fileName, file, printer, autostart);
-                var response = await RestClient.ExecuteAsync(request);
-                if ( response.StatusCode != HttpStatusCode.OK )
-                {
-                    await _clientEvents.HttpRequestFailedEvent.InvokeAsync(new HttpContextEventArgs(request, response));
-                    return false;
-                }
-
-                if ( response.ErrorException != null )
-                {
-                    throw response.ErrorException;
-                }
-            }
-            catch ( Exception ex )
-            {
-                _logger.LogError(ex, "Error while uploading and starting print: {Error}", ex.Message);
-            }
-
-            return await Task.FromResult(true);
-        }
-
-        #endregion
-
         private async Task ProcessResponse(RepetierResponse response)
         {
             switch ( response.CommandId )
@@ -552,7 +294,6 @@ namespace RepetierSharp
             var eventJson = JsonSerializer.Serialize(repetierEvent.EventData, new JsonSerializerOptions{WriteIndented = true});
             _logger.LogDebug("[Event] Event={event}, Printer={Printer}", repetierEvent.Event, repetierEvent.Printer);
             _logger.LogTrace("[Event] Event={event}, Printer={Printer}, Data={}", repetierEvent.Event, repetierEvent.Printer, eventJson);
- 
             
             switch ( repetierEvent.Event )
             {
@@ -670,9 +411,25 @@ namespace RepetierSharp
             }
         }
 
+        /// <summary>
+        /// Remote server gives access to methods to upload and start print jobs as well as get basic server infos
+        /// Internally this is a wrapper around http requests to the server.
+        /// </summary>
+        /// <returns></returns>
+        public IRemoteServer GetRemoteServer()
+        {
+            return new RemoteRepetierServer(Session, _printJobEvents, _clientEvents, RestClient);
+        }
+        
+        /// <summary>
+        /// Internally this bundles printer related websocket commands for the specified printer.
+        /// Currently, there is no validation of the provided printer slug done.readonly
+        /// Invalid printer slugs will result in wrong websocket commands.
+        /// </summary>
+        /// <param name="printer">The printer to get access to printer related commands</param>
+        /// <returns></returns>
         public IRemotePrinter GetRemotePrinter(string printer)
         {
-            //TODO: Validation of printer
             return new RemoteRepetierPrinter(this, printer);
         }
 
@@ -1134,7 +891,7 @@ namespace RepetierSharp
         private readonly CommandManager _commandManager;
         private IWebsocketClient WebSocketClient { get; set; }
         private IRestClient RestClient { get; set; }
-        private RepetierSession Session { get; set; }
+        public RepetierSession Session { get; }
         private long _lastPingTimestamp;
         private List<Predicate<string>> _commandFilters = new();
         private List<Predicate<string>> _eventFilters = new();
