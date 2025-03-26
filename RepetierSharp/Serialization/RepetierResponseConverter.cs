@@ -13,7 +13,7 @@ namespace RepetierSharp.Serialization
 {
     public class RepetierResponseConverter(string commandId) : JsonConverter<RepetierResponse>
     {
-        private readonly ILogger<RepetierResponseConverter> _logger = LoggerFactory.Create(builder =>
+        private static readonly ILogger<RepetierResponseConverter> _logger = LoggerFactory.Create(builder =>
         {
             builder.AddConsole();
         }).CreateLogger<RepetierResponseConverter>();
