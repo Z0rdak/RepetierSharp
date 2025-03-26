@@ -16,10 +16,16 @@ namespace RepetierSharp.Serialization
     public class RepetierBaseEventConverter : JsonConverter<IRepetierEvent>
     {
         private static readonly Dictionary<string, Type> s_extendableEventTypes = new();
-        private static readonly ILogger<RepetierBaseEventConverter> _logger = LoggerFactory.Create(builder =>
+        private readonly ILogger<RepetierBaseEventConverter> _logger;
+
+        public RepetierBaseEventConverter()
         {
-            builder.AddConsole();
-        }).CreateLogger<RepetierBaseEventConverter>();
+            using var factory = LoggerFactory.Create(builder =>
+            {
+                builder.AddConsole();
+            });
+            _logger = factory.CreateLogger<RepetierBaseEventConverter>();
+        }
 
         public static ImmutableDictionary<string, Type> GetExtendableEventTypes()
         {

@@ -11,12 +11,19 @@ using RepetierSharp.Util;
 
 namespace RepetierSharp.Serialization
 {
-    public class RepetierResponseConverter(string commandId) : JsonConverter<RepetierResponse>
+    public class RepetierResponseConverter : JsonConverter<RepetierResponse>
     {
-        private static readonly ILogger<RepetierResponseConverter> _logger = LoggerFactory.Create(builder =>
+        private readonly ILogger<RepetierResponseConverter> _logger;
+        private readonly string commandId;
+        public RepetierResponseConverter(string commandId)
         {
-            builder.AddConsole();
-        }).CreateLogger<RepetierResponseConverter>();
+            using var factory = LoggerFactory.Create(builder =>
+            {
+                builder.AddConsole();
+            });
+            _logger = factory.CreateLogger<RepetierResponseConverter>();
+            this.commandId = commandId;
+        }
 
         private static readonly ImmutableDictionary<string, Type> s_responseTypes = ImmutableDictionary.CreateRange
         (new[]
