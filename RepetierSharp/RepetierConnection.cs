@@ -66,7 +66,7 @@ namespace RepetierSharp
             // Each message send to and from the Repetier Server is a valid JSON message
             if ( msg.MessageType != WebSocketMessageType.Text || string.IsNullOrEmpty(msg.Text))
                 return;
-            var msgJson = JsonSerializer.Deserialize<JsonDocument>(msg.Text);
+            using var msgJson = JsonSerializer.Deserialize<JsonDocument>(msg.Text);
             if ( msgJson == null )
             {
                 _logger.LogWarning("Received message is not a valid JSON and won't be processed: '{Msg}'",
