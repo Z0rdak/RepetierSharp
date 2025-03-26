@@ -7,6 +7,13 @@
   * print job queue
   * ...
 
+# [0.2.1] - 2025-03-26
+
+## Fixed
+
+- Fix logger factories not using the `using` statement, causing potential memory issues
+- Fix JsonDocument during message handling not using the `using` statement, causing potential memory issues
+
 # [0.2.0] - 2025-03-25
 
 ## Added
