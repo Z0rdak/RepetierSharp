@@ -463,7 +463,7 @@ namespace RepetierSharp
             }
             return await Task.Run(async () =>
             {
-                var payload = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(command, SerializationOptions.DefaultOptions));
+                var payload = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(command, SerializationOptions.WriteCommandOptions));
                 var isInQueue = WebSocketClient.Send(payload);
                 var hasFilterCmd = _commandFilters.Exists(pre => pre.Invoke(command.Action));
                 if ( isInQueue )
