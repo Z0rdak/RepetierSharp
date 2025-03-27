@@ -368,9 +368,8 @@ namespace RepetierSharp
                     await _printJobEvents.PrintStartedEvent.InvokeAsync(jobStartedArgs);
                     break;
                 case EventConstants.STATE:
-                    var printerStateChange = (PrinterStateChanged)repetierEvent.EventData;
                     var printerStateChangedArgs =
-                        new StateChangedEventArgs(repetierEvent.Printer, printerStateChange.PrinterState);
+                        new StateChangedEventArgs(repetierEvent.Printer, (PrinterState)repetierEvent.EventData);
                     await _printerEvents.StateChangedEvent.InvokeAsync(printerStateChangedArgs);
                     break;
                 case EventConstants.TEMP:
