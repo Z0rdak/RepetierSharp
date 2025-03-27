@@ -101,7 +101,8 @@ namespace RepetierSharp.Serialization
                 /* not listed in docs -> reverse engineered through web-gui */
                 KeyValuePair.Create(LAYER_CHANGED, typeof(LayerChanged)),
                 KeyValuePair.Create(UPDATE_PRINTER_STATE, typeof(PrinterState)),
-                KeyValuePair.Create(MQTT_STATE_CHANGED, typeof(MqttStateChanged))
+                KeyValuePair.Create(MQTT_STATE_CHANGED, typeof(MqttStateChanged)),
+                KeyValuePair.Create(ADD_ERROR_LOG_LINE, typeof(AddErrorLogLine))
             }
         );
 

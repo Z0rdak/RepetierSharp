@@ -16,6 +16,7 @@
         public const string JOB_DEACTIVATED = "jobDeactivated";
         public const string JOB_KILLED = "jobKilled";
         public const string JOB_STARTED = "jobStarted";
+        public const string ADD_ERROR_LOG_LINE = "addErrorLogLine";
         public const string PRINT_JOB_ADDED = "printJobAdded";
         public const string PRINT_QUEUE_CHANGED = "printqueueChanged"; // deprecated with 1.5
         public const string LAST_PRINTS_CHANGED = "lastPrintsChanged"; // deprecated with 1.5
