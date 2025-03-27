@@ -98,11 +98,12 @@ namespace RepetierSharp.Serialization
                 KeyValuePair.Create(PROJECT_FOLDER_CHANGED, typeof(ProjectFolderChanged)),
                 KeyValuePair.Create(GLOBAL_ERRORS_CHANGED, typeof(EmptyEventData)),
                 KeyValuePair.Create(RELOAD_KLIPPER, typeof(EmptyEventData)),
-                /* not listed in docs -> reverse engineered through web-gui */
+                /* not listed in docs -> reverse engineered */
                 KeyValuePair.Create(LAYER_CHANGED, typeof(LayerChanged)),
                 KeyValuePair.Create(UPDATE_PRINTER_STATE, typeof(PrinterState)),
                 KeyValuePair.Create(MQTT_STATE_CHANGED, typeof(MqttStateChanged)),
-                KeyValuePair.Create(ADD_ERROR_LOG_LINE, typeof(AddErrorLogLine))
+                KeyValuePair.Create(ADD_ERROR_LOG_LINE, typeof(AddErrorLogLine)),
+                KeyValuePair.Create(DIALOGS_CHANGED, typeof(EmptyEventData)),
             }
         );
 
