@@ -55,7 +55,7 @@ namespace RepetierSharp.Serialization
                 KeyValuePair.Create(LAST_PRINTS_CHANGED, typeof(EmptyEventData)),
                 
                 KeyValuePair.Create(LOGOUT, typeof(ServerEventData)),
-                KeyValuePair.Create(USER_CREDENTIALS, typeof(ServerEventData)),
+                KeyValuePair.Create(USER_CREDENTIALS, typeof(UserCredentials)),
                 KeyValuePair.Create(MESSAGES_CHANGED, typeof(MessagesChanged)),
                 KeyValuePair.Create(MOVE, typeof(MoveEntry)),
                 KeyValuePair.Create(LOG, typeof(LogEntry)),
