@@ -7,6 +7,26 @@
   * print job queue
   * ...
 
+# [0.2.2] - 2025-03-27
+
+## Added 
+
+- Add command serializer to fix problems with serialization
+- Add type mapping for new events
+- Add event handling for jobsChanged, printQueueChanged and gcodeStorageChanged events. The corresponding event handlers are now invoked accordingly.
+
+## Changed
+
+- Reduce overly excessive error logging from exceptions during message handling
+
+## Fixed
+
+- Fix commands not being serialized properly
+- Fix parsed json being discard to early causing errors
+- Fix wrong type cast for state event serialization
+- Fix wrong type cast for printerListChanged event serialization
+- Fix wrong type cast for userCredentials event serialization
+
 # [0.2.1] - 2025-03-26
 
 ## Fixed
