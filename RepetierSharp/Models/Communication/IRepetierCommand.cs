@@ -3,9 +3,7 @@ using RepetierSharp.Models.Commands;
 
 namespace RepetierSharp.Models.Communication
 {
-    public interface IRepetierCommand { }
-
-    public abstract class BaseCommand(string action, ICommandData data, string printer, int callbackId) : IRepetierCommand
+    public class BaseCommand(string action, ICommandData data, string printer, int callbackId)
     {
         [JsonPropertyName("action")] public string Action { get; set; } = action;
         [JsonPropertyName("data")] public ICommandData Data { get; set; } = data;
