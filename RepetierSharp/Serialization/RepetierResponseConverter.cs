@@ -83,18 +83,10 @@ namespace RepetierSharp.Serialization
                     {
                         case CommandConstants.STATE_LIST:
                             var printerStates = JsonSerializer.Deserialize<Dictionary<string, PrinterState>>(dataJsonElement.GetRawText(), options);
+                            if (printerStates == null) 
+                                throw new JsonException($"Error deserializing printer states: {dataJsonElement.GetRawText()}");
                             responseData = new StateListResponse() { PrinterStates = printerStates };
                             break;
-                        /*
-                        case CommandConstants.LIST_JOBS:
-                            var jobInfos = JsonSerializer.Deserialize<List<ModelInfo>>(dataJsonElement.GetProperty("data").GetRawText(), options);
-                            responseData = new ModelInfoList() { Models = jobInfos };
-                            break;
-                        case CommandConstants.LIST_MODELS:
-                            var modelInfos = JsonSerializer.Deserialize<List<ModelInfo>>(dataJsonElement.GetProperty("data").GetRawText(), options);
-                            responseData = new ModelInfoList() { Models = modelInfos };
-                            break;
-                            */
                         case CommandConstants.MESSAGES:
                             var messages = JsonSerializer.Deserialize<List<Message>>(dataJsonElement.GetRawText(), options);
                             responseData = new MessageList() {Messages = messages ?? new List<Message>() };
