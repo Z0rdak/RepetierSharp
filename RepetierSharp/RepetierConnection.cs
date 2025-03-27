@@ -299,7 +299,17 @@ namespace RepetierSharp
             switch ( repetierEvent.Event )
             {
                 case EventConstants.JOBS_CHANGED:
-                    await _printerEvents.JobsChangedEvent.InvokeAsync(new JobsChangedEventArgs(repetierEvent.Printer));
+                    var jobsChanged = new JobsChangedEventArgs(repetierEvent.Printer);
+                    await _printerEvents.JobsChangedEvent.InvokeAsync(jobsChanged);
+                    break;
+                case EventConstants.PRINT_QUEUE_CHANGED:
+                    var printQueueChanged = new JobsChangedEventArgs(repetierEvent.Printer);
+                    await _printerEvents.JobsChangedEvent.InvokeAsync(printQueueChanged);
+                    break;
+                case EventConstants.GCODE_STORAGE_CHANGED: // TODO: Test when 1.5 is released
+                    var gcodeStorageChange = (GcodeStorageChange)repetierEvent.EventData;
+                    var gcodeChangeEvent = new GcodeStorageChangedEventArgs(repetierEvent.Printer, gcodeStorageChange);
+                    await _printJobEvents.GcodeStorageChangedEvent.InvokeAsync(gcodeChangeEvent);
                     break;
                 case EventConstants.PONG:
                     await SendPing();
@@ -399,8 +409,6 @@ namespace RepetierSharp
                 case EventConstants.MODEL_GROUPLIST_CHANGED:
                 case EventConstants.PREPARE_JOB:
                 case EventConstants.PREPARE_JOB_FINIHSED:
-                case EventConstants.PRINT_QUEUE_CHANGED:
-                case EventConstants.GCODE_STORAGE_CHANGED:
                 case EventConstants.EEPROM_DATA:
                 case EventConstants.SETTING_CHANGED:
                 case EventConstants.CONFIG:
