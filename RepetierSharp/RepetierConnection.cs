@@ -336,8 +336,8 @@ namespace RepetierSharp
                     await _clientEvents.CredentialsReceivedEvent.InvokeAsync(userCredentialsArgs);
                     break;
                 case EventConstants.PRINTER_LIST_CHANGED:
-                    var printerListChangedEvent = (List<Printer>)repetierEvent.EventData;
-                    var printerListChangedArgs = new PrinterListChangedEventArgs(new PrinterListChanged(){Printers = printerListChangedEvent});
+                    var printerListChanged = (PrinterListChanged)repetierEvent.EventData;
+                    var printerListChangedArgs = new PrinterListChangedEventArgs(printerListChanged);
                     await _serverEvents.PrinterListChangedEvent.InvokeAsync(printerListChangedArgs);
                     break;
                 case EventConstants.MESSAGES_CHANGED:
