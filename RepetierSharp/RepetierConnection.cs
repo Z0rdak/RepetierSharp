@@ -159,8 +159,7 @@ namespace RepetierSharp
             }
             catch ( Exception ex )
             {
-                var errorMsg = "[WebSocket] Error processing message from repetier server: '{Msg}'. Error: {Error}";
-                _logger.LogError(ex, errorMsg, msg.Text, ex.Message);
+                _logger.LogError(ex, "[WebSocket] Error processing message from repetier server. Error: {Error}", ex.Message);
             }
         }
         
