@@ -17,19 +17,22 @@ namespace RepetierSharp.Serialization
             };
         }
         
+        public static readonly JsonSerializerOptions WriteCommandOptions = new()
+        {
+            WriteIndented = true,
+            Converters = { new RepetierCommandConverter() },
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        };
+        
         public static readonly JsonSerializerOptions DefaultOptions = new()
         {
             AllowTrailingCommas = true,
             WriteIndented = true,
-            Converters =
-            {
-                new RepetierBaseEventConverter()
-            }
+            Converters = { new RepetierBaseEventConverter() }
         };
         
         public static readonly JsonSerializerOptions WriteOptions = new()
         {
-            
             WriteIndented = true,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
         };
