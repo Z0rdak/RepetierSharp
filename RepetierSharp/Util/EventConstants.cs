@@ -66,6 +66,7 @@
         public const string TIMER_3600 = "timer3600";
         
         public const string DUET_DIALOG_OPENED = "duetDialogOpened";
+        public const string DIALOGS_CHANGED = "dialogsChanged";
         public const string DISPATCHER_COUNT = "dispatcherCount";
 
     }
