@@ -404,18 +404,18 @@ namespace RepetierSharp
                     var changeFilamentRequestedEventArgs = new ChangeFilamentRequestedEventArgs(repetierEvent.Printer);
                     await _printerEvents.ChangeFilamentRequestedEvent.InvokeAsync(changeFilamentRequestedEventArgs);
                     break;
-                case EventConstants.MODEL_GROUPLIST_CHANGED:
                 case EventConstants.PREPARE_JOB:
                 case EventConstants.PREPARE_JOB_FINIHSED:
-                case EventConstants.EEPROM_DATA:
                 case EventConstants.SETTING_CHANGED:
                 case EventConstants.CONFIG:
+                case EventConstants.REMOTE_SERVERS_CHANGED:
+                case EventConstants.EEPROM_DATA:
                 case EventConstants.FIRMWARE_CHANGED:
                 case EventConstants.LOGOUT:
                 case EventConstants.FOLDERS_CHANGED:
                 case EventConstants.EEPROM_CLEAR:
-                case EventConstants.REMOTE_SERVERS_CHANGED:
                 case EventConstants.GET_EXTERNAL_LINKS:
+                case EventConstants.MODEL_GROUPLIST_CHANGED:
                     break;
             }
         }
