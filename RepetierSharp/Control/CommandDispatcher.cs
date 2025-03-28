@@ -8,16 +8,24 @@ using RepetierSharp.Models.Communication;
 namespace RepetierSharp.Control
 {
 
-    public class ScheduledCmd(string id, BaseCommand cmd)
+    public abstract class ScheduledCmd(string id, BaseCommand cmd)
     {
         public string Id { get => id; }
         public BaseCommand Cmd { get => cmd; }
     }
+
+    public class ScheduledPrinterCmd(string id, string printer, BaseCommand cmd) : ScheduledCmd(id, cmd)
+    {
+        public string Printer { get; } = printer;
+    }   
+    
+    public class ScheduledServerCmd(string id, BaseCommand cmd) : ScheduledCmd(id, cmd) { }   
+    
     
     public sealed class CommandDispatcher
     {
-        private Dictionary<RepetierTimer, List<ScheduledCmd>> PrinterCommandMap { get; } = new();
-        private Dictionary<RepetierTimer, List<ScheduledCmd>> ServerCommandMap { get; } = new();
+        private Dictionary<RepetierTimer, List<ScheduledPrinterCmd>> PrinterCommandMap { get; } = new();
+        private Dictionary<RepetierTimer, List<ScheduledServerCmd>> ServerCommandMap { get; } = new();
         
         public Task DispatchCommands(RepetierTimer timer, RepetierConnection repetierCon)
         {
@@ -44,22 +52,22 @@ namespace RepetierSharp.Control
         public ScheduledCmd AddPrinterCommand(RepetierTimer timer, ICommandData command, string printer)
         {
             var printerCmd = new PrinterCommand(command.Action, command, printer, -1);
-            var scheduledCmd = new ScheduledCmd(Guid.NewGuid().ToString(), printerCmd);
+            var scheduledCmd = new ScheduledPrinterCmd(Guid.NewGuid().ToString(), printer, printerCmd);
             if (PrinterCommandMap.TryGetValue(timer, out var scheduledCmds)) 
                 scheduledCmds.Add(scheduledCmd);
             else
-                PrinterCommandMap.Add(timer, new List<ScheduledCmd> { scheduledCmd });
+                PrinterCommandMap.Add(timer, new List<ScheduledPrinterCmd> { scheduledCmd });
             return scheduledCmd;
         }
         
         public ScheduledCmd AddServerCommand(RepetierTimer timer, ICommandData command)
         {
             var serverCmd = new ServerCommand(command.Action, command, -1);
-            var scheduledCmd = new ScheduledCmd(Guid.NewGuid().ToString(), serverCmd);
+            var scheduledCmd = new ScheduledServerCmd(Guid.NewGuid().ToString(), serverCmd);
             if (ServerCommandMap.TryGetValue(timer, out var scheduledCmds)) 
                 scheduledCmds.Add(scheduledCmd);
             else
-                ServerCommandMap.Add(timer, new List<ScheduledCmd> { scheduledCmd });
+                ServerCommandMap.Add(timer, new List<ScheduledServerCmd> { scheduledCmd });
             return scheduledCmd;
         }
         
