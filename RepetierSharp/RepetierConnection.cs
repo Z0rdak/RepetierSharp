@@ -455,35 +455,53 @@ namespace RepetierSharp
             return await SendCommand(serverCommand);
         }
         
-        protected async Task<bool> SendCommand(BaseCommand command)
+        private async Task<bool> SendCommand(BaseCommand command)
         {
-            if (command.Action != CommandConstants.PING )
+            var isFiltered = IsFiltered(command.Action, _commandFilters);
+            if (!isFiltered)
             {
-                _logger.LogDebug("[Command] Id={}, Cmd={id}", command.CallbackId, command.Action);
-                _logger.LogTrace("[Command] Id={}, Cmd={id}, Data={cmd}", command.CallbackId, command.Action, JsonSerializer.Serialize(command));
+                LogCommand(command);
             }
             return await Task.Run(async () =>
             {
                 var payload = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(command, SerializationOptions.WriteCommandOptions));
                 var isInQueue = WebSocketClient.Send(payload);
-                var hasFilterCmd = _commandFilters.Exists(pre => pre.Invoke(command.Action));
-                if ( isInQueue )
+                if ( !isInQueue ) // command send failed
                 {
-                    if ( !hasFilterCmd )
-                    {
-                        await _clientEvents.CommandSendEvent.InvokeAsync(new CommandEventArgs(command));
-                    }
+                    await _serverEvents.CommandFailedEvent.InvokeAsync(new CommandEventArgs(command));
+                    return false;
                 }
-                else
+                if (isFiltered) return isInQueue;
+                switch ( command )
                 {
-                    if ( !hasFilterCmd )
-                    {
-                        await _clientEvents.CommandFailedEvent.InvokeAsync(new CommandEventArgs(command));
-                    }
+                    case ServerCommand serverCmd:
+                        {
+                            await _serverEvents.CommandSendEvent.InvokeAsync(new ServerCommandEventArgs(serverCmd));
+                        }
+                        break;
+                    case PrinterCommand printerCmd:
+                        {
+                            await _printerEvents.CommandSendEvent.InvokeAsync(new PrinterCommandEventArgs(printerCmd));
+                        }
+                        break;
                 }
-
                 return isInQueue;
             });
+        }
+        
+        private void LogCommand(BaseCommand command)
+        {
+            switch ( command )
+            {
+                case PrinterCommand printerCmd:
+                    _logger.LogDebug("=?=[{action}]=?=> | {printer} | #{}", command.Action, printerCmd.Printer, command.CallbackId);
+                    _logger.LogTrace("=?=[{action}]=?=> | {printer} | #{}: Data={cmd}", command.Action, printerCmd.Printer, command.CallbackId, JsonSerializer.Serialize(command));
+                    break;
+                case ServerCommand _:
+                    _logger.LogDebug("=?=[{action}]=?=> | Server | #{}", command.Action, command.CallbackId);
+                    _logger.LogTrace("=?=[{action}]=?=> | Server | #{}: Data={cmd}", command.CallbackId, command.Action, JsonSerializer.Serialize(command));
+                    break;
+            }
         }
 
         /// <summary>
