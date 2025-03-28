@@ -45,7 +45,6 @@ public class Worker : BackgroundService
             // schedule commands based on the 30-second timer event from the server
             .ScheduleServerCommand(RepetierTimer.Timer30, new StateListCommand(false))
             .SchedulePrinterCommand(RepetierTimer.Timer30, ListJobsCommand.AllJobs, "Delta")
-            .SchedulePrinterCommand(RepetierTimer.Timer30, ListJobsCommand.AllJobs, "Cartesian")
             .Build();
         
         _repetierCon.HttpRequestFailedAsync += (args) =>
@@ -72,7 +71,7 @@ public class Worker : BackgroundService
                 {
                     var remotePrinter = _repetierCon.GetRemotePrinter(printerSlug);
                     _remotePrinters.Add(remotePrinter);
-                    // request all models uploaded to a printer when connected 
+                    _repetierCon.SchedulePrinterCommand(printerSlug, ListJobsCommand.AllJobs, RepetierTimer.Timer60);
                     await _repetierCon.SendPrinterCommand(ListModelsCommand.Instance, printerSlug);
                 });
             }
@@ -89,47 +88,43 @@ public class Worker : BackgroundService
         };
 
         _repetierCon.PrinterCommandSendAsync += args => Task.CompletedTask;
-        _repetierCon.PrintStartedAsync += args => Task.CompletedTask;;
-        _repetierCon.PrintFinishedAsync += args => Task.CompletedTask;;
-        _repetierCon.PrintKilledAsync += args => Task.CompletedTask;;
+        _repetierCon.PrintStartedAsync += args => Task.CompletedTask;
+        _repetierCon.PrintFinishedAsync += args => Task.CompletedTask;
+        _repetierCon.PrintKilledAsync += args => Task.CompletedTask;
         _repetierCon.EventReceivedAsync += args => Task.CompletedTask;
-        _repetierCon.PrinterStateReceivedAsync += args => Task.CompletedTask;;
-        _repetierCon.RepetierResponseReceivedAsync += OnResponseReceived; 
+        _repetierCon.PrinterStateReceivedAsync += args => Task.CompletedTask;
+        _repetierCon.RawResponseReceivedAsync += args => Task.CompletedTask; 
+        _repetierCon.PrinterResponseReceivedAsync += OnPrinterResponseReceived;
+        _repetierCon.ServerResponseReceivedAsync += OnServerResponseReceived; 
         _repetierCon.LayerChangedAsync += args => Task.CompletedTask;
         _repetierCon.ServerCommandSendAsync += args => Task.CompletedTask;
     }
-    
-    // TODO: No info about printer in response - F***
-    // FIXME: Put info about printer in callback 
-    private Task OnResponseReceived(ResponseReceivedEventArgs args)
+
+    private Task OnServerResponseReceived(ResponseEventArgs arg)
     {
-        if ( args.Response.CommandId == CommandConstants.LIST_JOBS )
-        {
-            var jobList = (ModelInfoList)args.Response.Data;
-            if ( jobList.Models.Count > 0 )
-            {
-                _logger.LogInformation("<=!= Amount jobs: {}", jobList.Models.Count);
-                var modelInfo = jobList.Models.First();
-                if ( modelInfo.State == "running" )
-                {
-                    _logger.LogInformation(
-                        "Currently printing job\n" +
-                        "\tID: {Id}\n" +
-                        "\tName: {Name}\n" +
-                        "\tLayer: {Layer}\n" +
-                        "\tLines: {Lines}\n" +
-                        "\tLength: {Length}\n" +
-                        "\tPrint Time: {PrintTime} sec\n",
-                        modelInfo.Id, modelInfo.Name, modelInfo.Layer, modelInfo.Lines,
-                        modelInfo.Length, modelInfo.PrintTime);
-                }
-            }
-        }
-        
-        if ( args.Response.CommandId != CommandConstants.PING )
+        var repetierResponse = arg.Response;
+        if ( repetierResponse.CommandId != CommandConstants.PING )
         {
             _logger.LogInformation("<=#=[{action}]=#= | #{callbackId}", 
-                args.Response.CommandId, args.Response.CallBackId);
+                repetierResponse.CommandId, repetierResponse.CallBackId);
+        }
+        return Task.CompletedTask;
+    }
+
+    private Task OnPrinterResponseReceived(PrinterResponseEventArgs args)
+    {
+        var repetierResponse = args.Response;
+        if ( repetierResponse.CommandId == CommandConstants.LIST_JOBS )
+        {
+            var jobList = (ModelInfoList)repetierResponse.Data;
+            if ( jobList.Models.Count > 0 && jobList.Models.First().State == "running")
+            {
+                var modelInfo = jobList.Models.First();
+                _logger.LogInformation("<=#={action}=#= | {printer} | #{calldback_id}: Amount jobs={}", repetierResponse.CommandId, args.Printer, repetierResponse.CallBackId, jobList.Models.Count);
+                _logger.LogInformation(
+                    "Currently printing: {Name} (JobId: {Id}), Layer={Layer}, Lines={Lines}, PrintTime={PrintTime} sec",
+                    modelInfo.Name,  modelInfo.Id, modelInfo.Layer, modelInfo.Lines, modelInfo.PrintTime);
+            }
         }
         return Task.CompletedTask;  
     }
