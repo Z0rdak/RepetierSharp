@@ -87,17 +87,17 @@ public class Worker : BackgroundService
             return Task.CompletedTask;
         };
 
-        _repetierCon.PrinterCommandSendAsync += args => Task.CompletedTask;
-        _repetierCon.PrintStartedAsync += args => Task.CompletedTask;
-        _repetierCon.PrintFinishedAsync += args => Task.CompletedTask;
-        _repetierCon.PrintKilledAsync += args => Task.CompletedTask;
-        _repetierCon.EventReceivedAsync += args => Task.CompletedTask;
-        _repetierCon.PrinterStateReceivedAsync += args => Task.CompletedTask;
-        _repetierCon.RawResponseReceivedAsync += args => Task.CompletedTask; 
+        _repetierCon.PrinterCommandSendAsync += (PrinterCommandEventArgs args) => Task.CompletedTask;
+        _repetierCon.PrintStartedAsync += (PrintJobStartedEventArgs args) => Task.CompletedTask;
+        _repetierCon.PrintFinishedAsync += (PrintJobFinishedEventArgs args) => Task.CompletedTask;
+        _repetierCon.PrintKilledAsync += (PrintJobKilledEventArgs args) => Task.CompletedTask;
+        _repetierCon.EventReceivedAsync += (EventReceivedEventArgs args) => Task.CompletedTask;
+        _repetierCon.PrinterStateReceivedAsync += (StateChangedEventArgs args) => Task.CompletedTask;
+        _repetierCon.RawResponseReceivedAsync += (RawResponseReceivedEventArgs args) => Task.CompletedTask; 
+        _repetierCon.LayerChangedAsync += (LayerChangedEventArgs args) => Task.CompletedTask;
+        _repetierCon.ServerCommandSendAsync += (ServerCommandEventArgs args) => Task.CompletedTask;
         _repetierCon.PrinterResponseReceivedAsync += OnPrinterResponseReceived;
         _repetierCon.ServerResponseReceivedAsync += OnServerResponseReceived; 
-        _repetierCon.LayerChangedAsync += args => Task.CompletedTask;
-        _repetierCon.ServerCommandSendAsync += args => Task.CompletedTask;
     }
 
     private Task OnServerResponseReceived(ResponseEventArgs arg)
