@@ -184,10 +184,17 @@ namespace RepetierSharp
             await _clientEvents.ResponseReceivedEvent.InvokeAsync(new ResponseReceivedEventArgs(response));
             await ProcessResponse(response);
         }
-
-        private bool IsFiltered(string eventName, List<Predicate<string>> filterList)
+        
+        private void LogResponse(RepetierResponse response, JsonElement dataElement)
         {
-            return filterList.Exists(pre => pre.Invoke(eventName));
+            var responseDataJson = JsonSerializer.Serialize(dataElement, SerializationOptions.WriteOptions);
+            _logger.LogDebug("<=#=[{action}]=#= | #{callbackId}", response.CallBackId, response.CommandId);
+            _logger.LogTrace("<=#=[{action}]=#= | #{callbackId}: Data={}", response.CallBackId, response.CommandId, responseDataJson);
+        }
+
+        private bool IsFiltered(string id, List<Predicate<string>> filterList)
+        {
+            return filterList.Exists(pre => pre.Invoke(id));
         }
         
         private void PublishRawEventInfo(JsonElement dataElement)
@@ -901,6 +908,7 @@ namespace RepetierSharp
         private IRestClient RestClient { get; set; }
         public RepetierSession Session { get; }
         private long _lastPingTimestamp;
+        private List<Predicate<string>> _responseFilters = new();
         private List<Predicate<string>> _commandFilters = new();
         private List<Predicate<string>> _eventFilters = new();
     }

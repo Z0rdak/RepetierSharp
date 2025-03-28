@@ -22,6 +22,7 @@ namespace RepetierSharp
             private ILogger<RepetierConnection>? _logger;
             private RepetierSession _session = new();
             private RestClientOptions? _restClientOptions = new();
+            private readonly List<Predicate<string>> _responseFilters = new();
             private readonly List<Predicate<string>> _commandFilters = new();
             private readonly List<Predicate<string>> _eventFilters = new();
             private readonly CommandDispatcher _commandDispatcher = new();
@@ -69,6 +70,7 @@ namespace RepetierSharp
                 var con = new RepetierConnection(_restClient, _websocketClient, _session, _logger);
                 con._eventFilters = _eventFilters;
                 con._commandFilters = _commandFilters;
+                con._responseFilters = _responseFilters;
                 con._commandDispatcher = _commandDispatcher;
                 return con;
             }
@@ -228,6 +230,12 @@ namespace RepetierSharp
                 return this;
             }
 
+            public RepetierConnectionBuilder WithResponseFilter(Predicate<string> responseFilter)
+            {
+                _responseFilters.Add(responseFilter);
+                return this;
+            }
+            
             public RepetierConnectionBuilder WithCommandFilter(Predicate<string> commandFilter)
             {
                 _commandFilters.Add(commandFilter);
