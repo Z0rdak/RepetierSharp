@@ -1,17 +1,17 @@
 using System.Text.Json;
-using RepetierSharp;
 using RepetierSharp.Control;
 using RepetierSharp.Internal;
-using RepetierSharp.Models;
 using RepetierSharp.Models.Commands;
-using RepetierSharp.Models.Events;
 using RepetierSharp.Models.Responses;
 using RepetierSharp.Util;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
+namespace RepetierSharp.Examples;
+
 /// <summary>
-/// TODO: move ListModels, ListJobs, etc into remoteprinter
-/// TODO: move printer events into remote printer?
+/// TODO: move ListModels, ListJobs, etc into IRemotePrinter
+/// TODO: Add CRUD to manage scheduled commands
+/// TODO: Separate event handlers for server and printer events (like responses and commands already have)
 /// </summary>
 public class Worker : BackgroundService
 {
@@ -26,7 +26,7 @@ public class Worker : BackgroundService
         {
             builder.AddConsole()
                 .AddDebug()
-                .SetMinimumLevel(LogLevel.Debug);
+                .SetMinimumLevel(LogLevel.Information);
         });
         var repetierLogger = factory.CreateLogger<RepetierConnection>();
       
@@ -40,11 +40,17 @@ public class Worker : BackgroundService
             .WithLogger(repetierLogger)
             .WithWebsocketHost($"wss://{host}/socket/?apiKey={apiKey}")
             .WithHttpHost($"https://{host}/")
-            .UseSession(new RepetierSession(new ApiKeyAuth(apiKey), 15))
-            .WithEventFilter(e => e is EventConstants.TEMP) // exclude temp event
-            // schedule commands based on the 30-second timer event from the server
+            // authentication with password (password is being hashed internally according to repetier server docs)
+            // .UseSession(new RepetierSession(new CredentialAuth("login", "password"), 15))
+            .UseSession(new RepetierSession(new ApiKeyAuth(apiKey), 10))
+            // exclude temp event from logging and being fired through event handlers
+            .WithEventFilter(e => e is EventConstants.TEMP)
+            // exclude ping response from logging and being fired through the event handlers
+            .WithResponseFilter(e => e is CommandConstants.PING)
+            // exclude ping command from logging and being fired through the event handlers
+            .WithCommandFilter(e => e is CommandConstants.PING)
+            // schedule command based on the 30-second timer event from the server
             .ScheduleServerCommand(RepetierTimer.Timer30, new StateListCommand(false))
-            .SchedulePrinterCommand(RepetierTimer.Timer30, ListJobsCommand.AllJobs, "Delta")
             .Build();
         
         _repetierCon.HttpRequestFailedAsync += (args) =>
@@ -59,21 +65,24 @@ public class Worker : BackgroundService
                 connectedArgs.Url.Scheme.ToString(),
                 connectedArgs.Url.Host.ToString(),
                 connectedArgs.Url.AbsolutePath);
-            
-            var info = await _repetierCon.GetRemoteServer().GetServerInfo();
-            if ( info != null )
+
+            if ( !connectedArgs.Reconnect )
             {
-                var printerSlugs = info.Printers.Select(p => p.Slug).ToList();
-                _logger.LogInformation("ServerInfo\n\t- Name: {servername} ({variant} v{version})\n\t- Printer: [{printer}]\n\t- UUID: {uuid}\n\t- API-Key: {apikey}",
-                    info.ServerName, info.Name, info.Version, string.Join(", ", printerSlugs), info.ServerUUID, info.ApiKey);
-                
-                printerSlugs.ForEach(async printerSlug =>
+                var info = await _repetierCon.GetRemoteServer().GetServerInfo();
+                if ( info != null )
                 {
-                    var remotePrinter = _repetierCon.GetRemotePrinter(printerSlug);
-                    _remotePrinters.Add(remotePrinter);
-                    _repetierCon.SchedulePrinterCommand(printerSlug, ListJobsCommand.AllJobs, RepetierTimer.Timer60);
-                    await _repetierCon.SendPrinterCommand(ListModelsCommand.Instance, printerSlug);
-                });
+                    var printerSlugs = info.Printers.Select(p => p.Slug).ToList();
+                    _logger.LogInformation("ServerInfo\n\t- Name: {servername} ({variant} v{version})\n\t- Printer: [{printer}]\n\t- UUID: {uuid}\n\t- API-Key: {apikey}",
+                        info.ServerName, info.Name, info.Version, string.Join(", ", printerSlugs), info.ServerUUID, info.ApiKey);
+                
+                    printerSlugs.ForEach(async printerSlug =>
+                    {
+                        var remotePrinter = _repetierCon.GetRemotePrinter(printerSlug);
+                        _remotePrinters.Add(remotePrinter);
+                        _repetierCon.SchedulePrinterCommand(printerSlug, ListJobsCommand.AllJobs, RepetierTimer.Timer30);
+                        await _repetierCon.SendPrinterCommand(ListModelsCommand.Instance, printerSlug);
+                    });
+                }  
             }
         };
         
@@ -87,27 +96,37 @@ public class Worker : BackgroundService
             return Task.CompletedTask;
         };
 
-        _repetierCon.PrinterCommandSendAsync += (PrinterCommandEventArgs args) => Task.CompletedTask;
         _repetierCon.PrintStartedAsync += (PrintJobStartedEventArgs args) => Task.CompletedTask;
         _repetierCon.PrintFinishedAsync += (PrintJobFinishedEventArgs args) => Task.CompletedTask;
         _repetierCon.PrintKilledAsync += (PrintJobKilledEventArgs args) => Task.CompletedTask;
         _repetierCon.EventReceivedAsync += (EventReceivedEventArgs args) => Task.CompletedTask;
+        // _repetierCon.PrinterEventReceivedAsync += (PrinterEventReceivedEventArgs args) => Task.CompletedTask;
         _repetierCon.PrinterStateReceivedAsync += (StateChangedEventArgs args) => Task.CompletedTask;
         _repetierCon.RawResponseReceivedAsync += (RawResponseReceivedEventArgs args) => Task.CompletedTask; 
         _repetierCon.LayerChangedAsync += (LayerChangedEventArgs args) => Task.CompletedTask;
-        _repetierCon.ServerCommandSendAsync += (ServerCommandEventArgs args) => Task.CompletedTask;
+        _repetierCon.ServerCommandSendAsync += OnServerCommandSend;
+        _repetierCon.PrinterCommandSendAsync += OnPrinterCommandSend;
         _repetierCon.PrinterResponseReceivedAsync += OnPrinterResponseReceived;
         _repetierCon.ServerResponseReceivedAsync += OnServerResponseReceived; 
     }
-
+    private Task OnServerCommandSend(ServerCommandEventArgs args)
+    {
+        var command = args.Command;
+        // _logger.LogInformation("=?=[{action}]=?=> | Server | #{}", command.Action, command.CallbackId);
+        return Task.CompletedTask;
+    }
     private Task OnServerResponseReceived(ResponseEventArgs arg)
     {
         var repetierResponse = arg.Response;
-        if ( repetierResponse.CommandId != CommandConstants.PING )
-        {
-            _logger.LogInformation("<=#=[{action}]=#= | #{callbackId}", 
-                repetierResponse.CommandId, repetierResponse.CallBackId);
-        }
+        // _logger.LogInformation("<=#=[{action}]=#= | #{callback_id}", repetierResponse.CommandId, repetierResponse.CallBackId);
+        return Task.CompletedTask;
+    }
+    
+    private Task OnPrinterCommandSend(PrinterCommandEventArgs args)
+    {
+        var command = args.Command;
+        var printer = args.Printer;
+        _logger.LogInformation("=?=[{action}]=?=> | {printer} | #{}", command.Action, printer, command.CallbackId);
         return Task.CompletedTask;
     }
 
@@ -117,15 +136,17 @@ public class Worker : BackgroundService
         if ( repetierResponse.CommandId == CommandConstants.LIST_JOBS )
         {
             var jobList = (ModelInfoList)repetierResponse.Data;
-            if ( jobList.Models.Count > 0 && jobList.Models.First().State == "running")
+            var runningJob = jobList.Models.Find(j => j.State == "running");
+            if ( runningJob != null )
             {
-                var modelInfo = jobList.Models.First();
-                _logger.LogInformation("<=#={action}=#= | {printer} | #{calldback_id}: Amount jobs={}", repetierResponse.CommandId, args.Printer, repetierResponse.CallBackId, jobList.Models.Count);
-                _logger.LogInformation(
-                    "Currently printing: {Name} (JobId: {Id}), Layer={Layer}, Lines={Lines}, PrintTime={PrintTime} sec",
-                    modelInfo.Name,  modelInfo.Id, modelInfo.Layer, modelInfo.Lines, modelInfo.PrintTime);
+                _logger.LogInformation("<=#={action}=#= | {printer} | #{callback_id}: Amount jobs={}\n" +
+                                       "Currently printing: {Name} (JobId: {Id}, Repeat: {repeat}, Layer={Layer}, Lines={Lines}, PrintTime={PrintTime} sec",
+                    repetierResponse.CommandId, args.Printer, repetierResponse.CallBackId, jobList.Models.Count,
+                    runningJob.Name, runningJob.Id, runningJob.Repeat, runningJob.Layer, runningJob.Lines, (int)runningJob.PrintTime);
             }
+            return Task.CompletedTask;
         }
+        _logger.LogInformation("<=#={action}=#= | {printer} | #{callback_id}", repetierResponse.CommandId, args.Printer, repetierResponse.CallBackId);
         return Task.CompletedTask;  
     }
     
