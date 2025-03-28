@@ -6,8 +6,10 @@
 - Responses can now be distinguished being a server or printer related response.
 - Add separate event handler for server responses.
 - Add separate event handler for printer responses, including the printer slug.
+- Add separate event handler for server and printer events
 - Add methods to schedule commands after initial repetier connection setup through builder (see example).
 - Add separate response filter in builder (separates it from the command filter)
+- Add custom logger for example
 
 ## Changed
 
