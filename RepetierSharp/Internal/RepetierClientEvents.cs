@@ -21,9 +21,7 @@ namespace RepetierSharp.Internal
         public AsyncEvent<ResponseReceivedEventArgs> ResponseReceivedEvent { get; } = new();
         public AsyncEvent<RawEventReceivedEventArgs> RawEventReceivedEvent { get; } = new();
         public AsyncEvent<RawResponseReceivedEventArgs> RawResponseReceivedEvent { get; } = new();
-        public AsyncEvent<CommandEventArgs> CommandSendEvent { get; } = new();
         public AsyncEvent<HttpContextEventArgs> HttpRequestFailedEvent { get; } = new();
-        public AsyncEvent<CommandEventArgs> CommandFailedEvent { get; } = new();
     }
     
     public sealed class HttpContextEventArgs(RestRequest request, RestResponse? response) : EventArgs

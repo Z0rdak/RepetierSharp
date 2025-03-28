@@ -1,5 +1,6 @@
 using System;
 using RepetierSharp.Models;
+using RepetierSharp.Models.Communication;
 using RepetierSharp.Models.Events;
 
 namespace RepetierSharp.Internal
@@ -17,12 +18,15 @@ namespace RepetierSharp.Internal
         public AsyncEvent<MovedEventArgs> MovedEvent { get; } = new();
         public AsyncEvent<LayerChangedEventArgs> LayerChangedEvent { get; } = new();
         public AsyncEvent<ChangeFilamentRequestedEventArgs> ChangeFilamentRequestedEvent { get; } = new();
+        public AsyncEvent<PrinterCommandEventArgs> CommandSendEvent { get; } = new();
     }
 
-    public sealed class ChangeFilamentRequestedEventArgs : PrinterEventArgs
+    public sealed class PrinterCommandEventArgs(PrinterCommand command) : PrinterEventArgs(command.Printer)
     {
-        public ChangeFilamentRequestedEventArgs(string printer) : base(printer) { }
+        public PrinterCommand Command { get; } = command;
     }
+
+    public sealed class ChangeFilamentRequestedEventArgs(string printer) : PrinterEventArgs(printer);
     
     public sealed class LayerChangedEventArgs : PrinterEventArgs
     {
