@@ -108,15 +108,7 @@ namespace RepetierSharp
                     }
                     repetierEventList.Data.ForEach(repEvent =>
                     {
-                        if ( !IsFiltered(repEvent.Event, _eventFilters) )
-                        {
-                            Task.Run(async () =>
-                            {
-                                var repetierEventArgs = new EventReceivedEventArgs(repEvent.Event, repEvent.Printer, repEvent.EventData);
-                                await _clientEvents.EventReceivedEvent.InvokeAsync(repetierEventArgs);
-                                await HandleEvent(repEvent);
-                            });
-                        }
+                        Task.Run(async () => await HandleEvent(repEvent));
                     });
                 }
                 else // handle response
@@ -290,10 +282,13 @@ namespace RepetierSharp
 
         private async Task HandleEvent(IRepetierEvent repetierEvent)
         {
-            var eventJson = JsonSerializer.Serialize(repetierEvent.EventData, new JsonSerializerOptions{WriteIndented = true});
-            _logger.LogDebug("[Event] Event={event}, Printer={Printer}", repetierEvent.Event, repetierEvent.Printer);
-            _logger.LogTrace("[Event] Event={event}, Printer={Printer}, Data={}", repetierEvent.Event, repetierEvent.Printer, eventJson);
-            
+            if ( !IsFiltered(repetierEvent.Event, _eventFilters) )
+            {
+                var repetierEventArgs = new EventReceivedEventArgs(repetierEvent.Event, repetierEvent.Printer, repetierEvent.EventData);
+                await _clientEvents.EventReceivedEvent.InvokeAsync(repetierEventArgs);
+                LogEvent(repetierEvent);
+            }
+
             switch ( repetierEvent.Event )
             {
                 case EventConstants.JOBS_CHANGED:
@@ -418,6 +413,12 @@ namespace RepetierSharp
                 case EventConstants.MODEL_GROUPLIST_CHANGED:
                     break;
             }
+        }
+        private void LogEvent(IRepetierEvent repetierEvent)
+        {
+            var eventJson = JsonSerializer.Serialize(repetierEvent.EventData, SerializationOptions.WriteOptions);
+            _logger.LogDebug("<=!=[{action}]=!= | {printer} |", repetierEvent.Event, repetierEvent.Printer);
+            _logger.LogTrace("<=!=[{action}]=!= | {printer} | Data={dataJson}", repetierEvent.Event, repetierEvent.Printer, eventJson);
         }
 
         /// <summary>
