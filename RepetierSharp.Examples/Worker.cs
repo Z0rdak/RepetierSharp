@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Microsoft.Extensions.Logging.Console;
 using RepetierSharp.Control;
 using RepetierSharp.Internal;
 using RepetierSharp.Models.Commands;
@@ -11,7 +12,6 @@ namespace RepetierSharp.Examples;
 /// <summary>
 /// TODO: move ListModels, ListJobs, etc into IRemotePrinter
 /// TODO: Add CRUD to manage scheduled commands
-/// TODO: Separate event handlers for server and printer events (like responses and commands already have)
 /// </summary>
 public class Worker : BackgroundService
 {
@@ -21,15 +21,16 @@ public class Worker : BackgroundService
     
     public Worker(ILogger<Worker> logger)
     {
-        _logger = logger;
+      
         using var factory = LoggerFactory.Create(builder =>
         {
-            builder.AddConsole()
+            builder.AddConsole(options => options.FormatterName = "RepetierConsole")
                 .AddDebug()
-                .SetMinimumLevel(LogLevel.Information);
+                .SetMinimumLevel(LogLevel.Information)
+                .AddConsoleFormatter<RepetierConsoleFormatter, ConsoleFormatterOptions>(); 
         });
         var repetierLogger = factory.CreateLogger<RepetierConnection>();
-      
+        _logger = factory.CreateLogger<Worker>();;
         // TODO: Load from secret storage
         var apiKey = "32e372fc-4107-4d52-9416-7afaec6408a4";
         // TODO: read from appsettings
@@ -44,7 +45,7 @@ public class Worker : BackgroundService
             // .UseSession(new RepetierSession(new CredentialAuth("login", "password"), 15))
             .UseSession(new RepetierSession(new ApiKeyAuth(apiKey), 10))
             // exclude temp event from logging and being fired through event handlers
-            .WithEventFilter(e => e is EventConstants.TEMP)
+            .WithEventFilter(e => e is EventConstants.TEMP or EventConstants.PONG)
             // exclude ping response from logging and being fired through the event handlers
             .WithResponseFilter(e => e is CommandConstants.PING)
             // exclude ping command from logging and being fired through the event handlers
@@ -60,7 +61,7 @@ public class Worker : BackgroundService
         };
         
         _repetierCon.ConnectedAsync += async (connectedArgs) => {
-            _logger.LogInformation("<=!= {} to repetier server: {scheme}://{host}{res}",
+            _logger.LogInformation("=== {} to repetier server: {scheme}://{host}{res} ===",
                 connectedArgs.Reconnect ? "Reconnected" : "Connected",
                 connectedArgs.Url.Scheme.ToString(),
                 connectedArgs.Url.Host.ToString(),
@@ -72,7 +73,7 @@ public class Worker : BackgroundService
                 if ( info != null )
                 {
                     var printerSlugs = info.Printers.Select(p => p.Slug).ToList();
-                    _logger.LogInformation("ServerInfo\n\t- Name: {servername} ({variant} v{version})\n\t- Printer: [{printer}]\n\t- UUID: {uuid}\n\t- API-Key: {apikey}",
+                    _logger.LogInformation("ServerInfo\n - Name:\t{servername} ({variant} v{version})\n - Printer:\t{printer}\n - UUID:\t{uuid}\n - API-Key:\t{apikey}",
                         info.ServerName, info.Name, info.Version, string.Join(", ", printerSlugs), info.ServerUUID, info.ApiKey);
                 
                     printerSlugs.ForEach(async printerSlug =>
@@ -87,7 +88,7 @@ public class Worker : BackgroundService
         };
         
         _repetierCon.SessionEstablishedAsync += (r) => {
-            _logger.LogInformation("<=!= Session established. SessionId='{SessionId}'", r.SessionId);
+            _logger.LogInformation("=== Session established. SessionId='{SessionId}' ===", r.SessionId);
             return Task.CompletedTask;
         };
         
@@ -99,26 +100,38 @@ public class Worker : BackgroundService
         _repetierCon.PrintStartedAsync += (PrintJobStartedEventArgs args) => Task.CompletedTask;
         _repetierCon.PrintFinishedAsync += (PrintJobFinishedEventArgs args) => Task.CompletedTask;
         _repetierCon.PrintKilledAsync += (PrintJobKilledEventArgs args) => Task.CompletedTask;
-        _repetierCon.EventReceivedAsync += (EventReceivedEventArgs args) => Task.CompletedTask;
-        // _repetierCon.PrinterEventReceivedAsync += (PrinterEventReceivedEventArgs args) => Task.CompletedTask;
         _repetierCon.PrinterStateReceivedAsync += (StateChangedEventArgs args) => Task.CompletedTask;
         _repetierCon.RawResponseReceivedAsync += (RawResponseReceivedEventArgs args) => Task.CompletedTask; 
         _repetierCon.LayerChangedAsync += (LayerChangedEventArgs args) => Task.CompletedTask;
+        _repetierCon.PrinterEventReceivedAsync += OnPrinterEventReceived;
+        _repetierCon.ServerEventReceivedAsync += OnServerEventReceived;
         _repetierCon.ServerCommandSendAsync += OnServerCommandSend;
         _repetierCon.PrinterCommandSendAsync += OnPrinterCommandSend;
         _repetierCon.PrinterResponseReceivedAsync += OnPrinterResponseReceived;
         _repetierCon.ServerResponseReceivedAsync += OnServerResponseReceived; 
     }
+    private Task OnPrinterEventReceived(PrinterEventEventArgs args)
+    {
+        _logger.LogInformation("<=!=[{action}]=!= | {printer}", args.EventName, args.Printer);
+        return Task.CompletedTask;
+    }
+    
+    private Task OnServerEventReceived(ServerEventEventArgs args)
+    {
+        _logger.LogInformation("<=!=[{action}]=!= | Server ",  args.EventName);
+        return Task.CompletedTask;
+    }
+    
     private Task OnServerCommandSend(ServerCommandEventArgs args)
     {
         var command = args.Command;
-        // _logger.LogInformation("=?=[{action}]=?=> | Server | #{}", command.Action, command.CallbackId);
+        _logger.LogInformation("=?=[{action}]=?=> | Server | #{}", command.Action, command.CallbackId);
         return Task.CompletedTask;
     }
     private Task OnServerResponseReceived(ResponseEventArgs arg)
     {
         var repetierResponse = arg.Response;
-        // _logger.LogInformation("<=#=[{action}]=#= | #{callback_id}", repetierResponse.CommandId, repetierResponse.CallBackId);
+        _logger.LogInformation("<=#=[{action}]=#= | #{callback_id}", repetierResponse.CommandId, repetierResponse.CallBackId);
         return Task.CompletedTask;
     }
     
