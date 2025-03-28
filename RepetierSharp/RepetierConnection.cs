@@ -157,6 +157,16 @@ namespace RepetierSharp
             }
         }
 
+        public ScheduledPrinterCmd SchedulePrinterCommand(string printer, ICommandData commandData, RepetierTimer timer = RepetierTimer.Timer30)
+        {
+            return _commandDispatcher.AddPrinterCommand(printer, commandData, timer);
+        }
+        
+        public ScheduledServerCmd ScheduleServerCommand(ICommandData commandData, RepetierTimer timer = RepetierTimer.Timer30)
+        {
+            return _commandDispatcher.AddServerCommand(commandData, timer);
+        }
+
         private async Task HandleResponse(RepetierResponse response, JsonElement dataElement)
         { 
             if ( !IsFiltered(response.CommandId, _responseFilters) )
