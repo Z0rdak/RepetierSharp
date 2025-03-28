@@ -88,35 +88,15 @@ public class Worker : BackgroundService
             return Task.CompletedTask;
         };
 
-        _repetierCon.PrinterCommandSendAsync += args =>
-        {
-            if ( args.Command.Action != CommandConstants.PING )
-            {
-                var isServerCommand = string.IsNullOrEmpty(args.Command.Printer);
-                _logger.LogInformation("=?=[{action}]=?=> | {printer} | #{callbackId}", 
-                    args.Command.Action, isServerCommand ? "Server" : args.Command.Printer, args.Command.CallbackId);
-            }
-            return Task.CompletedTask;  
-        };
-        
-        _repetierCon.ServerCommandSendAsync += args =>
-        {
-            if ( args.Command.Action != CommandConstants.PING )
-            {
-                _logger.LogInformation("=?=[{action}]=?=> | Server | #{callbackId}", 
-                    args.Command.Action, args.Command.CallbackId);
-            }
-            return Task.CompletedTask;  
-        };
-        _repetierCon.PrintStartedAsync += OnJobStarted;
-        _repetierCon.PrintFinishedAsync += OnJobFinished;
-        _repetierCon.PrintKilledAsync += OnJobKilled;
-        _repetierCon.EventReceivedAsync += OnEvent;
-        _repetierCon.PrinterStateReceivedAsync += OnPrinterStateReceived;
+        _repetierCon.PrinterCommandSendAsync += args => Task.CompletedTask;
+        _repetierCon.PrintStartedAsync += args => Task.CompletedTask;;
+        _repetierCon.PrintFinishedAsync += args => Task.CompletedTask;;
+        _repetierCon.PrintKilledAsync += args => Task.CompletedTask;;
+        _repetierCon.EventReceivedAsync += args => Task.CompletedTask;
+        _repetierCon.PrinterStateReceivedAsync += args => Task.CompletedTask;;
         _repetierCon.RepetierResponseReceivedAsync += OnResponseReceived; 
-        _repetierCon.LayerChangedAsync += (LayerChangedEventArgs args) => Task.CompletedTask;
-        
-    
+        _repetierCon.LayerChangedAsync += args => Task.CompletedTask;
+        _repetierCon.ServerCommandSendAsync += args => Task.CompletedTask;
     }
     
     // TODO: No info about printer in response - F***
@@ -154,227 +134,6 @@ public class Worker : BackgroundService
         return Task.CompletedTask;  
     }
     
-    private Task OnPrinterStateReceived(StateChangedEventArgs arg)
-    {
-        _logger.LogInformation("<=!=[{state}]=!= | {printer}", "state", arg.Printer);
-        return Task.CompletedTask;
-    }
-
-    private Task OnJobFinished(PrintJobFinishedEventArgs jobFinishedArgs)
-    {
-        var printer = jobFinishedArgs.Printer;
-        var jobState = jobFinishedArgs.JobState;
-        var jobEvent = PointData.Measurement("job-event")
-            .Tag("event", "job-finished")
-            .Tag("job-time-started", $"{jobState.StartTime}")
-            .Tag("job-time-ended", $"{jobState.StartTime + jobState.EndTime}")
-            .Tag("job-duration", $"{jobState.Duration}")
-            .Tag("job-printed-lines", $"{jobState.PrintedLines}")
-            .Timestamp(jobState.StartTime + jobState.EndTime, WritePrecision.S);
-
-        Action<WriteApiAsync> action = (writeApi) =>
-        {
-            writeApi.WritePointAsync(jobEvent, BucketNameFor(printer), InfluxOrgName);
-        };
-        Write(action);
-        _logger.LogInformation("<=!=[{event}]=!= | {printer}", "jobFinished", printer);
-        return Task.CompletedTask;
-    }
-
-    private void ReportPrinterState(string printer, PrinterState printerState)
-    {
-        var point = PointData.Measurement("printer-state") // Separate measurement for each metric
-            .Field("flow-multiplier", printerState.FlowMultiplier)
-            .Field("speed-multiplier", printerState.SpeedMultiplier)
-            .Field("active-extruder", printerState.ActiveExtruder)
-            .Field("current-layer", printerState.CurrentLayer)
-            .Timestamp(DateTime.UtcNow, WritePrecision.S);
-
-        Write((writeApi) =>
-            writeApi.WritePointAsync(point, BucketNameFor(printer),
-                InfluxOrgName));
-            
-        for (var i = 0; i < printerState.Extruders.Count; i++)
-        {
-            var extruder = printerState.Extruders[i];
-            var extruderData = PointData
-                .Measurement($"extruder{i}") // Separate measurement for each metric
-                .Field("read", extruder.Read)
-                .Field("set", extruder.Set)
-                .Field("out", extruder.Out)
-                .Timestamp(DateTime.UtcNow, WritePrecision.S);
-
-            Action<WriteApiAsync> action = (writeApi) =>
-            {
-                writeApi.WritePointAsync(extruderData, BucketNameFor(printer), InfluxOrgName);
-            };
-            Write(action);
-        }
-
-        for (var i = 0; i < printerState.Heatedbeds.Count; i++)
-        {
-            var heatbed = printerState.Heatedbeds[i];
-            var headbedData = PointData
-                .Measurement($"bed{i}") // Separate measurement for each metric
-                .Field("read", heatbed.Read)
-                .Field("out", heatbed.Out)
-                .Field("set", heatbed.Set)
-                .Timestamp(DateTime.UtcNow, WritePrecision.S);
-
-            Action<WriteApiAsync> action = (writeApi) =>
-            {
-                writeApi.WritePointAsync(headbedData, BucketNameFor(printer), InfluxOrgName);
-            };
-            Write(action);
-        }
-
-        for (var i = 0; i < printerState.Fans.Count; i++)
-        {
-            var fan = printerState.Fans[i];
-            var fanData = PointData
-                .Measurement($"fan{i}") // Separate measurement for each metric
-                .Field("voltage", fan.Voltage)
-                .Timestamp(DateTime.UtcNow, WritePrecision.S);
-
-            Action<WriteApiAsync> action = (writeApi) =>
-            {
-                writeApi.WritePointAsync(fanData, BucketNameFor(printer),
-                    InfluxOrgName);
-            };
-            Write(action);
-        }
-    }
-
-    private Task OnJobKilled(PrintJobKilledEventArgs printJobKilledEventArgs)
-    {
-        var jobState = printJobKilledEventArgs.JobState;
-        var printer = printJobKilledEventArgs.Printer;
-        var time = DateTimeOffset.UtcNow.ToUniversalTime();
-        var jobEvent = PointData.Measurement("job-event")
-            .Tag("event", "job-killed")
-            .Tag("job-time-started", $"{jobState.StartTime}")
-            .Tag("job-time-ended", $"{jobState.StartTime + jobState.EndTime}")
-            .Tag("job-duration", $"{jobState.Duration}")
-            .Tag("job-printed-lines", $"{jobState.PrintedLines}")
-            .Timestamp(jobState.StartTime + jobState.EndTime, WritePrecision.S);
-
-        Action<WriteApiAsync> action = (writeApi) =>
-        {
-            writeApi.WritePointAsync(jobEvent, BucketNameFor(printer), InfluxOrgName);
-        };
-        Write(action);
-        _logger.LogInformation("<=!=[{event}]=!= | {printer}", "jobKilled", printer);
-        return Task.CompletedTask;
-    }
-    
-    private Task OnEvent(EventReceivedEventArgs eventArgs)
-    {
-        var eventName = eventArgs.EventName;
-        var printer = eventArgs.Printer;
-
-        switch (eventName)
-        {
-            case EventConstants.JOBS_CHANGED:
-                _logger.LogInformation("<=!=[{event}]=!= | {printer}", eventName, printer);
-                break;
-            case EventConstants.PREPARE_JOB:
-            {
-                var time = DateTimeOffset.UtcNow.ToUniversalTime();
-                var jobState = PointData.Measurement("job-event")
-                    .Tag("event", "prepare-job")
-                    .Timestamp(time, WritePrecision.S);
-
-                Action<WriteApiAsync> action = (writeApi) =>
-                {
-                    writeApi.WritePointAsync(jobState, BucketNameFor(printer), InfluxOrgName);
-                };
-                Write(action);
-                _logger.LogInformation("<=!=[{event}]=!= | {printer}", eventName, printer);
-                break;
-            }
-            case EventConstants.PREPARE_JOB_FINIHSED:
-            {
-                var time = DateTimeOffset.UtcNow.ToUniversalTime();
-                var jobState = PointData.Measurement("job-event")
-                    .Tag("event", "prepare-job-finished")
-                    .Timestamp(time, WritePrecision.S);
-
-                Action<WriteApiAsync> action = (writeApi) =>
-                {
-                    writeApi.WritePointAsync(jobState, BucketNameFor(printer), InfluxOrgName);
-                };
-                Write(action);
-                _logger.LogInformation("<=!=[{event}]=!= | {printer}", eventName, printer);
-                break;
-            }
-            case EventConstants.UPDATE_PRINTER_STATE:
-                if ( eventArgs.RepetierEvent != null )
-                {
-                    var printerState = (PrinterState) eventArgs.RepetierEvent;
-                    ReportPrinterState(printer, printerState);
-                }
-                break;
-            case EventConstants.PRINTER_CONDITION_CHANGED:
-                if ( eventArgs.RepetierEvent != null )
-                {
-                    var printerCondition = (PrinterConditionChanged)eventArgs.RepetierEvent;
-                    _logger.LogInformation("<=!=[{event}]=!= | {printer}", eventName, printer);
-                    _logger.LogInformation("<=!= [{printer}] Condition: {}", printer, JsonSerializer.Serialize(printerCondition));
-                }  
-                break;
-        }
-        return Task.CompletedTask;
-    }
-
-    private string BucketNameFor(string printer)
-    {
-        switch (printer)
-        {
-            case "Original_Prusa_XL__5T":
-                return "0001-prusa-xl-5t";
-            case "Prusa_Mk3s_with_Enclosure":
-                return "0002-prusa-mk3s-encl";
-            default:
-                return "dump";
-        }
-    }
-
-
-    private Task OnJobStarted(PrintJobStartedEventArgs printJobStartedEventArgs)
-    {
-        var jobStartedInfo = printJobStartedEventArgs.JobStarted;
-        var printer = printJobStartedEventArgs.Printer;
-        var jobState = PointData.Measurement("job-event")
-            .Tag("event", "job-started")
-            .Timestamp(jobStartedInfo.StartTime, WritePrecision.S);
-
-        _logger.LogInformation("<=!=[{event}]=!= | {printer}", "jobStarted", printer);
-        Action<WriteApiAsync> action = writeApi =>
-        {
-            writeApi.WritePointAsync(jobState, BucketNameFor(printer), InfluxOrgName);
-        };
-        Write(action);
-        return Task.CompletedTask;
-    }
-
-    private void Write(Action<WriteApiAsync> action)
-    {
-        try
-        {
-            if (_logger.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Debug))
-            {
-                _client.SetLogLevel(InfluxDB.Client.Core.LogLevel.Body);
-            }
-
-            var write = _client.GetWriteApiAsync();
-            action(write);
-        }
-        catch (Exception e)
-        {
-            _logger.LogError("Error writing to InfluxDB: {Message}", e.Message);
-        }
-    }
-
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await _repetierCon.Connect();
@@ -385,7 +144,6 @@ public class Worker : BackgroundService
             {
                 //_logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
             }
-
             await Task.Delay(10000, stoppingToken);
         }
     }
