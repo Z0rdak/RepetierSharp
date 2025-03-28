@@ -18,7 +18,6 @@ namespace RepetierSharp.Internal
         public AsyncEvent<SessionIdReceivedEventArgs> SessionIdReceivedEvent { get; } = new();
         public AsyncEvent<UserCredentialsReceivedEventArgs> CredentialsReceivedEvent { get; } = new();
         public AsyncEvent<EventReceivedEventArgs> EventReceivedEvent { get; } = new();
-        public AsyncEvent<ResponseReceivedEventArgs> ResponseReceivedEvent { get; } = new();
         public AsyncEvent<RawEventReceivedEventArgs> RawEventReceivedEvent { get; } = new();
         public AsyncEvent<RawResponseReceivedEventArgs> RawResponseReceivedEvent { get; } = new();
         public AsyncEvent<HttpContextEventArgs> HttpRequestFailedEvent { get; } = new();
@@ -72,11 +71,6 @@ namespace RepetierSharp.Internal
         public byte[] EventPayload { get; }
         public string EventName { get; }
         public string Printer { get; }
-    }
-
-    public sealed class ResponseReceivedEventArgs(RepetierResponse response) : EventArgs
-    {
-        public RepetierResponse Response { get; } = response;
     }
 
     public sealed class RawResponseReceivedEventArgs : EventArgs
