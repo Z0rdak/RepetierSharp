@@ -49,7 +49,7 @@ namespace RepetierSharp.Control
             return Task.CompletedTask;
         }
         
-        public ScheduledCmd AddPrinterCommand(RepetierTimer timer, ICommandData command, string printer)
+        public ScheduledPrinterCmd AddPrinterCommand(string printer, ICommandData command, RepetierTimer timer)
         {
             var printerCmd = new PrinterCommand(command.Action, command, printer, -1);
             var scheduledCmd = new ScheduledPrinterCmd(Guid.NewGuid().ToString(), printer, printerCmd);
@@ -60,7 +60,7 @@ namespace RepetierSharp.Control
             return scheduledCmd;
         }
         
-        public ScheduledCmd AddServerCommand(RepetierTimer timer, ICommandData command)
+        public ScheduledServerCmd AddServerCommand(ICommandData command, RepetierTimer timer)
         {
             var serverCmd = new ServerCommand(command.Action, command, -1);
             var scheduledCmd = new ScheduledServerCmd(Guid.NewGuid().ToString(), serverCmd);
