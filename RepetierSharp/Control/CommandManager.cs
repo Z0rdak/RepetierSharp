@@ -53,7 +53,7 @@ namespace RepetierSharp.Control
             var callbackId = Next();
             while (!_callbackMap.TryAdd(callbackId, new CallbackInfo(action, CommandType.Server, "Server")))
             {
-                _logger.LogWarning("[CommandManager::ServerCommandWithId] Failed to add callbackId for command {callbackId} with id {CommandIdentifier}.", action, callbackId);
+                _logger.LogWarning("Failed to add callbackId for command {callbackId} with id {CommandIdentifier}.", action, callbackId);
                 callbackId = Next();
             }
             return new ServerCommand(action, command, callbackId);
@@ -69,7 +69,7 @@ namespace RepetierSharp.Control
             var callbackId = Next();
             while (!_callbackMap.TryAdd(callbackId, new CallbackInfo(action, CommandType.Printer, printer)))
             {
-                _logger.LogWarning("[CommandManager::PrinterCommandWithId] Failed to add callbackId for command {callbackId} with id {CommandIdentifier}.", action, callbackId);
+                _logger.LogTrace("Failed to add callbackId for command {callbackId} with id {CommandIdentifier}.", action, callbackId);
                 callbackId = Next();
             }
             return new PrinterCommand(action, command, printer, callbackId);
@@ -80,7 +80,7 @@ namespace RepetierSharp.Control
             if (!_callbackMap.ContainsKey(callbackId)) return;
             if (_callbackMap.TryRemove(callbackId, out var command) )
             {
-                _logger.LogDebug("[CommandManager] Removed command='{command}' with Id={callbackId}.", command, callbackId);
+                _logger.LogTrace("Removed command='{command}' with Id={callbackId}.", command.Action, callbackId);
             } else 
             {
                 _logger.LogWarning("Failed to remove command with {id}", callbackId);

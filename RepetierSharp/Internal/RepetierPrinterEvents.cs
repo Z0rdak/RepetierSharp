@@ -20,8 +20,17 @@ namespace RepetierSharp.Internal
         public AsyncEvent<ChangeFilamentRequestedEventArgs> ChangeFilamentRequestedEvent { get; } = new();
         public AsyncEvent<PrinterCommandEventArgs> CommandSendEvent { get; } = new();
         public AsyncEvent<PrinterResponseEventArgs> ResponseReceivedEvent { get; } = new();
+        
+        public AsyncEvent<PrinterEventEventArgs> EventReceivedEvent { get; } = new();
     }
 
+    public sealed class PrinterEventEventArgs(string eventName, string printer, IEventData? repetierEvent) : EventArgs
+    {
+        public IEventData? RepetierEvent { get; } = repetierEvent;
+        public string EventName { get; } = eventName;
+        public string Printer { get; } = printer;
+    }
+    
     public sealed class PrinterResponseEventArgs(RepetierResponse response, string printer) : EventArgs
     {
         public string Printer { get; } = printer;

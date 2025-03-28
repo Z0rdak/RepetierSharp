@@ -13,6 +13,14 @@ namespace RepetierSharp.Internal
         public AsyncEvent<ServerCommandEventArgs> CommandSendEvent { get; } = new();
         public AsyncEvent<CommandEventArgs> CommandFailedEvent { get; } = new();
         public AsyncEvent<ResponseEventArgs> ResponseReceivedEvent { get; } = new();
+        
+        public AsyncEvent<ServerEventEventArgs> EventReceivedEvent { get; } = new();
+    }
+    
+    public sealed class ServerEventEventArgs(string eventName, IEventData? repetierEvent) : EventArgs
+    {
+        public IEventData? RepetierEvent { get; } = repetierEvent;
+        public string EventName { get; } = eventName;
     }
     
     public sealed class ResponseEventArgs(RepetierResponse response) : EventArgs

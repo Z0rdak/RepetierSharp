@@ -190,8 +190,8 @@ namespace RepetierSharp
         private void LogResponse(RepetierResponse response, JsonElement dataElement)
         {
             var responseDataJson = JsonSerializer.Serialize(dataElement, SerializationOptions.WriteOptions);
-            _logger.LogDebug("<=#=[{action}]=#= | #{callbackId}", response.CallBackId, response.CommandId);
-            _logger.LogTrace("<=#=[{action}]=#= | #{callbackId}: Data={}", response.CallBackId, response.CommandId, responseDataJson);
+            _logger.LogDebug("<=#=[{action}]=#= | #{callbackId}", response.CommandId, response.CallBackId);
+            _logger.LogTrace("<=#=[{action}]=#= | #{callbackId}: Data={}", response.CommandId, response.CallBackId, responseDataJson);
         }
 
         private bool IsFiltered(string id, List<Predicate<string>> filterList)
@@ -301,8 +301,17 @@ namespace RepetierSharp
         {
             if ( !IsFiltered(repetierEvent.Event, _eventFilters) )
             {
-                var repetierEventArgs = new EventReceivedEventArgs(repetierEvent.Event, repetierEvent.Printer, repetierEvent.EventData);
-                await _clientEvents.EventReceivedEvent.InvokeAsync(repetierEventArgs);
+
+                if ( string.IsNullOrEmpty(repetierEvent.Printer) )
+                {
+                    var repetierEventArgs = new ServerEventEventArgs(repetierEvent.Event, repetierEvent.EventData);
+                    await _serverEvents.EventReceivedEvent.InvokeAsync(repetierEventArgs);
+                }
+                else
+                {
+                    var repetierEventArgs = new PrinterEventEventArgs(repetierEvent.Event, repetierEvent.Printer, repetierEvent.EventData);
+                    await _printerEvents.EventReceivedEvent.InvokeAsync(repetierEventArgs);
+                } 
                 LogEvent(repetierEvent);
             }
 
@@ -432,10 +441,17 @@ namespace RepetierSharp
             }
         }
         private void LogEvent(IRepetierEvent repetierEvent)
-        {
-            var eventJson = JsonSerializer.Serialize(repetierEvent.EventData, SerializationOptions.WriteOptions);
-            _logger.LogDebug("<=!=[{action}]=!= | {printer} |", repetierEvent.Event, repetierEvent.Printer);
-            _logger.LogTrace("<=!=[{action}]=!= | {printer} | Data={dataJson}", repetierEvent.Event, repetierEvent.Printer, eventJson);
+        {var eventJson = JsonSerializer.Serialize(repetierEvent.EventData, SerializationOptions.WriteOptions);
+            if ( string.IsNullOrEmpty(repetierEvent.Printer) )
+            {
+                _logger.LogDebug("<=!=[{action}]=!= | Server ", repetierEvent.Event);
+                _logger.LogTrace("<=!=[{action}]=!= | Server | Data={dataJson}", repetierEvent.Event, eventJson);
+            }
+            else
+            {
+                _logger.LogDebug("<=!=[{action}]=!= | {printer}", repetierEvent.Event, repetierEvent.Printer);
+                _logger.LogTrace("<=!=[{action}]=!= | {printer} |Data={dataJson}", repetierEvent.Event, repetierEvent.Printer, eventJson);
+            }
         }
 
         /// <summary>
@@ -508,15 +524,16 @@ namespace RepetierSharp
         
         private void LogCommand(BaseCommand command)
         {
+            var cmdStr = JsonSerializer.Serialize(command, SerializationOptions.WriteCommandOptions);
             switch ( command )
             {
                 case PrinterCommand printerCmd:
                     _logger.LogDebug("=?=[{action}]=?=> | {printer} | #{}", command.Action, printerCmd.Printer, command.CallbackId);
-                    _logger.LogTrace("=?=[{action}]=?=> | {printer} | #{}: Data={cmd}", command.Action, printerCmd.Printer, command.CallbackId, JsonSerializer.Serialize(command));
+                    _logger.LogTrace("=?=[{action}]=?=> | {printer} | #{}: Data={cmd}", command.Action, printerCmd.Printer, command.CallbackId, cmdStr);
                     break;
                 case ServerCommand _:
                     _logger.LogDebug("=?=[{action}]=?=> | Server | #{}", command.Action, command.CallbackId);
-                    _logger.LogTrace("=?=[{action}]=?=> | Server | #{}: Data={cmd}", command.CallbackId, command.Action, JsonSerializer.Serialize(command));
+                    _logger.LogTrace("=?=[{action}]=?=> | Server | #{}: Data={cmd}", command.CallbackId, command.Action, cmdStr);
                     break;
             }
         }
@@ -633,17 +650,6 @@ namespace RepetierSharp
         {
             add => _clientEvents.CredentialsReceivedEvent.AddHandler(value);
             remove => _clientEvents.CredentialsReceivedEvent.RemoveHandler(value);
-        }
-
-        /// <summary>
-        ///     Fired for received events from the repetier server. Note that temp, move and log events are not included here.
-        ///     <br></br>
-        ///     They can be enabled by setting the appropriate properties.
-        /// </summary>
-        public event Func<EventReceivedEventArgs, Task> EventReceivedAsync
-        {
-            add => _clientEvents.EventReceivedEvent.AddHandler(value);
-            remove => _clientEvents.EventReceivedEvent.RemoveHandler(value);
         }
 
         /// <summary>
@@ -808,6 +814,12 @@ namespace RepetierSharp
             add => _printerEvents.PrinterActivatedEvent.AddHandler(value);
             remove => _printerEvents.PrinterActivatedEvent.RemoveHandler(value);
         }
+        
+        public event Func<PrinterEventEventArgs, Task> PrinterEventReceivedAsync
+        {
+            add => _printerEvents.EventReceivedEvent.AddHandler(value);
+            remove => _printerEvents.EventReceivedEvent.RemoveHandler(value);
+        }
 
         /// <summary>
         ///     Fired after the response for the printer deactivation request from was received.
@@ -937,6 +949,12 @@ namespace RepetierSharp
         {
             add => _clientEvents.HttpRequestFailedEvent.AddHandler(value);
             remove => _clientEvents.HttpRequestFailedEvent.RemoveHandler(value);
+        }
+        
+        public event Func<ServerEventEventArgs, Task> ServerEventReceivedAsync
+        {
+            add => _serverEvents.EventReceivedEvent.AddHandler(value);
+            remove => _serverEvents.EventReceivedEvent.RemoveHandler(value);
         }
 
         #endregion

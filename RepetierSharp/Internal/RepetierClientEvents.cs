@@ -17,7 +17,6 @@ namespace RepetierSharp.Internal
         public AsyncEvent<PermissionDeniedEventArgs> PermissionDeniedEvent { get; } = new();
         public AsyncEvent<SessionIdReceivedEventArgs> SessionIdReceivedEvent { get; } = new();
         public AsyncEvent<UserCredentialsReceivedEventArgs> CredentialsReceivedEvent { get; } = new();
-        public AsyncEvent<EventReceivedEventArgs> EventReceivedEvent { get; } = new();
         public AsyncEvent<RawEventReceivedEventArgs> RawEventReceivedEvent { get; } = new();
         public AsyncEvent<RawResponseReceivedEventArgs> RawResponseReceivedEvent { get; } = new();
         public AsyncEvent<HttpContextEventArgs> HttpRequestFailedEvent { get; } = new();
@@ -45,13 +44,6 @@ namespace RepetierSharp.Internal
     {
         public int CallbackId { get; } = callbackId;
         public string CommandId { get; } = commandId;
-    }
-
-    public sealed class EventReceivedEventArgs(string eventName, string printer, IEventData? repetierEvent) : EventArgs
-    {
-        public IEventData? RepetierEvent { get; } = repetierEvent;
-        public string EventName { get; } = eventName;
-        public string Printer { get; } = printer;
     }
 
     public sealed class RawEventReceivedEventArgs : EventArgs
