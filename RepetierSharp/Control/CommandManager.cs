@@ -2,11 +2,18 @@
 using System.Threading;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using RepetierSharp.Models.Commands;
 using RepetierSharp.Models.Communication;
 
 namespace RepetierSharp.Control
 {
+    public enum CommandType
+    {
+        Printer = 0,
+        Server = 1,
+    }
+
+    public record CallbackInfo(string Action, CommandType CmdType, string Printer);
+    
     /// <summary>
     ///     CommandManager manages the commands that are sent to the Repetier-Server.
     ///     It is used to generate unique callback ids for each command.
@@ -15,7 +22,7 @@ namespace RepetierSharp.Control
     internal class CommandManager(ILogger<RepetierConnection>? logger = null)
     {
         // CallbackId -> Command
-        private readonly ConcurrentDictionary<int, string> _callbackMap = new();
+        private readonly ConcurrentDictionary<int, CallbackInfo> _callbackMap = new();
         private readonly ILogger<RepetierConnection> _logger = logger ?? NullLogger<RepetierConnection>.Instance;
         private volatile int _callBackId;
         private readonly object _lockObj = new object();
@@ -44,7 +51,7 @@ namespace RepetierSharp.Control
         public ServerCommand ServerCommandWithId(string action, ICommandData command)
         {
             var callbackId = Next();
-            while (!_callbackMap.TryAdd(callbackId, action))
+            while (!_callbackMap.TryAdd(callbackId, new CallbackInfo(action, CommandType.Server, "Server")))
             {
                 _logger.LogWarning("[CommandManager::ServerCommandWithId] Failed to add callbackId for command {callbackId} with id {CommandIdentifier}.", action, callbackId);
                 callbackId = Next();
@@ -60,7 +67,7 @@ namespace RepetierSharp.Control
         public PrinterCommand PrinterCommandWithId(string action, ICommandData command, string printer)
         {
             var callbackId = Next();
-            while (!_callbackMap.TryAdd(callbackId, action))
+            while (!_callbackMap.TryAdd(callbackId, new CallbackInfo(action, CommandType.Printer, printer)))
             {
                 _logger.LogWarning("[CommandManager::PrinterCommandWithId] Failed to add callbackId for command {callbackId} with id {CommandIdentifier}.", action, callbackId);
                 callbackId = Next();
@@ -83,8 +90,15 @@ namespace RepetierSharp.Control
         public string CommandIdentifierFor(int callbackId)
         {
             return _callbackMap.TryGetValue(callbackId, out var commandIdentifier)
-                ? commandIdentifier
+                ? commandIdentifier.Action
                 : string.Empty;
+        }
+        
+        public CallbackInfo? CallbackInfoFor(int callbackId)
+        {
+            return _callbackMap.TryGetValue(callbackId, out var commandIdentifier)
+                ? commandIdentifier
+                : null;
         }
     }
 }
