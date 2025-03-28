@@ -1,11 +1,23 @@
-# [0.3.0] - Unreleased
+# [0.3.0] - 2025-03-28
 
-## Planned
+## Added
 
-* Managed RepetierClient which keeps track of printer state to allow to fire events for stats not provided out of the box. 
-* Managed RepetierClient manages 
-  * print job queue
-  * ...
+- Add Background Worker example to repo, as starting point and to test stuff.
+- Responses can now be distinguished being a server or printer related response.
+- Add separate event handler for server responses.
+- Add separate event handler for printer responses, including the printer slug.
+- Add methods to schedule commands after initial repetier connection setup through builder (see example).
+- Add separate response filter in builder (separates it from the command filter)
+
+## Changed
+
+- CommandManager now stores extended info about commands (server or printer command and printer slug)
+- Change internal logging of commands, events, responses (debug, trace)
+
+## Fixed
+
+- Fix event filter not being applied correctly, causing events not being handled correctly
+- Fix response filter not being applied correctly, causing response not being handled correctly
 
 # [0.2.2] - 2025-03-27
 
