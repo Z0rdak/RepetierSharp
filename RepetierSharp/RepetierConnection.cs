@@ -174,8 +174,15 @@ namespace RepetierSharp
                 var rawResponsePayload = Encoding.UTF8.GetBytes(dataElement.GetRawText());
                 var rawResponseArgs = new RawResponseReceivedEventArgs(response.CallBackId, response.CommandId, rawResponsePayload);
                 await _clientEvents.RawResponseReceivedEvent.InvokeAsync(rawResponseArgs);
-                await _clientEvents.ResponseReceivedEvent.InvokeAsync(new ResponseReceivedEventArgs(response));
-                LogResponse(response, dataElement);
+                var callbackInfo = _commandManager.CallbackInfoFor(response.CallBackId);
+                if ( callbackInfo != null )
+                {
+                    if ( callbackInfo.CmdType == CommandType.Printer )
+                        await _printerEvents.ResponseReceivedEvent.InvokeAsync(new PrinterResponseEventArgs(response, callbackInfo.Printer));
+                    else
+                        await _serverEvents.ResponseReceivedEvent.InvokeAsync(new ResponseEventArgs(response));
+                    LogResponse(response, dataElement);
+                }
             }
             await ProcessResponse(response);
         }
@@ -647,19 +654,10 @@ namespace RepetierSharp
         ///     <br></br>
         ///     which are not yet implemented by RepetierSharp.
         /// </summary>
-        public event Func<RawEventReceivedEventArgs, Task> RawRepetierEventReceivedAsync
+        public event Func<RawEventReceivedEventArgs, Task> RawEventReceivedAsync
         {
             add => _clientEvents.RawEventReceivedEvent.AddHandler(value);
             remove => _clientEvents.RawEventReceivedEvent.RemoveHandler(value);
-        }
-
-        /// <summary>
-        ///     Fired when a response from the server is received. This does not include the ping response.
-        /// </summary>
-        public event Func<ResponseReceivedEventArgs, Task> RepetierResponseReceivedAsync
-        {
-            add => _clientEvents.ResponseReceivedEvent.AddHandler(value);
-            remove => _clientEvents.ResponseReceivedEvent.RemoveHandler(value);
         }
 
         /// <summary>
@@ -669,7 +667,7 @@ namespace RepetierSharp
         ///     <br></br>
         ///     which are not yet implemented by RepetierSharp.
         /// </summary>
-        public event Func<RawResponseReceivedEventArgs, Task> RawRepetierResponseReceivedAsync
+        public event Func<RawResponseReceivedEventArgs, Task> RawResponseReceivedAsync
         {
             add => _clientEvents.RawResponseReceivedEvent.AddHandler(value);
             remove => _clientEvents.RawResponseReceivedEvent.RemoveHandler(value);
@@ -770,6 +768,18 @@ namespace RepetierSharp
         {
             add => _printerEvents.ConditionChangedEvent.AddHandler(value);
             remove => _printerEvents.ConditionChangedEvent.RemoveHandler(value);
+        }
+        
+        public event Func<ResponseEventArgs, Task> ServerResponseReceivedAsync
+        {
+            add => _serverEvents.ResponseReceivedEvent.AddHandler(value);
+            remove => _serverEvents.ResponseReceivedEvent.RemoveHandler(value);
+        }
+        
+        public event Func<PrinterResponseEventArgs, Task> PrinterResponseReceivedAsync
+        {
+            add => _printerEvents.ResponseReceivedEvent.AddHandler(value);
+            remove => _printerEvents.ResponseReceivedEvent.RemoveHandler(value);
         }
 
         /// <summary>
