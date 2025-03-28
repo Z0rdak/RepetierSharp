@@ -826,6 +826,16 @@ namespace RepetierSharp
             add => _printerEvents.ChangeFilamentRequestedEvent.AddHandler(value);
             remove => _printerEvents.ChangeFilamentRequestedEvent.RemoveHandler(value);
         }
+        
+        /// <summary>
+        ///     Fired for every printer command send to the repetier server. <br></br>
+        ///     This is mainly useful to get the callback_id and printer name of commands and for debugging purposes.
+        /// </summary>
+        public event Func<PrinterCommandEventArgs, Task> PrinterCommandSendAsync
+        {
+            add => _printerEvents.CommandSendEvent.AddHandler(value);
+            remove => _printerEvents.CommandSendEvent.RemoveHandler(value);
+        }
 
         #endregion
 
@@ -862,24 +872,24 @@ namespace RepetierSharp
         }
 
         /// <summary>
-        ///     Fired for every command/request send to the repetier server. <br></br>
-        ///     This is mainly useful for debugging purposes.
+        ///     Fired for every server command send to the repetier server. <br></br>
+        ///     This is mainly useful to get the callback_id of commands and for debugging purposes.
         /// </summary>
-        public event Func<CommandEventArgs, Task> RepetierRequestSendAsync
+        public event Func<ServerCommandEventArgs, Task> ServerCommandSendAsync
         {
-            add => _clientEvents.CommandSendEvent.AddHandler(value);
-            remove => _clientEvents.CommandSendEvent.RemoveHandler(value);
+            add => _serverEvents.CommandSendEvent.AddHandler(value);
+            remove => _serverEvents.CommandSendEvent.RemoveHandler(value);
         }
 
         /// <summary>
-        ///     Fired when a request to the repetier server failed. <br></br>
-        ///     This happens when the websocket client is unable to queue the request internally. <br></br>
-        ///     To check if the server received the response either listen for the corresponding response.
+        ///     Fired when a command to the repetier server failed. <br></br>
+        ///     This happens when the websocket client is unable to queue the command internally. <br></br>
+        ///     To check if the server received the command either listen for the corresponding response.
         /// </summary>
-        public event Func<CommandEventArgs, Task> RepetierRequestFailedAsync
+        public event Func<CommandEventArgs, Task> CommandFailedAsync
         {
-            add => _clientEvents.CommandFailedEvent.AddHandler(value);
-            remove => _clientEvents.CommandFailedEvent.RemoveHandler(value);
+            add => _serverEvents.CommandFailedEvent.AddHandler(value);
+            remove => _serverEvents.CommandFailedEvent.RemoveHandler(value);
         }
 
         /// <summary>
