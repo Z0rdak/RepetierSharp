@@ -142,17 +142,7 @@ namespace RepetierSharp
                             repetierResponse.CallBackId, msgDataJson.GetRawText());
                         return;
                     }
-                    
-                    if ( !IsFiltered(cmdIdentifier, _commandFilters) )
-                    {
-                        Task.Run(async () =>
-                        {
-                            var rawResponsePayload = Encoding.UTF8.GetBytes(msgDataJson.GetRawText());
-                            var rawResponseArgs = new RawResponseReceivedEventArgs(repetierResponse.CallBackId, repetierResponse.CommandId, rawResponsePayload);
-                            await _clientEvents.RawResponseReceivedEvent.InvokeAsync(rawResponseArgs);
-                            await HandleResponse(repetierResponse, msgDataJson);
-                        });
-                    }
+                    Task.Run(async () => await HandleResponse(repetierResponse, msgDataJson));
                 }
             }
             catch ( Exception ex )
@@ -177,11 +167,14 @@ namespace RepetierSharp
 
         private async Task HandleResponse(RepetierResponse response, JsonElement dataElement)
         { 
-            var responseDataJson = JsonSerializer.Serialize(dataElement, new JsonSerializerOptions { WriteIndented = true });
-            _logger.LogDebug("[Response] Id={}, Cmd={}", response.CallBackId, response.CommandId);
-            _logger.LogTrace("[Response] Id={}, Cmd={}, Data={}", response.CallBackId, response.CommandId, responseDataJson);
-         
-            await _clientEvents.ResponseReceivedEvent.InvokeAsync(new ResponseReceivedEventArgs(response));
+            if ( !IsFiltered(response.CommandId, _responseFilters) )
+            {
+                var rawResponsePayload = Encoding.UTF8.GetBytes(dataElement.GetRawText());
+                var rawResponseArgs = new RawResponseReceivedEventArgs(response.CallBackId, response.CommandId, rawResponsePayload);
+                await _clientEvents.RawResponseReceivedEvent.InvokeAsync(rawResponseArgs);
+                await _clientEvents.ResponseReceivedEvent.InvokeAsync(new ResponseReceivedEventArgs(response));
+                LogResponse(response, dataElement);
+            }
             await ProcessResponse(response);
         }
         
